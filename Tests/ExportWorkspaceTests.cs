@@ -148,6 +148,45 @@ public sealed class ExportWorkspaceTests : IDisposable
         Assert.Contains("output size", vm.ExportValidationReason);
     }
 
+    [Fact]
+    public async Task ExportWorkspaceCommand_IsIgnoredInFullScreen()
+    {
+        using var catalog = _fx.CreateCatalog();
+        await using var vm = CreateViewModel(new NullBaseLoader(), catalog);
+        vm.IsFullScreenMode = true;
+
+        vm.SwitchToExportCommand.Execute(null);
+
+        Assert.False(vm.IsExportMode);
+        Assert.Empty(vm.ExportSettings.OutputFolder);
+    }
+
+    [Fact]
+    public async Task ExportWorkspaceCommand_FollowsAutomaticDestinationUntilCustomized()
+    {
+        using var catalog = _fx.CreateCatalog();
+        await using var vm = CreateViewModel(new NullBaseLoader(), catalog);
+        var folderA = _fx.Path("a");
+        var folderB = _fx.Path("b");
+        var folderC = _fx.Path("c");
+
+        vm.CurrentFolderPath = folderA;
+        vm.SwitchToExportCommand.Execute(null);
+        Assert.Equal(Path.Combine(folderA, "export"), vm.ExportSettings.OutputFolder);
+
+        vm.HandleEscapeCommand.Execute(null);
+        vm.CurrentFolderPath = folderB;
+        vm.SwitchToExportCommand.Execute(null);
+        Assert.Equal(Path.Combine(folderB, "export"), vm.ExportSettings.OutputFolder);
+
+        vm.HandleEscapeCommand.Execute(null);
+        var customFolder = _fx.Path("deliveries");
+        vm.ExportSettings.OutputFolder = customFolder;
+        vm.CurrentFolderPath = folderC;
+        vm.SwitchToExportCommand.Execute(null);
+        Assert.Equal(customFolder, vm.ExportSettings.OutputFolder);
+    }
+
     private MainWindowViewModel CreateViewModel(
         IBaseImageLoader loader,
         CatalogService? catalog = null) =>

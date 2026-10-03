@@ -191,24 +191,12 @@
                             Spacing="18">
                     <TextBlock Text="You're all set"
                                Classes="dialog-title" TextAlignment="Center"/>
-                    <TextBlock Text="Happy Photon is ready for your photographs. Take a short tour of the workspace, or start exploring on your own."
+                    <TextBlock Text="Happy Photon is ready for your photographs."
                                Classes="dialog-body" Foreground="{DynamicResource TextSecondary}"
                                TextAlignment="Center" TextWrapping="Wrap"/>
-                    <Grid ColumnDefinitions="*,Auto">
-                        <Button Content="Back" Classes="quiet-button" HorizontalAlignment="Left"
-                                Command="{Binding BackFirstRunCommand}"/>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                            <Button Content="Skip" Classes="quiet-button"
-                                    Command="{Binding SkipFirstRunTourCommand}"/>
-                            <Button x:Name="StartTourButton"
-                                    Classes="accent" MinWidth="150" Padding="18,11"
-                                    FontFamily="{StaticResource FontBody}"
-                                    FontSize="{StaticResource FontSizeLabel}"
-                                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                    Content="Start tour"
-                                    Command="{Binding StartFirstRunTourCommand}"/>
-                        </StackPanel>
-                    </Grid>
+                    <Button x:Name="StartBrowsingButton" Content="Start browsing"
+                            Classes="quiet-button accent" HorizontalAlignment="Center"
+                            Command="{Binding FinishFirstRunCommand}"/>
                 </StackPanel>
 
                 <TextBlock Text="{Binding FirstRunErrorMessage}"

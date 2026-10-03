@@ -7,6 +7,12 @@ namespace HappyPhoton.ViewModels;
 public partial class MainWindowViewModel
 {
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsBrowseTipsVisible), nameof(IsDevelopTipsVisible), nameof(IsExportTipsVisible))]
+    private bool _isFullScreenMode;
+
+    public bool IsDevelopEmptyStateVisible => !HasSelectedImage;
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ZoomReadout))]
     [NotifyPropertyChangedFor(nameof(IsDevelopMode))]
     [NotifyPropertyChangedFor(nameof(IsBrowseMode))]
@@ -17,6 +23,7 @@ public partial class MainWindowViewModel
     [NotifyPropertyChangedFor(nameof(IsBrowseGridVisible))]
     [NotifyPropertyChangedFor(nameof(IsBrowseChromeVisible))]
     [NotifyPropertyChangedFor(nameof(IsExportProofCaptionVisible))]
+    [NotifyPropertyChangedFor(nameof(IsBrowseTipsVisible), nameof(IsDevelopTipsVisible), nameof(IsExportTipsVisible))]
     private WorkspaceMode _workspaceMode;
     private WorkspaceMode _workspaceModeBeforeExport = WorkspaceMode.Browse;
 
@@ -170,7 +177,6 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(IsWorkspacePreviewSurfaceActive));
         UpdateNavigatorPreviewSurfaceActivity();
         OnPropertyChanged(nameof(CanSavePreset));
-        NotifyWorkflowTourVisibilityChanged();
         NotifyWhiteBalanceCommandState();
         ToggleColorAssessmentModeCommand.NotifyCanExecuteChanged();
         ToggleBeforeAfterCommand.NotifyCanExecuteChanged();

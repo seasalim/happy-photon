@@ -81,7 +81,6 @@
     <Compile Include="..\Tests\WaveformScopeUiTests.cs" Link="WaveformScopeUiTests.cs" />
     <Compile Include="..\Tests\WaveformViewTests.cs" Link="WaveformViewTests.cs" />
     <Compile Include="..\Tests\WorkspaceTransitionTests.cs" Link="WorkspaceTransitionTests.cs" />
-    <Compile Include="..\Tests\WorkflowTourDimmingTests.cs" Link="WorkflowTourDimmingTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\Tests\GoldenTestCases.cs" Link="GoldenTestCases.cs" />

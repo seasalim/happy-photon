@@ -1,17 +1,1 @@
-[
-  {
-    "Path": "Views/WorkflowCoachmark.axaml",
-    "Text": "FontSize=\u002212\u0022",
-    "Count": 1
-  },
-  {
-    "Path": "Views/WorkflowCoachmark.axaml",
-    "Text": "FontSize=\u002218\u0022",
-    "Count": 1
-  },
-  {
-    "Path": "Views/WorkflowCoachmark.axaml",
-    "Text": "LetterSpacing=\u00221\u0022",
-    "Count": 1
-  }
-]
+[]

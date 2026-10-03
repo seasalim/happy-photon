@@ -123,7 +123,7 @@ an images-only catalog, needs protection before migration. An unreadable databas
 the error screen; a hot rollback journal is probed and verified on disposable copies.
 Incomplete first-run shutdown saves preferences only; browsing root, viewed folder and
 completion version commit together when the wizard finishes. DESIGN.md owns first-run,
-Lightroom-discovery and tour presentation.
+Lightroom-discovery and tips.
 
 ## The catalog
 

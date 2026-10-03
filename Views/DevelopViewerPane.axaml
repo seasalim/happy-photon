@@ -64,6 +64,8 @@
                                              HorizontalAlignment="Center"
                                              VerticalAlignment="Bottom"
                                              Margin="16,16,16,32"/>
+            </Panel>
+            <Grid Grid.ColumnSpan="2" RowDefinitions="*,Auto">
             <Border x:Name="DevelopEmptyState"
                     IsVisible="{Binding IsDevelopEmptyStateVisible}"
                     Background="{DynamicResource SurfaceLow}" Padding="20"
@@ -71,7 +73,9 @@
                 <TextBlock Text="Select an image to edit"
                            Foreground="{DynamicResource TextMuted}" FontSize="{StaticResource FontSizeHeading}"/>
             </Border>
-            </Panel>
+            <views:TipsCard Grid.Row="1" Tips="{x:Static vm:TipsContent.Develop}"
+                            IsVisible="{Binding IsDevelopTipsVisible}"/>
+            </Grid>
         </Grid>
         <Border x:Name="DevelopControlBar" Grid.Row="1" Padding="10,4" ClipToBounds="True"
                 Background="{DynamicResource SurfaceLow}"

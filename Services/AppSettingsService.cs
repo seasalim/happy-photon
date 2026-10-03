@@ -62,6 +62,10 @@ public partial class AppSettingsService
 
         return new AppSettings
         {
+            ShowTips = !bool.TryParse(await _catalogService.GetAppSettingAsync("ShowTips"), out var showTips) || showTips,
+            BrowseTipsSeen = await LoadTipsSeenAsync("BrowseTipsSeen"),
+            DevelopTipsSeen = await LoadTipsSeenAsync("DevelopTipsSeen"),
+            ExportTipsSeen = await LoadTipsSeenAsync("ExportTipsSeen"),
             PasteGroups = await LoadPasteGroupsAsync(),
             PresetGroups = await LoadGroupPreferencesAsync("PresetGroups"),
             DevelopGroups = await LoadGroupPreferencesAsync("DevelopGroups"),
@@ -98,9 +102,9 @@ public partial class AppSettingsService
             System.Globalization.CultureInfo.InvariantCulture, out var value) && double.IsFinite(value)
             ? Math.Clamp(value, min, max) : fallback;
 
-    public Task SaveAsync(AppSettings settings)
+    public Task SaveAsync(AppSettings settings, bool saveTips = true)
     {
-        return _catalogService.SetAppSettingsAsync(WithWatermark(settings, new Dictionary<string, string?>
+        return _catalogService.SetAppSettingsAsync(WithTips(settings, saveTips, WithWatermark(settings, new Dictionary<string, string?>
         {
             [RootFolderPathKey] = settings.RootFolderPath,
             [SelectedFolderPathKey] = settings.SelectedFolderPath,
@@ -124,12 +128,12 @@ public partial class AppSettingsService
             [AppThemeKey] = settings.AppTheme.ToString(),
             [StripLocationDataKey] = settings.StripLocationData.ToString(),
             [OutputSharpeningKey] = settings.OutputSharpening.ToString()
-        }));
+        })));
     }
 
-    public Task SavePreferencesAsync(AppSettings settings)
+    public Task SavePreferencesAsync(AppSettings settings, bool saveTips = true)
     {
-        return _catalogService.SetAppSettingsAsync(WithWatermark(settings, new Dictionary<string, string?>
+        return _catalogService.SetAppSettingsAsync(WithTips(settings, saveTips, WithWatermark(settings, new Dictionary<string, string?>
         {
             ["SpotMode"] = settings.SpotMode,
             ["SpotSize"] = settings.SpotSize.ToString(System.Globalization.CultureInfo.InvariantCulture),
@@ -149,8 +153,24 @@ public partial class AppSettingsService
             [AppThemeKey] = settings.AppTheme.ToString(),
             [StripLocationDataKey] = settings.StripLocationData.ToString(),
             [OutputSharpeningKey] = settings.OutputSharpening.ToString()
-        }));
+        })));
     }
+
+    private static Dictionary<string, string?> WithTips(
+        AppSettings settings, bool saveTips, Dictionary<string, string?> values)
+    {
+        if (!saveTips) return values;
+
+        values["ShowTips"] = settings.ShowTips.ToString();
+        values["BrowseTipsSeen"] = settings.BrowseTipsSeen.ToString();
+        values["DevelopTipsSeen"] = settings.DevelopTipsSeen.ToString();
+        values["ExportTipsSeen"] = settings.ExportTipsSeen.ToString();
+
+        return values;
+    }
+
+    private async Task<bool> LoadTipsSeenAsync(string key) =>
+        bool.TryParse(await _catalogService.GetAppSettingAsync(key), out var seen) && seen;
 
     public Task SaveFirstRunVersionAsync(int version)
     {

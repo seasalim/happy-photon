@@ -20,6 +20,14 @@
     <UserControl.Styles>
         <StyleInclude Source="avares://HappyPhoton/Views/BrowseFilterBarStyles.axaml"/>
         <StyleInclude Source="avares://HappyPhoton/Views/BrowseThumbnailStyles.axaml"/>
+        <Style Selector="Border#EmptyState">
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Margin" Value="24"/>
+        </Style>
+        <Style Selector="Border#EmptyState.tips-visible">
+            <Setter Property="Padding" Value="4"/>
+            <Setter Property="Margin" Value="12,0"/>
+        </Style>
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*,Auto">
@@ -30,16 +38,12 @@
                 IsVisible="{Binding IsBrowseGridVisible}">
             <Grid ColumnDefinitions="Auto,*,Auto">
                 <TextBlock x:Name="FilterLabel"
-                           Classes="tour-region"
-                           Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
                            Text="Filter" FontSize="{StaticResource FontSizeSmall}" Foreground="{DynamicResource TextMuted}"
                            FontFamily="{StaticResource FontBody}"
                            VerticalAlignment="Center" Margin="0,0,7,0"/>
 
                 <Grid Grid.Column="1" ClipToBounds="True">
                     <ScrollViewer x:Name="FilterScrollViewer"
-                                  Classes="tour-region"
-                                  Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
                                   HorizontalScrollBarVisibility="Hidden"
                                   VerticalScrollBarVisibility="Disabled">
                         <StackPanel Orientation="Horizontal" Spacing="5">
@@ -89,9 +93,7 @@
 
                 <StackPanel x:Name="BrowseActionsPanel"
                             Grid.Column="2" Orientation="Horizontal" Spacing="5"
-                            Margin="10,0,0,0"
-                            Classes="tour-region"
-                            Classes.tour-dimmed="{Binding IsWorkflowTourPresented}">
+                            Margin="10,0,0,0">
                     <Button x:Name="BrowseActionsButton" Classes="icon-button compact"
                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                             IsEnabled="{Binding Browse.HasVisibleImages}"
@@ -347,7 +349,8 @@
         </ScrollViewer>
 
         <!-- Above the thumbnail scroller, below the Compare and Loupe viewers. -->
-        <StackPanel Grid.Row="1" x:Name="FilteredEmptyState"
+        <Grid Grid.Row="1" RowDefinitions="*,Auto">
+        <StackPanel x:Name="FilteredEmptyState"
                     IsVisible="False" Orientation="Horizontal" Spacing="4"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
             <TextBlock Text="No images match the current filters"
@@ -360,13 +363,11 @@
         </StackPanel>
 
         <!-- Empty state -->
-        <Border Grid.Row="1"
-                x:Name="EmptyState"
+        <Border x:Name="EmptyState"
+                Classes.tips-visible="{Binding IsBrowseTipsVisible}"
                 IsVisible="False"
                 Background="{DynamicResource SurfaceLow}"
-                Padding="20"
                 MaxWidth="520"
-                Margin="24"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center">
             <StackPanel Spacing="8">
@@ -386,6 +387,10 @@
             </StackPanel>
         </Border>
 
+        <views:TipsCard Grid.Row="1" Tips="{x:Static vm:TipsContent.Browse}"
+                        IsVisible="{Binding IsBrowseTipsVisible}"/>
+        </Grid>
+
         <views:CompareView x:Name="CompareView" Grid.Row="1"
                            IsVisible="{Binding IsCompareMode}"/>
         <views:LoupeView x:Name="LoupeView" Grid.Row="1"
@@ -396,21 +401,6 @@
                                 ShowBursts="{Binding ShowBursts, ElementName=Root, Mode=TwoWay}"
                                 ShowPairs="{Binding ShowPairs, ElementName=Root, Mode=TwoWay}"
                                 ThumbnailSize="{Binding ThumbnailSize, ElementName=Root, Mode=TwoWay}"/>
-
-        <views:WorkflowCoachmark
-            Grid.Row="1"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Bottom"
-            Margin="12"
-            IsVisible="{Binding IsChooseWhatMattersTourVisible}"
-            Pointer="Down"
-            StepText="1 of 3"
-            Heading="Curate your images"
-            Body="Use the controls below to pick, reject, and curate your photographs"
-            PrimaryText="Show me Develop"
-            PrimaryCommand="{Binding ShowDevelopTourStepCommand}"
-            SecondaryText="End tour"
-            SecondaryCommand="{Binding EndWorkflowTourCommand}"/>
 
     </Grid>
 

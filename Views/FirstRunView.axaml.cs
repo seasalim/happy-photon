@@ -67,7 +67,7 @@ public partial class FirstRunView : UserControl
                 LightroomImportButton.Focus();
                 break;
             case FirstRunStep.AllSet:
-                StartTourButton.Focus();
+                StartBrowsingButton.Focus();
                 break;
         }
     }

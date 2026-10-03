@@ -1,0 +1,35 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:HappyPhoton.ViewModels"
+             x:Class="HappyPhoton.Views.TipsCard"
+             x:Name="Root" x:DataType="vm:MainWindowViewModel"
+             MaxWidth="300" Margin="12"
+             HorizontalAlignment="Right" VerticalAlignment="Bottom"
+             Focusable="False"
+             AutomationProperties.Name="{Binding #Root.Tips.Title}">
+    <Border Background="{DynamicResource SurfaceHigh}"
+            BorderBrush="{DynamicResource Divider}" BorderThickness="1" Padding="12">
+        <StackPanel Spacing="8">
+            <TextBlock Text="{Binding #Root.Tips.Title}"
+                       FontFamily="{StaticResource FontBody}"
+                       FontSize="{StaticResource FontSizeLabel}" FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextPrimary}"/>
+            <StackPanel x:Name="CopyLines" Spacing="6"/>
+            <Button Content="Keyboard shortcuts"
+                    Background="Transparent" BorderThickness="0" Cursor="Hand"
+                    FontFamily="{StaticResource FontBody}" FontSize="{StaticResource FontSizeBody}" FontWeight="Normal"
+                    Foreground="{DynamicResource TextPrimary}"
+                    HorizontalAlignment="Left" Padding="0" MinHeight="20"
+                    Focusable="False" Command="{Binding OpenKeyboardShortcutsCommand}">
+                <Button.ContentTemplate>
+                    <DataTemplate x:DataType="x:String">
+                        <TextBlock Text="{Binding}" TextDecorations="Underline"/>
+                    </DataTemplate>
+                </Button.ContentTemplate>
+            </Button>
+            <Button Content="Got it" Classes="quiet-button accent"
+                    HorizontalAlignment="Right" Focusable="False"
+                    Command="{Binding DismissTipsCommand}"/>
+        </StackPanel>
+    </Border>
+</UserControl>

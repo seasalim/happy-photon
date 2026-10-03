@@ -36,6 +36,7 @@ public partial class MainWindowViewModel
     private bool _firstRunLightroomOffered;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsBrowseTipsVisible), nameof(IsDevelopTipsVisible), nameof(IsExportTipsVisible))]
     private StartupGateState _startupGateState = StartupGateState.Initializing;
 
     [ObservableProperty]
@@ -63,6 +64,7 @@ public partial class MainWindowViewModel
     private bool _isFirstRunStorageCommitted;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsBrowseTipsVisible), nameof(IsDevelopTipsVisible), nameof(IsExportTipsVisible))]
     private int? _firstRunExperienceVersion;
 
     [ObservableProperty]
@@ -340,21 +342,20 @@ public partial class MainWindowViewModel
         IsFirstRunLightroomStep && !IsFirstRunBusy;
 
     [RelayCommand(CanExecute = nameof(CanFinishFirstRun))]
-    private Task StartFirstRunTourAsync() => CompleteFirstRunAsync(startTour: true);
-
-    [RelayCommand(CanExecute = nameof(CanFinishFirstRun))]
-    private Task SkipFirstRunTourAsync() => CompleteFirstRunAsync(startTour: false);
+    private Task FinishFirstRunAsync() => CompleteFirstRunAsync();
 
     private bool CanFinishFirstRun() => IsFirstRunAllSetStep && !IsFirstRunBusy;
 
-    private async Task CompleteFirstRunAsync(bool startTour)
+    private async Task CompleteFirstRunAsync()
     {
         if (IsFirstRunBusy || !IsFirstRunAllSetStep) return;
+
         IsFirstRunBusy = true;
         FirstRunErrorMessage = null;
+
         try
         {
-            await FinishFirstRunAsync(startTour);
+            await OpenFirstWorkspaceAsync();
         }
         catch (Exception exception)
         {
@@ -368,7 +369,7 @@ public partial class MainWindowViewModel
         }
     }
 
-    private async Task FinishFirstRunAsync(bool startTour)
+    private async Task OpenFirstWorkspaceAsync()
     {
         if (string.IsNullOrWhiteSpace(FirstRunPicturesPath) ||
             PersistFirstRunCompletionAsync == null)
@@ -379,7 +380,8 @@ public partial class MainWindowViewModel
 
         await PersistFirstRunCompletionAsync(FirstRunPicturesPath);
         ShowWorkspaceReady(CurrentFirstRunExperienceVersion);
-        if (startTour) StartWorkflowTour();
+        IsFullScreenMode = false;
+        SwitchToBrowse();
         RequestFolderTreeFocus?.Invoke();
     }
 
@@ -472,8 +474,7 @@ public partial class MainWindowViewModel
         ImportDetectedLightroomCommand.NotifyCanExecuteChanged();
         SkipDetectedLightroomCommand.NotifyCanExecuteChanged();
         ChooseAnotherLightroomCatalogCommand.NotifyCanExecuteChanged();
-        StartFirstRunTourCommand.NotifyCanExecuteChanged();
-        SkipFirstRunTourCommand.NotifyCanExecuteChanged();
+        FinishFirstRunCommand.NotifyCanExecuteChanged();
     }
 
     private void SetFirstRunDefaultLocation(string? path)

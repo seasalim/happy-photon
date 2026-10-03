@@ -17,8 +17,6 @@
     <Grid ColumnDefinitions="*,Auto">
         <StackPanel x:Name="ThumbnailSizePanel"
                     Grid.Column="1"
-                    Classes="tour-region"
-                    Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Center"
                     Orientation="Horizontal"
@@ -110,17 +108,12 @@
         </StackPanel>
         <Grid Grid.Column="0" ColumnDefinitions="Auto,*">
             <views:ImageAssessmentControl x:Name="ImageAssessment"
-                                          Classes="tour-region tour-glow"
-                                          Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
-                                          Classes.tour-focus="{Binding IsChooseWhatMattersTourVisible}"
                                           IsEnabled="{Binding HasSelectedImage}"
                                           HorizontalAlignment="Left"
                                           VerticalAlignment="Center"/>
             <!-- Bounded so a long cloud-only message yields to both control groups. -->
             <TextBlock x:Name="OnlineOnlyMessage"
                        Grid.Column="1"
-                       Classes="tour-region"
-                       Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
                        Text="{Binding OnlineOnlyMessage}"
                        IsVisible="{Binding HasOnlineOnlyPhotos}"
                        Foreground="{DynamicResource TextSecondary}"

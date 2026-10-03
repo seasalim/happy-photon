@@ -1,4 +1,5 @@
 using Avalonia.Platform.Storage;
+using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
 
@@ -116,6 +117,29 @@ public partial class MainWindow
             // A picker remains usable without a suggested start location.
         }
         return null;
+    }
+
+    private async Task RestoreFolderSessionAsync(
+        MainWindowViewModel vm,
+        AppSettings settings)
+    {
+        if (!string.IsNullOrWhiteSpace(settings.RootFolderPath) &&
+            vm.ValidateBrowseLocation(settings.RootFolderPath) ==
+            BrowseLocationValidation.Valid)
+        {
+            await vm.InitializeFolderTreeWithRootAsync(
+                settings.RootFolderPath,
+                settings.SelectedFolderPath);
+            return;
+        }
+
+        if (_startupPicturesPath != null)
+        {
+            await vm.InitializeFolderTreeWithRootAsync(_startupPicturesPath);
+            return;
+        }
+
+        vm.ClearFolderTree();
     }
 
     private Task<LightroomDetectionResult> DetectLightroomAsync(

@@ -15,6 +15,7 @@ public partial class MainWindowViewModel
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsBrowseGridVisible))]
     [NotifyPropertyChangedFor(nameof(IsBrowseChromeVisible))]
+    [NotifyPropertyChangedFor(nameof(IsBrowseTipsVisible), nameof(IsDevelopTipsVisible), nameof(IsExportTipsVisible))]
     private bool _isCompareMode;
 
     public bool IsBrowseGridVisible =>

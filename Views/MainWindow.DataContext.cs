@@ -41,6 +41,7 @@ public partial class MainWindow
         {
             _subscribedViewModel.CancelWatermarkSettingsSave();
             SetExportWorkspaceSettingsSubscription(null);
+            _subscribedViewModel.RequestKeyboardShortcutsAsync = null;
             _subscribedViewModel.IsEnterTextInputFocused = null;
             _subscribedViewModel.ToggleFocusedDevelopGroup = null;
             _subscribedViewModel.PropertyChanged -= OnViewModelPropertyChanged;
@@ -105,6 +106,8 @@ public partial class MainWindow
             () => _browseGridView?.CaptureViewportAnchorPath();
         vm.RestoreBrowseViewportAnchor =
             path => _browseGridView?.RestoreViewportAnchorPath(path);
+        vm.RequestKeyboardShortcutsAsync = async () =>
+            await new HelpAboutDialog(vm, showKeyboardShortcuts: true).ShowDialog(this);
         vm.RequestSettingsDialogAsync = async () =>
             await new SettingsDialog(vm).ShowDialog(this);
         vm.ConfirmDeleteAsync = ConfirmDeleteAsync;
@@ -227,6 +230,7 @@ public partial class MainWindow
             await vm.RestoreXmpSettingsAsync();
             vm.RestoreBrowseThumbnailSize(settings.BrowseThumbnailSize);
             vm.RestoreBrushPreferences(settings);
+            vm.RestoreTipsSettings(settings);
             vm.RestorePasteGroups(settings.PasteGroups);
             vm.RestorePresetGroups(settings.PresetGroups);
             vm.RestoreDevelopGroups(settings.DevelopGroups);
@@ -328,29 +332,6 @@ public partial class MainWindow
         }
 
         await PersistAppSettingsSafelyAsync(vm);
-    }
-
-    private async Task RestoreFolderSessionAsync(
-        MainWindowViewModel vm,
-        AppSettings settings)
-    {
-        if (!string.IsNullOrWhiteSpace(settings.RootFolderPath) &&
-            vm.ValidateBrowseLocation(settings.RootFolderPath) ==
-            BrowseLocationValidation.Valid)
-        {
-            await vm.InitializeFolderTreeWithRootAsync(
-                settings.RootFolderPath,
-                settings.SelectedFolderPath);
-            return;
-        }
-
-        if (_startupPicturesPath != null)
-        {
-            await vm.InitializeFolderTreeWithRootAsync(_startupPicturesPath);
-            return;
-        }
-
-        vm.ClearFolderTree();
     }
 
     private void SetSubscribedViewModel(MainWindowViewModel vm)

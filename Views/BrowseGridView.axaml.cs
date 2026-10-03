@@ -62,9 +62,6 @@ public partial class BrowseGridView : UserControl
             nameof(EmptyHeadingText),
             "Select a folder to view photographs");
 
-    public static readonly StyledProperty<bool> SuppressEmptyStateProperty =
-        AvaloniaProperty.Register<BrowseGridView, bool>(nameof(SuppressEmptyState));
-
     public static readonly StyledProperty<ImageFileTypeFilter> FileTypeFilterProperty =
         AvaloniaProperty.Register<BrowseGridView, ImageFileTypeFilter>(
             nameof(FileTypeFilter),
@@ -139,12 +136,6 @@ public partial class BrowseGridView : UserControl
     {
         get => GetValue(EmptyHeadingTextProperty);
         set => SetValue(EmptyHeadingTextProperty, value);
-    }
-
-    public bool SuppressEmptyState
-    {
-        get => GetValue(SuppressEmptyStateProperty);
-        set => SetValue(SuppressEmptyStateProperty, value);
     }
 
     public ImageFileTypeFilter FileTypeFilter
@@ -242,8 +233,7 @@ public partial class BrowseGridView : UserControl
         }
         else if (change.Property == TotalImageCountProperty ||
                  change.Property == EmptyMessageTextProperty ||
-                 change.Property == EmptyHeadingTextProperty ||
-                 change.Property == SuppressEmptyStateProperty)
+                 change.Property == EmptyHeadingTextProperty)
         {
             UpdateEmptyState();
         }
@@ -307,7 +297,7 @@ public partial class BrowseGridView : UserControl
         var isFilteredEmpty = isEmpty && TotalImageCount > 0;
         EmptyHeading.Text = EmptyHeadingText;
         EmptyMessage.Text = EmptyMessageText;
-        EmptyState.IsVisible = isEmpty && !isFilteredEmpty && !SuppressEmptyState;
+        EmptyState.IsVisible = isEmpty && !isFilteredEmpty;
         FilteredEmptyState.IsVisible = isFilteredEmpty;
         ThumbnailGrid.IsVisible = !isEmpty;
     }

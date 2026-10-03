@@ -2,6 +2,14 @@ namespace HappyPhoton.Models;
 
 public class AppSettings
 {
+    public bool ShowTips { get; set; } = true;
+
+    public bool BrowseTipsSeen { get; set; }
+
+    public bool DevelopTipsSeen { get; set; }
+
+    public bool ExportTipsSeen { get; set; }
+
     public string? RootFolderPath { get; set; }
     public string? SelectedFolderPath { get; set; }
     public int? FirstRunExperienceVersion { get; set; }

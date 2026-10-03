@@ -188,21 +188,9 @@ public sealed class ThemeResourceTests
 
     [AvaloniaTheory]
     [MemberData(nameof(Variants))]
-    public void Theme_DimmedTourAndDisabledContentRemainDistinguishable(
+    public void Theme_DisabledContentRemainsDistinguishable(
         ThemeVariant variant)
     {
-        var surround = Brush("ViewerSurround", variant).Color;
-        var dimmedOpacity = Resource<double>("TourDimmedOpacity", variant);
-        var dimmedText = Composite(
-            Brush("TextPrimary", variant).Color,
-            surround,
-            dimmedOpacity);
-        var dimmedSurface = Composite(
-            Brush("SurfaceLow", variant).Color,
-            surround,
-            dimmedOpacity);
-        Assert.True(Contrast(dimmedText, dimmedSurface) >= 2.5);
-
         var disabledOpacity = Resource<double>("DisabledOpacity", variant);
         var disabledText = Composite(
             Brush("TextDisabled", variant).Color,
@@ -213,9 +201,6 @@ public sealed class ThemeResourceTests
 
         AssertContrast(4.5, "TextPrimary", "SurfaceHigh", variant);
         AssertContrast(4.5, "TextSecondary", "SurfaceHigh", variant);
-        Assert.InRange(Resource<double>("TourFocusGlowOpacity", variant), 0.5, 1);
-        Assert.InRange(Resource<double>("CoachmarkFocusGlowOpacity", variant), 0.55, 1);
-        Assert.NotNull(Resource<object>("CoachmarkShadow", variant));
     }
 
     [AvaloniaTheory]
@@ -257,8 +242,6 @@ public sealed class ThemeResourceTests
     [AvaloniaFact]
     public void Dark_ControlSpecificOpacitiesPreserveExistingRendering()
     {
-        Assert.Equal(0.5, Resource<double>("TourFocusGlowOpacity", ThemeVariant.Dark));
-        Assert.Equal(0.55, Resource<double>("CoachmarkFocusGlowOpacity", ThemeVariant.Dark));
         Assert.Equal(0.32, Resource<double>("DisabledOpacity", ThemeVariant.Dark));
     }
 

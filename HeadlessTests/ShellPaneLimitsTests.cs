@@ -106,7 +106,7 @@ public sealed class ShellPaneLimitsTests
         Assert.InRange(grid.ColumnDefinitions[0].ActualWidth, 150, 400);
         Assert.InRange(grid.ColumnDefinitions[4].ActualWidth, 200, 450);
         Assert.True(grid.ColumnDefinitions[2].ActualWidth >= 300);
-        Control[] controls = [window.FindControl<Border>("TourLeftPanel")!, splitters[0],
+        Control[] controls = [window.FindControl<Border>("WorkspaceLeftPanel")!, splitters[0],
             window.FindControl<DevelopViewerPane>("DevelopViewerPane")!, splitters[1],
             window.FindControl<DevelopEditPanel>("DevelopEditPanel")!];
 

@@ -45,6 +45,22 @@ public sealed partial class ThemeSourceGuardTests
         Assert.DoesNotMatch(RetiredClassPattern(), "<Button Classes=\"icon-button compact\"/>");
     }
 
+    [Fact]
+    public void G6_TourIdentifiersAreRetired()
+    {
+        var root = FindRepositoryRoot();
+        var sources = new[] { "Views", "ViewModels", "Themes" }
+            .SelectMany(folder => SourceFiles(Path.Combine(root, folder)));
+        var violations = sources.SelectMany(file => File.ReadLines(file)
+            .Where(line => RetiredTourPattern().IsMatch(line))
+            .Select(line => $"{Path.GetRelativePath(root, file)}: {line}"));
+
+        Assert.Empty(violations);
+    }
+
+    [GeneratedRegex(@"WorkflowCoachmark|WorkflowTour|tour-region|tour-dimmed|tour-focus|tour-glow|TourArrow|Coachmark\w*|x:Key=""Tour\w*|SuppressEmptyState")]
+    private static partial Regex RetiredTourPattern();
+
     [GeneratedRegex(@"(?<![\w-])(?:wb-auto|develop-reset|develop-action|view-toggle|thumbnail-size|check-badge|root-override|wizard-primary|wizard-quiet)(?![\w-])")]
     private static partial Regex RetiredClassPattern();
 }

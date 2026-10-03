@@ -61,6 +61,7 @@
 
         <!-- Folder Tree -->
         <TreeView x:Name="FolderTree"
+                  Focusable="True"
                   Classes="overlay-scrollbar"
                   Grid.Row="1"
                   Background="Transparent"

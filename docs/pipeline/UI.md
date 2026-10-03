@@ -13,7 +13,7 @@ Color assessment is session-only composition and never changes output pixels.
    loaded `BaseImageInfo.IsRawSource`. Before the base arrives, gate provisionally on
    `ImageFile.IsRaw`; if LibRaw cannot produce a base, keep the RAW identity and show
    the reason rather than silently demoting the file.
-3. Tours never mutate edits; DESIGN.md owns their presentation.
+3. Tips never change edits, selection or filters; DESIGN.md owns their presentation.
 4. Shift+wheel over enabled, unlocked sliders steps by `SmallChange`, accumulates fractional deltas, and clamps at both ends (cyclic controls stop one step below the wrapping maximum); each burst renders like a drag and commits one history step, ending before image selection changes.
 
 ## 2. Develop right panel — target layout (top → bottom)

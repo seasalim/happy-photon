@@ -49,7 +49,7 @@ public sealed partial class FirstRunExperienceTests : IDisposable
 
         Assert.Equal(FirstRunStep.AllSet, vm.FirstRunStep);
         Assert.Null(persistedPath);
-        await vm.StartFirstRunTourCommand.ExecuteAsync(null);
+        await vm.FinishFirstRunCommand.ExecuteAsync(null);
 
         Assert.Equal(_testRoot.Path, persistedPath);
         Assert.Equal(StartupGateState.Ready, vm.StartupGateState);
@@ -70,7 +70,7 @@ public sealed partial class FirstRunExperienceTests : IDisposable
         vm.ResumeFirstRunAfterStorage(_testRoot.Path);
 
         await vm.CompleteFirstRunFromLocationAsync(_testRoot.Path);
-        await vm.StartFirstRunTourCommand.ExecuteAsync(null);
+        await vm.FinishFirstRunCommand.ExecuteAsync(null);
 
         Assert.True(vm.IsFirstRunVisible);
         Assert.False(vm.CanPersistFolderSession);
@@ -254,11 +254,11 @@ public sealed partial class FirstRunExperienceTests : IDisposable
 
         Assert.Equal(FirstRunStep.AllSet, vm.FirstRunStep);
         Assert.False(persisted);
-        await vm.StartFirstRunTourCommand.ExecuteAsync(null);
+        await vm.FinishFirstRunCommand.ExecuteAsync(null);
 
         Assert.True(persisted);
         Assert.Equal(StartupGateState.Ready, vm.StartupGateState);
-        Assert.Equal(WorkflowTourStep.ChooseWhatMatters, vm.WorkflowTourStep);
+        Assert.True(vm.IsBrowseMode);
         Assert.True(focusRequested);
         await vm.DisposeAsync();
     }
@@ -284,11 +284,11 @@ public sealed partial class FirstRunExperienceTests : IDisposable
 
         Assert.Equal(FirstRunStep.AllSet, vm.FirstRunStep);
         Assert.Null(persistedPath);
-        await vm.SkipFirstRunTourCommand.ExecuteAsync(null);
+        await vm.FinishFirstRunCommand.ExecuteAsync(null);
 
         Assert.Equal(_testRoot.Path, persistedPath);
         Assert.Equal(StartupGateState.Ready, vm.StartupGateState);
-        Assert.Equal(WorkflowTourStep.None, vm.WorkflowTourStep);
+        Assert.True(vm.IsBrowseMode);
         await vm.DisposeAsync();
     }
 

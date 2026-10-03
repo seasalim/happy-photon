@@ -13,15 +13,13 @@ Confirming Storage is the catalog-creation boundary; empty configured roots stay
 read-only until then. Pictures chooses the top-level browsing folder.
 
 A bounded shallow local probe may offer a Lightroom step. Apply or explicit Skip
-advances to an all-set page; cancel stays in the wizard. Start tour and Skip both
-finish setup and focus the folder tree; only Start tour opens the guided workflow.
+advances to an all-set page; cancel stays in the wizard.
+Start browsing finishes setup and focuses the folder tree.
 ARCHITECTURE.md owns the startup gate and atomic completion checkpoint.
 
-The session-only tour uses non-modal coachmarks anchored to stable Browse/Develop
-layout points. It suspends when its view is left and resumes on return. Unrelated
-sections dim while the target stays interactive; the Browse empty card stays hidden.
-Decorative photon trails never intercept input. Tour navigation never changes photo
-state, filters or selection; its Export entry offers a return to Browse when empty.
+Browse, Develop and Export each show a corner tips card on first entry.
+Got it dismisses that mode's card permanently; Keyboard shortcuts opens Help on its shortcuts tab.
+Tips never take focus and stay hidden outside the main surfaces, during setup and in fullscreen.
 
 ## Import from Lightroom Classic
 

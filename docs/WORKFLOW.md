@@ -24,7 +24,7 @@ Thumbnails and previews are regenerable caches;
 Settings → Storage reveals both locations and stages moves for the next launch.
 
 First run confirms storage and the Pictures browsing root, optionally imports Lightroom
-assessments, then offers a tour. The title-bar Theme menu chooses Dark or Middle Gray;
+assessments, then shows a tips card on the first visit to Browse, Develop and Export. The title-bar Theme menu chooses Dark or Middle Gray;
 Settings (gear or `Ctrl+,`) holds preferences and Metadata interop controls.
 See [DESIGN.md](DESIGN.md) for first-run and theme details.
 

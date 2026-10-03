@@ -144,9 +144,6 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     [ObservableProperty]
     private FolderNode? _selectedFolder;
 
-    [ObservableProperty]
-    private bool _isFullScreenMode;
-
     public BrowseImageState Browse { get; }
 
     [ObservableProperty]

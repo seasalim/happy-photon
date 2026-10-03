@@ -13,6 +13,7 @@ public partial class MainWindowViewModel
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsBrowseGridVisible))]
     [NotifyPropertyChangedFor(nameof(ZoomReadout))]
+    [NotifyPropertyChangedFor(nameof(IsBrowseTipsVisible), nameof(IsDevelopTipsVisible), nameof(IsExportTipsVisible))]
     private bool _isLoupeMode;
 
     [ObservableProperty]

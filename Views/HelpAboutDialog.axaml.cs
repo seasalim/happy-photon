@@ -18,13 +18,15 @@ public partial class HelpAboutDialog : Window
 
     internal HelpAboutDialog(
         MainWindowViewModel? viewModel,
-        Func<Uri, Task<bool>>? launchUriAsync = null)
+        Func<Uri, Task<bool>>? launchUriAsync = null,
+        bool showKeyboardShortcuts = false)
     {
         InitializeComponent();
         ViewModel = viewModel;
         _launchUriAsync = launchUriAsync;
         DataContext = this;
-        if (viewModel?.IsUpdateAvailable == true)
+
+        if (!showKeyboardShortcuts && viewModel?.IsUpdateAvailable == true)
         {
             HelpAboutTabs.SelectedIndex = 1;
         }

@@ -193,7 +193,7 @@ public sealed class FolderTreeLayoutTests
                 "FolderTreePanel")!;
             var navigator = window.FindControl<Border>("NavigatorPanel")!;
             var navigatorPreview = window.FindControl<Border>("NavigatorPreviewFrame")!;
-            var leftPanel = window.FindControl<Border>("TourLeftPanel")!;
+            var leftPanel = window.FindControl<Border>("WorkspaceLeftPanel")!;
             var tree = folderTree.FindControl<TreeView>("FolderTree")!;
             var item = tree.GetVisualDescendants()
                 .OfType<TreeViewItem>()

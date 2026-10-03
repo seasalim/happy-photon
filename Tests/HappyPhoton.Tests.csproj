@@ -56,6 +56,5 @@
     <Compile Remove="WaveformScopeUiTests.cs" />
     <Compile Remove="WaveformViewTests.cs" />
     <Compile Remove="WorkspaceTransitionTests.cs" />
-    <Compile Remove="WorkflowTourDimmingTests.cs" />
   </ItemGroup>
 </Project>

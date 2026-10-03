@@ -119,8 +119,10 @@ public partial class MainWindow
         };
 
         vm.CaptureBrushPreferences(settings);
+        var saveTips = vm.CaptureTipsSettings(settings);
+
         return vm.CanPersistFolderSession
-            ? _appSettingsService.SaveAsync(settings)
-            : _appSettingsService.SavePreferencesAsync(settings);
+            ? _appSettingsService.SaveAsync(settings, saveTips)
+            : _appSettingsService.SavePreferencesAsync(settings, saveTips);
     }
 }

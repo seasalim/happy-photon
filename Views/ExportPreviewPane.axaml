@@ -72,19 +72,36 @@
                 </TextBlock.Effect>
             </TextBlock>
         </views:UniformImageOverlayPanel>
+        <Grid Grid.Row="1" RowDefinitions="*,Auto">
         <Border x:Name="ExportPreviewEmptyState"
-                Grid.Row="1"
+                Classes.tips-visible="{Binding IsExportTipsVisible}"
                 IsVisible="{Binding HasNoExportCaptures}"
                 Background="{DynamicResource SurfaceLow}"
-                Padding="20"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center">
-            <StackPanel Spacing="8">
+            <Border.Styles>
+                <Style Selector="Border#ExportPreviewEmptyState">
+                    <Setter Property="Padding" Value="20"/>
+                </Style>
+                <Style Selector="Border#ExportPreviewEmptyState.tips-visible">
+                    <Setter Property="Padding" Value="4,0"/>
+                </Style>
+                <Style Selector="Border#ExportPreviewEmptyState StackPanel">
+                    <Setter Property="Spacing" Value="8"/>
+                </Style>
+                <Style Selector="Border#ExportPreviewEmptyState.tips-visible StackPanel">
+                    <Setter Property="Spacing" Value="4"/>
+                </Style>
+            </Border.Styles>
+            <StackPanel>
                 <TextBlock Text="Choose photos to export"
                            Foreground="{DynamicResource TextMuted}"
                            FontSize="{StaticResource FontSizeHeading}"/>
                 <Button Content="Choose in Browse…" Classes="quiet-button" Command="{Binding ChooseExportPhotosInBrowseCommand}" HorizontalAlignment="Center"/>
             </StackPanel>
         </Border>
+        <views:TipsCard Grid.Row="1" Tips="{x:Static vm:TipsContent.Export}"
+                        IsVisible="{Binding IsExportTipsVisible}"/>
+        </Grid>
     </Grid>
 </UserControl>

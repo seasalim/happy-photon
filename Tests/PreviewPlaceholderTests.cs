@@ -65,14 +65,12 @@ public sealed class PreviewPlaceholderTests
         vm.Browse.SetImages([image]);
         vm.Browse.ToggleSelection(image);
         vm.SelectedImage = image;
-        vm.WorkflowTourStep = WorkflowTourStep.ChooseWhatMatters;
         var window = new MainWindow();
         using var windowScope = TestUiScope.ForMainWindow(window, vm);
 
         vm.SwitchToExportCommand.Execute(null);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.False(vm.IsWorkflowTourPresented);
         var capturePane = window.FindControl<ExportCapturePane>(
             "ExportCapturePane")!;
         Assert.True(capturePane.IsVisible);

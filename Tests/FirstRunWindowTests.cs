@@ -80,7 +80,7 @@ public sealed class FirstRunWindowTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(FirstRunStep.AllSet, vm.FirstRunStep);
-        Assert.True(view.FindControl<Button>("StartTourButton")!.IsFocused);
+        Assert.True(view.FindControl<Button>("StartBrowsingButton")!.IsFocused);
         window.Content = null;
         window.Close();
         await vm.DisposeAsync();

@@ -82,10 +82,8 @@
         <views:HappyPhotonTitleBar x:Name="HappyPhotonTitleBar" Grid.Row="0" Grid.ColumnSpan="5"/>
 
         <!-- Left Panel: Navigator + Folder Tree -->
-        <Border x:Name="TourLeftPanel"
+        <Border x:Name="WorkspaceLeftPanel"
                 Grid.Row="1" Grid.Column="0" Background="{DynamicResource SurfaceLow}"
-                Classes="tour-region"
-                Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
                 IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
             <Panel>
             <Grid RowDefinitions="Auto,8,*" IsVisible="{Binding IsBrowseOrDevelopMode}">
@@ -190,7 +188,6 @@
                                        TotalImageCount="{Binding Browse.TotalCount}"
                                        EmptyHeadingText="{Binding BrowseEmptyHeading}"
                                        EmptyMessageText="{Binding BrowseEmptyMessage}"
-                                       SuppressEmptyState="{Binding IsWorkflowTourActive}"
                                        FileTypeFilter="{Binding Browse.FileTypeFilter, Mode=TwoWay}"
                                        FlagFilter="{Binding Browse.FlagFilter, Mode=TwoWay}"
                                        MinimumRating="{Binding Browse.MinimumRating, Mode=TwoWay}"
@@ -209,62 +206,24 @@
         <GridSplitter Grid.Row="1" Grid.Column="3" Classes="panel-splitter"
                       ResizeDirection="Columns"
                       IsEnabled="{Binding IsWorkspaceInteractionEnabled}"/>
-        <views:WorkflowCoachmark
-            Grid.Row="1"
-            Grid.Column="2"
-            HorizontalAlignment="Right"
-            VerticalAlignment="Center"
-            Margin="12"
-            IsVisible="{Binding IsShapePhotographTourVisible}"
-            Pointer="Right"
-            StepText="2 of 3"
-            Heading="Shape the photograph"
-            Body="Use the editing controls to adjust composition, exposure, white balance with Kelvin and tint, and other settings."
-            PrimaryText="Next: Export"
-            PrimaryCommand="{Binding ShowExportTourStepCommand}"
-            SecondaryText="End tour"
-            SecondaryCommand="{Binding EndWorkflowTourCommand}"/>
 
         <views:DevelopEditPanel x:Name="DevelopEditPanel"
                                 Grid.Row="1" Grid.Column="4"
-                                Classes="tour-region"
-                                Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
-                                Classes.tour-focus="{Binding IsShapePhotographTourVisible}"
                                 IsVisible="{Binding IsDevelopMode}"
                                 IsEnabled="{Binding CanEditSelectedImage}"/>
 
         <views:BrowseReviewPane x:Name="BrowseReviewPane"
                                  Grid.Row="1" Grid.Column="4"
-                                 Classes="tour-region"
-                                 Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
                                  IsVisible="{Binding IsBrowseMode}"/>
 
         <views:ExportSettingsPane x:Name="ExportSettingsPane"
                                   Grid.Row="1" Grid.Column="4"
-                                  Classes="tour-region" Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
-                                  Classes.tour-focus="{Binding IsDeliverCopiesTourVisible}"
                                   IsVisible="{Binding IsExportMode}"/>
-
-        <views:WorkflowCoachmark
-            Grid.Row="1"
-            Grid.Column="2"
-            HorizontalAlignment="Right"
-            VerticalAlignment="Top"
-            Margin="12"
-            IsVisible="{Binding IsDeliverCopiesTourVisible}"
-            Pointer="Right"
-            StepText="3 of 3"
-            Heading="Export the edited images"
-            Body="Choose photos in Browse. Here, review the batch, destination, output sizes and filename example, then export copies. Originals remain untouched."
-            PrimaryText="Finish"
-            PrimaryCommand="{Binding FinishWorkflowTourCommand}"/>
 
         <views:ExportQueueStrip Grid.Row="2" Grid.ColumnSpan="5"/>
 
-        <views:StatusBarView x:Name="TourStatusBar"
+        <views:StatusBarView x:Name="WorkspaceStatusBar"
                              Grid.Row="3" Grid.ColumnSpan="5"
-                             Classes="tour-region"
-                             Classes.tour-dimmed="{Binding IsWorkflowTourPresented}"
                              IsEnabled="{Binding IsWorkspaceInteractionEnabled}"/>
 
         <views:StartupGateView Grid.Row="1" Grid.Column="2"

@@ -45,7 +45,7 @@ public sealed class FirstRunCardWidthBaselineTests(ITestOutputHelper output)
         await vm.StartInDefaultLocationCommand.ExecuteAsync(null);
         Measure(FirstRunStep.Lightroom, "LightroomImportButton", "lightroom");
         vm.SkipDetectedLightroomCommand.Execute(null);
-        Measure(FirstRunStep.AllSet, "StartTourButton", "all-set");
+        Measure(FirstRunStep.AllSet, "StartBrowsingButton", "all-set");
         output.WriteLine($"VISUALS-WP11 G2 max-min={widths.Max() - widths.Min():F3}");
         Assert.Equal(0, widths.Max() - widths.Min());
 
@@ -82,15 +82,12 @@ public sealed class FirstRunCardWidthBaselineTests(ITestOutputHelper output)
 
                     if (step == FirstRunStep.AllSet)
                     {
-                        Assert.Equal(150, button.MinWidth);
-                        Assert.Equal(new Thickness(18, 11), button.Padding);
-                        Assert.Equal(12, button.FontSize);
-                        Assert.Equal(ThemeResourceTests.Resource<FontFamily>("FontBody", ThemeVariant.Dark),
-                            button.FontFamily);
-                        Assert.Equal(new[] { "accent" }, button.Classes.Where(name => !name.StartsWith(':')));
+                        Assert.Equal("Start browsing", button.Content);
+                        Assert.Equal(new[] { "quiet-button", "accent" }, button.Classes.Where(name => !name.StartsWith(':')));
+                        Assert.Single(panel.GetLogicalDescendants().OfType<Button>());
                     }
 
-                    if (step is FirstRunStep.Lightroom or FirstRunStep.AllSet)
+                    if (step == FirstRunStep.Lightroom)
                     {
                         var skip = panel.GetLogicalDescendants().OfType<Button>()
                             .Single(candidate => Equals(candidate.Content, "Skip"));
