@@ -14,6 +14,65 @@ namespace HappyPhoton.Tests;
 public sealed class TipsLifecycleTests
 {
     [AvaloniaFact]
+    public async Task G1_TurnOffTipsPersistsThroughProductionClose()
+    {
+        using var files = new CatalogVmFixture("tips-off-restart");
+        var locations = Locations(files);
+        var resolved = await locations.CreateFreshAsync();
+
+        using (var seed = new CatalogService())
+        {
+            await seed.InitializeAsync(resolved);
+            await new AppSettingsService(seed).SaveFirstRunVersionAsync(1);
+        }
+
+        foreach (var firstOpen in new[] { true, false })
+        {
+            using var catalog = new CatalogService();
+            var vm = new MainWindowViewModel(catalog);
+            using var theme = new TestUiScope();
+            var window = new MainWindow();
+            using var scope = TestUiScope.ForMainWindow(window, vm);
+            var closed = new TaskCompletionSource();
+            window.Closed += (_, _) => closed.TrySetResult();
+
+            try
+            {
+                await window.InitializeApplicationAsync(vm, catalog, locations,
+                    new CatalogLocationMigrator(locations), files.Path("pictures"));
+
+                if (firstOpen)
+                {
+                    var browse = TipsTestScene.Card(window, WorkspaceMode.Browse);
+                    Assert.True(browse.IsEffectivelyVisible);
+                    var button = browse.GetVisualDescendants().OfType<Button>()
+                        .SingleOrDefault(control => Equals(control.Content, "Don't show tips"));
+                    Assert.True(button != null, "Don't show tips not found");
+                    TipsTestScene.Click(button!);
+                }
+
+                foreach (var mode in Enum.GetValues<WorkspaceMode>())
+                {
+                    vm.WorkspaceMode = mode;
+                    Assert.False(TipsTestScene.Card(window, mode).IsEffectivelyVisible);
+                }
+
+                var settings = new AppSettings();
+                Assert.True(vm.CaptureTipsSettings(settings));
+                Assert.False(settings.ShowTips);
+                Assert.False(settings.BrowseTipsSeen);
+                Assert.False(settings.DevelopTipsSeen);
+                Assert.False(settings.ExportTipsSeen);
+            }
+            finally
+            {
+                window.Close();
+                await closed.Task.WaitAsync(TestWaits.Condition);
+            }
+        }
+    }
+
+    [AvaloniaFact]
     public async Task G2_FreshWizardFinishesInBrowseWithFolderFocus()
     {
         using var files = new CatalogVmFixture("tips-startup");

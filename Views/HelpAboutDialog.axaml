@@ -259,11 +259,15 @@
         </TabControl>
 
         <Border Grid.Row="2" Classes="dialog-footer">
-            <Button Content="Close"
-                    HorizontalAlignment="Right"
-                    Classes="quiet-button"
-                    AutomationProperties.Name="Close Help and About"
-                    Click="OnCloseClick"/>
+            <Grid ColumnDefinitions="*,Auto">
+                <Button Content="Show tips" HorizontalAlignment="Left"
+                        Classes="quiet-button" AutomationProperties.Name="Show tips"
+                        Click="OnShowTipsClick"/>
+                <Button Grid.Column="1" Content="Close"
+                        Classes="quiet-button"
+                        AutomationProperties.Name="Close Help and About"
+                        Click="OnCloseClick"/>
+            </Grid>
         </Border>
     </Grid>
 </Window>

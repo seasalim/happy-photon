@@ -15,6 +15,17 @@ public partial class MainWindowViewModel
 
     private bool _exportTipsSeen;
 
+    public bool ShowTips
+    {
+        get => _showTips;
+        set
+        {
+            if (!SetProperty(ref _showTips, value)) return;
+
+            NotifyTipsVisibilityChanged();
+        }
+    }
+
     private bool CanShowTips => _tipsSettingsApplied && _showTips &&
         StartupGateState == StartupGateState.Ready &&
         FirstRunExperienceVersion >= CurrentFirstRunExperienceVersion && !IsFullScreenMode;
@@ -34,6 +45,7 @@ public partial class MainWindowViewModel
         _developTipsSeen = settings.DevelopTipsSeen;
         _exportTipsSeen = settings.ExportTipsSeen;
         _tipsSettingsApplied = true;
+        OnPropertyChanged(nameof(ShowTips));
         NotifyTipsVisibilityChanged();
     }
 
@@ -56,6 +68,19 @@ public partial class MainWindowViewModel
         else if (IsDevelopTipsVisible) _developTipsSeen = true;
         else if (IsExportTipsVisible) _exportTipsSeen = true;
 
+        NotifyTipsVisibilityChanged();
+    }
+
+    [RelayCommand]
+    private void DisableTips() => ShowTips = false;
+
+    [RelayCommand]
+    private void ShowAllTips()
+    {
+        _browseTipsSeen = false;
+        _developTipsSeen = false;
+        _exportTipsSeen = false;
+        ShowTips = true;
         NotifyTipsVisibilityChanged();
     }
 

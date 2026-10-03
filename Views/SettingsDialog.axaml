@@ -37,6 +37,11 @@
                     </ComboBox>
                     <TextBlock Text="Changes apply immediately and are shared by the application."
                                Classes="dialog-note"/>
+                    <TextBlock Text="Tips" Classes="section-label" Margin="0,8,0,0"/>
+                    <CheckBox Content="Show tips the first time each workspace opens"
+                              IsChecked="{Binding ShowTips, Mode=TwoWay}"/>
+                    <TextBlock Text="Help &amp; About › Show tips shows dismissed tips again."
+                               Classes="dialog-note"/>
                 </StackPanel>
             </TabItem>
             <TabItem Header="Metadata" Classes="dialog-tab">

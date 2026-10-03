@@ -68,6 +68,12 @@ public partial class HelpAboutDialog : Window
 
     private void OnCloseClick(object? sender, RoutedEventArgs e) => Close();
 
+    private void OnShowTipsClick(object? sender, RoutedEventArgs e)
+    {
+        ViewModel?.ShowAllTipsCommand.Execute(null);
+        Close();
+    }
+
     private async void OnCopyVersionInfoClick(object? sender, RoutedEventArgs e)
     {
         try

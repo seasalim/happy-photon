@@ -87,7 +87,7 @@ public sealed class TipsLayoutTests
             }
         }
 
-        foreach (var text in new[] { "Got it", "Keyboard shortcuts" })
+        foreach (var text in new[] { "Don't show tips", "Got it", "Keyboard shortcuts" })
         {
             var button = TipsTestScene.Action(card, text);
             var actionBounds = BoundsInWindow(button, scene.Window);
