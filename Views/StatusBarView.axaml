@@ -7,7 +7,7 @@
     <Border Background="{DynamicResource SurfaceLow}"
             BorderBrush="{DynamicResource Divider}" BorderThickness="0,1,0,0"
             Height="24">
-        <Grid ColumnDefinitions="*,Auto" ClipToBounds="True">
+        <Grid ColumnDefinitions="*,Auto,Auto" ClipToBounds="True">
             <Grid Grid.Column="0" ColumnDefinitions="Auto,Auto,*" VerticalAlignment="Center">
                 <TextBlock Grid.Column="0"
                            Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource FontBody}" Margin="8,0">
@@ -25,8 +25,12 @@
                            Foreground="{DynamicResource TextSecondary}" FontFamily="{StaticResource FontBody}"
                            TextTrimming="CharacterEllipsis" Margin="8,0"/>
             </Grid>
+            <Button x:Name="UndoSyncButton" Grid.Column="1" Classes="compact-button filled"
+                    Content="{Binding UndoBatchText}" Command="{Binding UndoBatchCommand}"
+                    IsVisible="{Binding IsBatchUndoOffered}" Margin="8,0" Padding="6,0" Height="20" MinHeight="20"
+                    VerticalAlignment="Center" ToolTip.Tip="Undo sync or paste (Ctrl+Z)"/>
             <StackPanel x:Name="BackgroundActivitySegment"
-                        Grid.Column="1"
+                        Grid.Column="2"
                         Orientation="Horizontal"
                         Spacing="6"
                         Margin="8,0,24,0"

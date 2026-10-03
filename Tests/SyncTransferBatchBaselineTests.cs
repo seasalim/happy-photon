@@ -26,7 +26,16 @@ public sealed class SyncTransferBatchBaselineTests(ITestOutputHelper output)
     [Fact]
     public Task SyncWorkloadTransfersDocumentsAndSeedsHistory() => RunAsync(measure: false, sync: true);
 
-    private async Task MeasureAsync(bool sync)
+    [Fact]
+    public Task G2_UndoToModelsUpdated_WhenEnabled() => MeasureAsync(sync: true, undo: true);
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public Task G1_UndoRestoresFiveHundredDocumentsAndHistories(bool sync) =>
+        RunAsync(measure: false, sync, undo: true);
+
+    private async Task MeasureAsync(bool sync, bool undo = false)
     {
         Assert.SkipWhen(
             Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1",
@@ -38,7 +47,7 @@ public sealed class SyncTransferBatchBaselineTests(ITestOutputHelper output)
 
         for (var run = 0; run < samples.Length; run++)
         {
-            samples[run] = await RunAsync(measure: true, sync);
+            samples[run] = await RunAsync(measure: true, sync, undo);
             output.WriteLine($"G2 run {run + 1}: {samples[run]:F3} ms");
         }
 
@@ -59,7 +68,7 @@ public sealed class SyncTransferBatchBaselineTests(ITestOutputHelper output)
         }
     }
 
-    private static async Task<double> RunAsync(bool measure, bool sync = false)
+    private static async Task<double> RunAsync(bool measure, bool sync = false, bool undo = false)
     {
         using var fixture = new CatalogVmFixture("sync-transfer-batch");
         using var catalog = await fixture.CreateCatalogAsync();
@@ -80,6 +89,16 @@ public sealed class SyncTransferBatchBaselineTests(ITestOutputHelper output)
             await catalog.SaveEditSettingsAsync(target.CatalogId, target.EditSettings);
             Assert.Empty((await catalog.LoadEditHistoryAsync(target.CatalogId)).Entries);
             targets[index] = target;
+        }
+
+        var recordings = new Dictionary<long, string[]>();
+
+        if (undo)
+        {
+            foreach (var target in targets)
+            {
+                recordings.Add(target.CatalogId, await CatalogBatchUndoTests.RawAsync(catalog, target.CatalogId));
+            }
         }
 
         vm.Browse.SetImages([source, .. targets]);
@@ -161,6 +180,26 @@ public sealed class SyncTransferBatchBaselineTests(ITestOutputHelper output)
             var storedSource = await catalog.LoadImageStatesAsync([source.FilePath]);
             Assert.Equal(expected, EditSettingsJson.Serialize(Assert.Single(storedSource[source.FilePath]).EditSettings));
             Assert.False(vm.HasCopiedSettings);
+        }
+
+        if (undo)
+        {
+            updated = 0;
+            timer.Reset();
+            Assert.True(vm.UndoBatchCommand.CanExecute(null));
+            if (measure) timer.Start();
+            await vm.UndoBatchCommand.ExecuteAsync(null);
+            Assert.False(timer.IsRunning);
+            elapsed = timer.Elapsed.TotalMilliseconds;
+            Assert.Equal(TargetCount, updated);
+
+            foreach (var target in targets)
+            {
+                Assert.Equal(original, EditSettingsJson.Serialize(target.EditSettings));
+                Assert.Equal(recordings[target.CatalogId], await CatalogBatchUndoTests.RawAsync(catalog, target.CatalogId));
+            }
+
+            Assert.False(vm.UndoCommand.CanExecute(null));
         }
 
         return elapsed;

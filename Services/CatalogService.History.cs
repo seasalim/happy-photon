@@ -48,32 +48,6 @@ public partial class CatalogService
         });
     }
 
-    public async Task SaveEditSettingsBatchWithHistoryAsync(
-        IReadOnlyList<CatalogEditSettingsUpdate> updates, string operation)
-    {
-        EnsureInitialized();
-        if (updates.Count == 0) return;
-        var serialized = updates.Select(SerializeUpdate).ToArray();
-        await InHistoryTransactionAsync(async transaction =>
-        {
-            for (var index = 0; index < updates.Count; index++)
-            {
-                var update = updates[index];
-                var state = await ReadHistoryAsync(
-                    _connection!, transaction, update.CatalogId);
-                var mutation = CatalogEditHistory.PrepareAppend(
-                    state,
-                    update.Previous ?? update.Settings,
-                    update.Settings,
-                    operation);
-                await WriteSettingsAsync(transaction, serialized[index]);
-                if (mutation != null)
-                    await WriteHistoryMutationAsync(
-                        transaction, update.CatalogId, mutation);
-            }
-        });
-    }
-
     public async Task ClearEditHistoryAsync(long catalogId)
     {
         EnsureInitialized();
@@ -138,18 +112,24 @@ public partial class CatalogService
         return new(entries, position);
     }
 
-    internal async Task WriteHistoryMutationAsync(
+    internal Task WriteHistoryMutationAsync(
         SqliteTransaction transaction, long catalogId,
-        CatalogEditHistoryMutation mutation)
+        CatalogEditHistoryMutation mutation) => WriteHistoryRowsAsync(transaction, catalogId,
+            mutation.TruncateAfter, mutation.Appended.Select(entry => new CatalogHistoryRow(
+                entry.Sequence, entry.Label, EditSettingsJson.Serialize(entry.Settings))).ToArray(), mutation.Position);
+
+    private async Task WriteHistoryRowsAsync(SqliteTransaction transaction, long catalogId,
+        int truncateAfter, IReadOnlyList<CatalogHistoryRow> appended, int position)
     {
         using var command = _connection!.CreateCommand();
         command.Transaction = transaction;
         command.CommandText =
             "DELETE FROM edit_history WHERE image_id = @id AND seq > @position;";
         command.Parameters.AddWithValue("@id", catalogId);
-        command.Parameters.AddWithValue("@position", mutation.TruncateAfter);
+        command.Parameters.AddWithValue("@position", truncateAfter);
         await command.ExecuteNonQueryAsync();
-        foreach (var entry in mutation.Appended)
+
+        foreach (var entry in appended)
         {
             command.Parameters.Clear();
             command.CommandText = """
@@ -159,11 +139,11 @@ public partial class CatalogService
             command.Parameters.AddWithValue("@id", catalogId);
             command.Parameters.AddWithValue("@seq", entry.Sequence);
             command.Parameters.AddWithValue("@label", entry.Label);
-            command.Parameters.AddWithValue(
-                "@settings", EditSettingsJson.Serialize(entry.Settings));
+            command.Parameters.AddWithValue("@settings", entry.SettingsJson);
             await command.ExecuteNonQueryAsync();
         }
-        await WritePositionAsync(transaction, catalogId, mutation.Position);
+
+        await WritePositionAsync(transaction, catalogId, position);
     }
 
     private async Task WritePositionAsync(

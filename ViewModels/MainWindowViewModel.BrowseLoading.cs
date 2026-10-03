@@ -14,6 +14,7 @@ public partial class MainWindowViewModel
 
     public async Task<int> LoadFolderAsync(string folderPath)
     {
+        ClearBatchOffer();
         CancelAdjacentPreviewWarm(true, dropRetained: true);
         var generation = Interlocked.Increment(ref _browseGeneration);
         await CancelXmpReconcileAsync();

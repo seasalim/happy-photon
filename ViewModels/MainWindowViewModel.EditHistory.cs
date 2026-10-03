@@ -9,6 +9,7 @@ namespace HappyPhoton.ViewModels;
 public partial class MainWindowViewModel
 {
     private bool CanUndoEdit() =>
+        IsBrowseMode ? UndoBatchCommand.CanExecute(null) :
         (CanUndo || IsLocalsGestureActive || IsSpotsGestureActive) && IsDevelopMode && !IsFullScreenMode &&
         !IsHistoryBlockedByCrop && CanEditSelectedImage;
 

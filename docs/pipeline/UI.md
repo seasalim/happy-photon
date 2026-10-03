@@ -318,6 +318,12 @@ expander remembers its collapse state. Clicking the active look records Preset: 
   Rotation, horizon, crop, and manual geometry are history fields. Applying crop
   commits its crop region and any provisional horizon change as one step; cancelling
   crop commits nothing. History commands are unavailable while crop mode is active.
+- **Batch undo**: Browse grid and Loupe offer **Undo sync (N photos)** / **Undo paste (N photos)**
+  beside the status text, independently of transient messages. `Ctrl+Z` runs that action.
+  It removes the batch's steps and restores prior documents and history, including any
+  truncated redo tail, only for targets still on the unchanged batch step; changed targets
+  are skipped. The action ends after use, another sync/paste, folder change, or app exit.
+  Results read "Restored N photos" or "Restored N of M · K changed since"; the batch has no redo.
 - **User presets** capture color, tonal, color-mixer, all curve, detail, and effects fields and
   still never geometry or camera profiles. Hover, apply, and untoggle preserve the
   current profile.

@@ -142,6 +142,15 @@ public sealed class ShortcutReachabilityTests
         Assert.All(sync.Reachability, claim => Assert.Equal("SyncSettingsButton", claim.ControlName));
     }
 
+    [Fact]
+    public void UndoClaimsBrowseStatusActionAndDevelopUndo()
+    {
+        var undo = Assert.Single(ShortcutCatalog.Groups.SelectMany(group => group.Entries), entry => entry.Keys == "Ctrl+Z");
+        Assert.Equal(new ShortcutWorkspace?[] { ShortcutWorkspace.Develop, ShortcutWorkspace.Browse },
+            undo.Reachability.Select(claim => claim.Workspace));
+        Assert.Equal(new[] { "UndoEditButton", "UndoSyncButton" }, undo.Reachability.Select(claim => claim.ControlName));
+    }
+
     private static bool HasValidReachability(ShortcutEntry entry) =>
         entry.Reachability.Count > 0 && entry.Reachability.All(claim =>
         {
@@ -204,6 +213,14 @@ public sealed class ShortcutReachabilityTests
         {
             await TestWaits.UntilAsync(() => vm.PreviewImage != null);
             await vm.ToggleSpotsModeCommand.ExecuteAsync(null);
+        }
+
+        if (claim.ControlName == "UndoSyncButton")
+        {
+            vm.SelectAllCommand.Execute(null);
+            vm.ShowPasteSettingsAsync = _ => Task.FromResult(true);
+            await vm.SyncSettingsCommand.ExecuteAsync(null);
+            Assert.True(vm.UndoBatchCommand.CanExecute(null));
         }
 
         Dispatcher.UIThread.RunJobs();

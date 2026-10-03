@@ -10,6 +10,13 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanUndoEdit))]
     private async Task UndoAsync()
     {
+        if (IsBrowseMode)
+        {
+            if (UndoBatchCommand.CanExecute(null)) await UndoBatchCommand.ExecuteAsync(null);
+
+            return;
+        }
+
         if (DiscardSpotsGesture() || DiscardLocalsGesture()) return;
         var image = SelectedImage;
         var generation = Volatile.Read(ref _historySubjectGeneration);

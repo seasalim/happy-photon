@@ -70,6 +70,7 @@ public partial class MainWindowViewModel
 
     private void NotifySyncSettingsChanged()
     {
+        NotifyBatchOfferChanged();
         _isNotifyingSync = true;
         _syncNotificationScan = null;
 
@@ -113,6 +114,6 @@ public partial class MainWindowViewModel
             return;
         }
 
-        await PasteToSelectionAsync(snapshot, targets, RememberedPasteGroups);
+        await BeginPasteBatchAsync(snapshot, targets, RememberedPasteGroups, kind: "sync");
     }
 }

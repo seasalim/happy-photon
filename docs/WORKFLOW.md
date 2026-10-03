@@ -329,9 +329,13 @@ nothing selected. The choice is remembered across restarts. With no Browse selec
 the dialog targets the active photo. Unticked groups retain their values, including
 unsaved Develop edits. The source preset marker travels only when all look groups are chosen.
 
-Each changed target gets one **Paste settings** history step; one Undo restores its prior
-document. Paste discards an active Spots or Locals gesture first. Unticked groups and
-quarter-turn rotation remain the target's own.
+Each changed target gets one **Paste settings** history step. In Browse (grid or Loupe),
+**Undo sync** / **Undo paste** in the status bar or `Ctrl+Z` restores the whole last batch
+in one step, removing its history entries. Targets edited or moved off that step are
+skipped. A pre-existing redo tail is restored; the batch itself cannot be redone.
+The action stays until used, another sync or paste, a folder change, or app exit.
+Paste discards an active Spots or Locals gesture first. Unticked groups and quarter-turn
+rotation remain the target's own.
 
 ## 5. Build a selection
 
@@ -494,7 +498,8 @@ Help & About lists every shortcut and gesture; these are the essentials.
 | `Ctrl+Shift+C` / `Ctrl+Shift+V` | Copy settings / paste remembered groups in Develop; choose groups in Browse |
 | `Ctrl+Shift+S` | Sync the active selected photo's settings to the rest in Browse grid or Loupe |
 | `Ctrl+Alt+Shift+V` | Open Paste Settings (also right-click Paste) |
-| `Ctrl+Z` / `Ctrl+Y` / `Ctrl+Shift+Z` | Move backward or forward through Develop history |
+| `Ctrl+Z` | Undo the last sync or paste in Browse while offered; move backward through Develop history |
+| `Ctrl+Y` / `Ctrl+Shift+Z` | Move forward through Develop history |
 | `Ctrl+Shift+E` | Open the Export workspace |
 | `Enter` | Run Export, apply crop, or move from Browse Loupe to Develop |
 | `Ctrl+,` | Open Settings |
