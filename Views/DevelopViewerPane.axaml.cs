@@ -20,8 +20,7 @@ public partial class DevelopViewerPane : UserControl
     public DevelopViewerPane()
     {
         InitializeComponent();
-        DevelopControlBar.SizeChanged += (_, _) => UpdateControlBarTier();
-        DevelopAssessmentSlot.SizeChanged += (_, _) => UpdateAssessmentMode();
+        DevelopBarLayout.PrepareLayout = UpdateControlBarTier;
         DevelopImageAssessment.AddHandler(Button.ClickEvent, (_, _) => Focus());
         DevelopViewActionsButton.Flyout!.Opened += (_, _) => ConfigureViewMenuKeys();
         DevelopViewActionsButton.Flyout.Closed += (_, _) =>
@@ -57,21 +56,20 @@ public partial class DevelopViewerPane : UserControl
         }
     }
 
-    private void UpdateControlBarTier()
+    private void UpdateControlBarTier(double width)
     {
         if (_fullBarWidth == 0)
         {
             // Read once with every original control visible, even on a narrow first layout.
             DevelopImageActionsPanel.Measure(Size.Infinity);
             DevelopViewStatePanel.Measure(Size.Infinity);
-            _fullBarWidth = DevelopImageActionsPanel.DesiredSize.Width +
-                DevelopViewStatePanel.DesiredSize.Width + DevelopControlBar.Padding.Left +
-                DevelopControlBar.Padding.Right;
-            _noSliderBarWidth = _fullBarWidth - DevelopZoomSlider.DesiredSize.Width -
+            _noSliderBarWidth = DevelopImageActionsPanel.DesiredSize.Width +
+                DevelopViewStatePanel.DesiredSize.Width - DevelopZoomSlider.DesiredSize.Width -
                 DevelopViewStatePanel.Spacing;
+            _fullBarWidth = ControlBarLayout.FullClusterWidth + 2 * Math.Max(
+                DevelopImageActionsPanel.DesiredSize.Width, DevelopViewStatePanel.DesiredSize.Width);
         }
 
-        var width = DevelopControlBar.Bounds.Width;
         var overflow = width < _noSliderBarWidth;
 
         foreach (var control in DevelopViewStatePanel.Children)
@@ -79,16 +77,6 @@ public partial class DevelopViewerPane : UserControl
             control.IsVisible = control == DevelopViewActionsButton ? overflow
                 : control == DevelopZoomSlider ? width >= _fullBarWidth : !overflow;
         }
-
-        // The slot's SizeChanged applies WP4's rule after these groups have laid out.
-    }
-
-    private void UpdateAssessmentMode()
-    {
-        var available = DevelopAssessmentSlot.Bounds.Width;
-        DevelopAssessmentHost.IsVisible = available >= DevelopAssessmentHost.Width;
-        DevelopCompactAssessment.IsVisible = !DevelopAssessmentHost.IsVisible &&
-            available >= DevelopCompactAssessment.Width;
     }
 
     protected override void OnDataContextChanged(EventArgs e)

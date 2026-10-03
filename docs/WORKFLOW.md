@@ -134,9 +134,12 @@ photograph. In Develop, Browse Loupe, and Compare they affect only the active
 photograph. Pick and Reject are set-only; the backtick toggle clears a uniformly
 Picked target or sets Picked otherwise.
 
-Develop and Browse Loupe briefly confirm assessment changes over the photo. Develop's
-control bar shows persistent state as the Library footer does, using a compact read-only
-cluster when space is limited and an empty middle slot when neither control fits.
+Develop and Browse Loupe briefly confirm assessment changes over the photo. Both control
+bars centre the same assessment controls, using a compact read-only cluster when space
+is limited and an empty middle slot when neither fits. Browse's previous/next buttons
+sit left of the online-only message. Develop hides the zoom slider before moving the
+cluster off centre; zoom keys, wheel, Fit and 1:1 remain available. Assessment tooltips
+and Help keep the keyboard shortcuts.
 Rejected does not delete, and Picked does not select for export.
 On the first pass, reject clear misses, pick each moment's strongest frame and leave
 uncertain comparisons unflagged. Footer buttons perform the same actions.

@@ -187,6 +187,7 @@ public sealed partial class CompactSliderEntryTests
         s.Key(Key.Enter);
         Assert.True(s.Vm.IsDevelopMode);
         Assert.Equal(0, s.Steps);
+        s.Window.Width = 1800;
         var zoom = s.Slider("Zoom");
         s.Click(s.Center(zoom.FindControl<TextBlock>("ValueText")!));
         Assert.False(zoom.IsEditingValue);

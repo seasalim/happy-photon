@@ -26,7 +26,10 @@ public sealed class TipsLayoutTests
         scene.Vm.IsExportJobRunning = mode == WorkspaceMode.Export;
         var card = TipsTestScene.Card(scene.Window, mode);
         scene.Window.UpdateLayout();
-        AvaloniaHeadlessPlatform.ForceRenderTimerTick();
+        // A render tick can enqueue more compositor jobs. The headless frame helper
+        // drains those too, so direct hit tests use the current workspace scene.
+        using var frame = scene.Window.CaptureRenderedFrame();
+        Assert.NotNull(frame);
         var bounds = BoundsInWindow(card, scene.Window);
         var area = mode switch
         {
@@ -59,7 +62,8 @@ public sealed class TipsLayoutTests
             var actionBounds = BoundsInWindow(button, scene.Window);
             Assert.True(emptyBounds.Contains(actionBounds));
             var hit = scene.Window.InputHitTest(actionBounds.Center) as Visual;
-            Assert.True(ReferenceEquals(hit, button) || hit?.GetVisualAncestors().Contains(button) == true);
+            Assert.True(ReferenceEquals(hit, button) || hit?.GetVisualAncestors().Contains(button) == true,
+                $"{mode} {button.Content} at {actionBounds}: hit {hit}");
         }
 
         var chromeNames = mode switch

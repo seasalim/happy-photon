@@ -32,7 +32,7 @@ public sealed partial class DevelopControlBarTests
             var labelWidth = labels.Sum(text => Math.Ceiling(new Avalonia.Media.TextFormatting.TextLayout(
                 text, face, 10, Avalonia.Media.Brushes.White).WidthIncludingTrailingWhitespace) + 12);
             var expected = 5 * 24 + 180 + 9 + 10 * 8 + 20 + labelWidth;
-            Assert.Equal(expected, full);
+            Assert.Equal(ControlBarLayout.FullClusterWidth + 2 * (expected - 20 - 137) + 20, full);
             Assert.Equal(expected - 180 - 8, noSlider);
 
             foreach (var width in new[] { 1200, 500, 308, 1200,
@@ -111,7 +111,8 @@ public sealed partial class DevelopControlBarTests
         var slider = pane.FindControl<CompactSlider>("DevelopZoomSlider")!;
         var full = left.Bounds.Width + right.Bounds.Width + bar.Padding.Left + bar.Padding.Right;
 
-        return (full, full - slider.Bounds.Width - right.Spacing);
+        return (ControlBarLayout.FullClusterWidth + 2 * Math.Max(left.Bounds.Width, right.Bounds.Width) +
+            bar.Padding.Left + bar.Padding.Right, full - slider.Bounds.Width - right.Spacing);
     }
 
     private static void AssertTier(DevelopViewerPane pane, string tier)

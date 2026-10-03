@@ -51,7 +51,12 @@ public sealed class SliderAndFooterMetricTests
             $"The shortened Browse footer measured {browseSurface.Bounds.Height}px; " +
             $"padding={browseSurface.Padding}; actions={browseActions.Bounds}; " +
             $"state={browseState.Bounds}.");
-        AssertAnchoredAtOppositeEnds(browseSurface, browseActions, browseState);
+        AssertAnchoredAtOppositeEnds(browseSurface,
+            browse.FindControl<Grid>("BrowseImageActionsPanel")!, browseState);
+        var browseCluster = ControlBarGateScene.Bounds(browseActions, browseSurface);
+        var browseRight = ControlBarGateScene.Bounds(browseState, browseSurface);
+        Assert.Equal(Math.Min(browseSurface.Bounds.Width / 2,
+            browseRight.Left - browseCluster.Width / 2), browseCluster.Center.X, precision: 3);
         AssertAnchoredAtOppositeEnds(developBar, developActions, developState);
         Assert.True(
             developActions.Bounds.Width + developState.Bounds.Width +
@@ -145,7 +150,7 @@ public sealed class SliderAndFooterMetricTests
         foreach (var slider in content.GetLogicalDescendants().OfType<CompactSlider>()
                      .Where(slider => slider.Classes.Contains("local-geometry")))
             slider.IsVisible = true;
-        var window = new Window { Width = 900, Height = 2200, Content = content };
+        var window = new Window { Width = 1400, Height = 2200, Content = content };
         using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
 

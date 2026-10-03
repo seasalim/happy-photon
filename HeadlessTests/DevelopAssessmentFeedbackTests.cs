@@ -21,7 +21,7 @@ public sealed class DevelopAssessmentFeedbackTests
         {
             var pane = window.FindControl<DevelopViewerPane>("DevelopViewerPane")!;
             var controlBar = pane.FindControl<Border>("DevelopControlBar")!;
-            var layout = Assert.IsType<Grid>(controlBar.Child);
+            var layout = Assert.IsType<ControlBarLayout>(controlBar.Child);
             var actions = pane.FindControl<StackPanel>(
                 "DevelopImageActionsPanel")!;
             var viewState = pane.FindControl<StackPanel>(
@@ -37,9 +37,9 @@ public sealed class DevelopAssessmentFeedbackTests
             Assert.IsType<Avalonia.Controls.Shapes.Rectangle>(actions.Children[2]);
             Assert.Same(rotateLeft, actions.Children[3]);
             Assert.Same(layout, actions.Parent);
-            Assert.Equal(0, Grid.GetColumn(actions));
+            Assert.Same(actions, layout.Children[0]);
             Assert.Same(layout, viewState.Parent);
-            Assert.Equal(2, Grid.GetColumn(viewState));
+            Assert.Same(viewState, layout.Children[2]);
             Assert.True(actions.Bounds.Left < viewState.Bounds.Left);
 
             var overlays = window.GetLogicalDescendants()

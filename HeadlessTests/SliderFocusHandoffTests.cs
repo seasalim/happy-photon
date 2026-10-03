@@ -33,7 +33,7 @@ public sealed class SliderFocusHandoffTests : IDisposable
         vm.SelectedImage = first;
         await TestWaits.UntilAsync(() => vm.IsHistoryLoaded && vm.PreviewImage != null);
         vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        var window = new MainWindow { Width = 1200, Height = 700 };
+        var window = new MainWindow { Width = 1800, Height = 700 };
         using var scope = TestUiScope.ForMainWindow(window, vm);
         var slider = window.GetVisualDescendants().OfType<CompactSlider>().Single(s =>
             s.Label == "Exposure" && s.IsEffectivelyVisible &&

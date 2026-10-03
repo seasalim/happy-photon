@@ -38,7 +38,15 @@ public partial class MainWindow
         return true;
     }
 
-    // Plain keyboard moves re-anchor at the new focus, as a plain click does.
+    internal void FollowBrowseNavigation()
+    {
+        if (DataContext is MainWindowViewModel { IsBrowseGridVisible: true } vm)
+        {
+            FollowKeyboardFocus(vm);
+        }
+    }
+
+    // Plain navigation moves re-anchor at the new focus, as a plain click does.
     private void FollowKeyboardFocus(MainWindowViewModel vm)
     {
         ScrollSelectedIntoView(vm);

@@ -67,11 +67,6 @@
         <Style Selector="Button.clear:pointerover Path">
             <Setter Property="Stroke" Value="{DynamicResource TextPrimary}"/>
         </Style>
-        <Style Selector="TextBlock.shortcut">
-            <Setter Property="FontFamily" Value="{StaticResource FontLabel}"/>
-            <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
-            <Setter Property="Opacity" Value="0.7"/>
-        </Style>
     </UserControl.Styles>
 
     <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
@@ -85,42 +80,33 @@
                             Command="{Binding TogglePickedImageCommand}"
                             ToolTip.Tip="Pick the Browse selection when non-empty, otherwise the active photo; active photo only in Develop, Loupe, or Compare (P)"
                             AutomationProperties.Name="Pick images">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <Path Width="14" Height="14"
-                                  Data="M 2,13 L 2,2 M 2,3 L 11,3 L 9,6 L 11,9 L 2,9"
-                                  StrokeThickness="1.4"
-                                  StrokeLineCap="Round"
-                                  StrokeJoin="Round"/>
-                            <TextBlock Text="P" Classes="shortcut" VerticalAlignment="Center"/>
-                        </StackPanel>
+                        <Path Width="14" Height="14"
+                              Data="M 2,13 L 2,2 M 2,3 L 11,3 L 9,6 L 11,9 L 2,9"
+                              StrokeThickness="1.4"
+                              StrokeLineCap="Round"
+                              StrokeJoin="Round"/>
                     </Button>
-                    <Button x:Name="RejectImageButton"
+                    <Button x:Name="RejectImageButton" Width="26"
                             Classes="assessment flag reject"
                             Classes.active="{Binding SelectedImage.IsRejected, FallbackValue=False}"
                             Command="{Binding ToggleRejectedImageCommand}"
                             ToolTip.Tip="Reject the Browse selection when non-empty, otherwise the active photo; active photo only in Develop, Loupe, or Compare (X)"
                             AutomationProperties.Name="Reject images">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <Path Width="14" Height="14"
-                                  Data="M 7,1 A 6,6 0 1 1 6.99,1 M 3,3 L 11,11"
-                                  StrokeThickness="1.4"
-                                  StrokeLineCap="Round"/>
-                            <TextBlock Text="X" Classes="shortcut" VerticalAlignment="Center"/>
-                        </StackPanel>
+                        <Path Width="14" Height="14"
+                              Data="M 7,1 A 6,6 0 1 1 6.99,1 M 3,3 L 11,11"
+                              StrokeThickness="1.4"
+                              StrokeLineCap="Round"/>
                     </Button>
                     <Button x:Name="UnflagImageButton"
                             Classes="assessment flag"
                             Command="{Binding UnpickImageCommand}"
                             ToolTip.Tip="Unflag the Browse selection when non-empty, otherwise the active photo; active photo only in Develop, Loupe, or Compare (U)"
                             AutomationProperties.Name="Unflag images">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <Path Width="14" Height="14"
-                                  Data="M 2,13 L 2,2 M 2,3 L 11,3 L 9,6 L 11,9 L 2,9 M 13.2,2.6 L 2.6,13.2"
-                                  StrokeThickness="1.4"
-                                  StrokeLineCap="Round"
-                                  StrokeJoin="Round"/>
-                            <TextBlock Text="U" Classes="shortcut" VerticalAlignment="Center"/>
-                        </StackPanel>
+                        <Path Width="14" Height="14"
+                              Data="M 2,13 L 2,2 M 2,3 L 11,3 L 9,6 L 11,9 L 2,9 M 13.2,2.6 L 2.6,13.2"
+                              StrokeThickness="1.4"
+                              StrokeLineCap="Round"
+                              StrokeJoin="Round"/>
                     </Button>
                 </StackPanel>
             </Border>
@@ -208,13 +194,10 @@
                 <Button.CommandParameter>
                     <x:Int32>0</x:Int32>
                 </Button.CommandParameter>
-                <StackPanel Orientation="Horizontal" Spacing="4">
-                    <Path Width="14" Height="14"
-                          Data="M 7,1 A 6,6 0 1 1 6.99,1 M 4,7 L 10,7"
-                          StrokeThickness="1.4"
-                          StrokeLineCap="Round"/>
-                    <TextBlock Text="0" Classes="shortcut" VerticalAlignment="Center"/>
-                </StackPanel>
+                <Path Width="14" Height="14"
+                      Data="M 7,1 A 6,6 0 1 1 6.99,1 M 4,7 L 10,7"
+                      StrokeThickness="1.4"
+                      StrokeLineCap="Round"/>
             </Button>
 
             <Rectangle Width="1" Height="16" Fill="{DynamicResource Divider}"/>

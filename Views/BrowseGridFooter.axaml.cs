@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using HappyPhoton.Models;
 
 namespace HappyPhoton.Views;
@@ -92,6 +93,18 @@ public partial class BrowseGridFooter : UserControl
 
     private void OnPairsClick(object? sender, RoutedEventArgs e) =>
         ShowPairs = !ShowPairs;
+
+    private void OnNavigationClick(object? sender, RoutedEventArgs e)
+    {
+        // Button executes its bound command after routing Click.
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (TopLevel.GetTopLevel(this) is MainWindow window)
+            {
+                window.FollowBrowseNavigation();
+            }
+        });
+    }
 
     private void UpdateThumbnailSizeButtons()
     {

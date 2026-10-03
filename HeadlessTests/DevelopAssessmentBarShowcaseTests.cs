@@ -13,8 +13,8 @@ public sealed class DevelopAssessmentBarShowcaseTests
 {
     [AvaloniaTheory]
     [InlineData("develop-bar-full", 1600, 900, ImageFlag.Picked, 3, ColorLabel.Red)]
-    [InlineData("develop-bar-compact", 1280, 600, ImageFlag.Rejected, 5, ColorLabel.Blue)]
-    [InlineData("develop-bar-empty", 1381, 900, ImageFlag.Unflagged, 0, ColorLabel.None)]
+    [InlineData("develop-bar-compact", 1100, 600, ImageFlag.Rejected, 5, ColorLabel.Blue)]
+    [InlineData("develop-bar-empty", 1200, 900, ImageFlag.Unflagged, 0, ColorLabel.None)]
     public async Task RenderScene(string scene, int width, int height, ImageFlag flag, int rating, ColorLabel label)
     {
         await DevelopToolsBaselineTests.WithScene("normal", width, height, (vm, scope) =>

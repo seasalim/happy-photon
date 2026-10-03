@@ -42,7 +42,7 @@ public sealed class BrowseShellExportStyleTests
         using var scope = new TestUiScope(window, theme);
         var buttons = panel.GetVisualDescendants().OfType<Button>()
             .Where(button => button.Classes.Contains("icon-button")).ToArray();
-        Assert.Equal(10, buttons.Length);
+        Assert.Equal(12, buttons.Length);
 
         foreach (var button in buttons)
         {

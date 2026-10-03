@@ -13,8 +13,52 @@
         BorderBrush="{DynamicResource Divider}"
         BorderThickness="0,1,0,0"
         Padding="10,2">
-    <!-- Culling actions anchor left; view and thumbnail state anchor right. -->
-    <Grid ColumnDefinitions="*,Auto">
+    <views:ControlBarLayout>
+        <Grid x:Name="BrowseImageActionsPanel" ColumnDefinitions="Auto,*" MinWidth="56">
+            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <Button Classes="icon-button" x:Name="PreviousImageButton"
+                        Click="OnNavigationClick"
+                        Command="{Binding SelectPreviousImageCommand}"
+                        ToolTip.Tip="Previous image (←)"
+                        AutomationProperties.Name="Previous image">
+                    <Viewbox Width="14" Height="14"><Canvas Width="16" Height="16">
+                        <Path Data="M 10,3.5 L 5.5,8 L 10,12.5" Fill="Transparent"
+                              StrokeThickness="1.5"
+                              StrokeLineCap="Round" StrokeJoin="Round"/>
+                    </Canvas></Viewbox>
+                </Button>
+                <Button Classes="icon-button" x:Name="NextImageButton"
+                        Click="OnNavigationClick"
+                        Command="{Binding SelectNextImageCommand}"
+                        ToolTip.Tip="Next image (→)"
+                        AutomationProperties.Name="Next image">
+                    <Viewbox Width="14" Height="14"><Canvas Width="16" Height="16">
+                        <Path Data="M 6,3.5 L 10.5,8 L 6,12.5" Fill="Transparent"
+                              StrokeThickness="1.5"
+                              StrokeLineCap="Round" StrokeJoin="Round"/>
+                    </Canvas></Viewbox>
+                </Button>
+            </StackPanel>
+            <TextBlock x:Name="OnlineOnlyMessage"
+                       Grid.Column="1"
+                       Text="{Binding OnlineOnlyMessage}"
+                       IsVisible="{Binding HasOnlineOnlyPhotos}"
+                       Foreground="{DynamicResource TextSecondary}"
+                       FontFamily="{StaticResource FontBody}"
+                       FontSize="{StaticResource FontSizeSmall}"
+                       HorizontalAlignment="Left"
+                       VerticalAlignment="Center"
+                       MaxWidth="180"
+                       Margin="12,0,8,0"
+                       TextTrimming="CharacterEllipsis"
+                       ToolTip.Tip="{Binding OnlineOnlyMessage}"/>
+        </Grid>
+        <Grid ClipToBounds="True">
+            <Border Width="{x:Static views:ControlBarLayout.FullClusterWidth}" VerticalAlignment="Center">
+                <views:ImageAssessmentControl x:Name="ImageAssessment"/>
+            </Border>
+            <views:DevelopAssessmentCluster IsVisible="False" VerticalAlignment="Center"/>
+        </Grid>
         <StackPanel x:Name="ThumbnailSizePanel"
                     Grid.Column="1"
                     HorizontalAlignment="Right"
@@ -106,27 +150,7 @@
                     </Canvas></Viewbox>
                 </RadioButton>
         </StackPanel>
-        <Grid Grid.Column="0" ColumnDefinitions="Auto,*">
-            <views:ImageAssessmentControl x:Name="ImageAssessment"
-                                          IsEnabled="{Binding HasSelectedImage}"
-                                          HorizontalAlignment="Left"
-                                          VerticalAlignment="Center"/>
-            <!-- Bounded so a long cloud-only message yields to both control groups. -->
-            <TextBlock x:Name="OnlineOnlyMessage"
-                       Grid.Column="1"
-                       Text="{Binding OnlineOnlyMessage}"
-                       IsVisible="{Binding HasOnlineOnlyPhotos}"
-                       Foreground="{DynamicResource TextSecondary}"
-                       FontFamily="{StaticResource FontBody}"
-                       FontSize="{StaticResource FontSizeSmall}"
-                       HorizontalAlignment="Left"
-                       VerticalAlignment="Center"
-                       MaxWidth="180"
-                       Margin="12,0,8,0"
-                       TextTrimming="CharacterEllipsis"
-                       ToolTip.Tip="{Binding OnlineOnlyMessage}"/>
-        </Grid>
-    </Grid>
+    </views:ControlBarLayout>
 </Border>
 
 </UserControl>

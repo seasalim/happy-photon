@@ -83,7 +83,7 @@
                 BorderThickness="0,1,0,0"
                 IsEnabled="{Binding HasSelectedImage}"
                 HorizontalAlignment="Stretch">
-            <Grid ColumnDefinitions="Auto,*,Auto">
+            <views:ControlBarLayout x:Name="DevelopBarLayout">
             <StackPanel x:Name="DevelopImageActionsPanel"
                         Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                 <Button Classes="icon-button" x:Name="PreviousImageButton"
@@ -130,7 +130,7 @@
             </StackPanel>
             <Grid x:Name="DevelopAssessmentSlot" Grid.Column="1" ClipToBounds="True">
                 <!-- Reserve the widest (Rejected) state, including its button border. -->
-                <Border x:Name="DevelopAssessmentHost" Width="406" IsVisible="False"
+                <Border x:Name="DevelopAssessmentHost" Width="{x:Static views:ControlBarLayout.FullClusterWidth}" IsVisible="False"
                         HorizontalAlignment="Center" VerticalAlignment="Center">
                     <views:ImageAssessmentControl x:Name="DevelopImageAssessment"/>
                 </Border>
@@ -211,7 +211,7 @@
                     </Button.Flyout>
                 </Button>
             </StackPanel>
-            </Grid>
+            </views:ControlBarLayout>
         </Border>
     </Grid>
 </UserControl>

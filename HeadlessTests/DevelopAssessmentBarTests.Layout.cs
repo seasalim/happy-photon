@@ -49,6 +49,8 @@ public sealed partial class DevelopAssessmentBarTests
                 .FindControl<ImageAssessmentControl>("ImageAssessment")!;
             var controls = views.GetVisualDescendants().OfType<Button>()
                 .Prepend(pane.FindControl<Button>("RotateLeftButton")!).ToArray();
+            pane.Width = 1000;
+            Settle(window);
             var emptyWidth = actions.Bounds.Width + views.Bounds.Width + 20;
 
             foreach (var width in new[] { emptyWidth + host.Width + 1, emptyWidth + cluster.Width + 1, emptyWidth })
@@ -96,7 +98,7 @@ public sealed partial class DevelopAssessmentBarTests
             {
                 pane.Width = width;
                 Settle(window);
-                AssertMode(pane, width == 1300, width == 800);
+                AssertMode(pane, width >= 800, width == 600);
             }
 
             // The overflow button leaves enough space for the compact assessment cluster.
@@ -121,8 +123,8 @@ public sealed partial class DevelopAssessmentBarTests
                 .Single(grid => grid.ColumnDefinitions.Count == 5);
 
             // Pane maximums (400/450) bound the viewer, so use a window where they still reach each tier.
-            // Shared button metrics reduce the full action bar by 59 px (596 to 537); filled view buttons add 20 px.
-            window.Width = 1461;
+            // The no-slider full cluster fits at 735 viewer pixels; compact fits at 479.
+            window.Width = 1240;
             Settle(window);
             AssertMode(pane, true, false);
 
