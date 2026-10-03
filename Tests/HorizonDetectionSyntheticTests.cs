@@ -11,10 +11,11 @@ public sealed class HorizonDetectionSyntheticTests(ITestOutputHelper output)
     public void G1AccuracyAndG2ClosedLoop()
     {
         var errors = new List<double>();
+        var lineErrors = new List<double>();
         var residuals = new List<double>();
         var failures = new List<string>();
 
-        foreach (var scene in StraightenGateScenes.Names.Append("facade-blurred"))
+        foreach (var scene in StraightenGateScenes.Names.Append("facade-blurred").Append("skyline"))
         {
             foreach (var portrait in new[] { false, true })
             {
@@ -24,17 +25,19 @@ public sealed class HorizonDetectionSyntheticTests(ITestOutputHelper output)
                 {
                     using var frame = StraightenGateScenes.Tilt(basis, tilt);
                     var result = HorizonDetection.Detect(frame, out var diagnostics);
-                    var error = Math.Abs((result?.HorizonRotation ?? diagnostics.RawPeak) + tilt);
+                    var error = Math.Abs(result.HorizonRotation + tilt);
                     errors.Add(error);
+                    if (scene != "skyline") lineErrors.Add(error);
                     Print("G1", new { scene, portrait, tilt, diagnostics, error, result });
+                    Assert.Equal(scene == "skyline" ? HorizonDetection.Tier.Skyline : HorizonDetection.Tier.Lines, diagnostics.Tier);
 
-                    if (result is null || error > .15)
+                    if (error > (scene == "skyline" ? .35 : .15))
                     {
                         failures.Add($"G1 {scene}/{portrait}/{tilt}: result={result}, error={error}");
                     }
 
-                    if (Math.Abs(tilt) < .2 || result is null) continue;
-                    if (Math.Sign(result.Value.HorizonRotation) != -Math.Sign(tilt)) failures.Add("G2 wrong sign");
+                    if (Math.Abs(tilt) < .2) continue;
+                    if (Math.Sign(result.HorizonRotation) != -Math.Sign(tilt)) failures.Add("G2 wrong sign");
 
                     var settings = new List<(string Name, EditSettings Settings)> { ("identity", new()) };
 
@@ -48,12 +51,13 @@ public sealed class HorizonDetectionSyntheticTests(ITestOutputHelper output)
 
                     foreach (var arm in settings)
                     {
-                        arm.Settings.HorizonRotation = result.Value.HorizonRotation;
+                        arm.Settings.HorizonRotation = result.HorizonRotation;
                         using var final = RenderGeometry.Apply(frame, arm.Settings, out _);
                         var fit = StraightenGateOracle.Fit(final,
-                            StraightenGateScenes.CentralEdge(final, arm.Settings.Rotation == 90));
+                            scene == "skyline" ? StraightenGateSkylineScene.Region(final) :
+                                StraightenGateScenes.CentralEdge(final, arm.Settings.Rotation == 90));
                         var residual = Math.Abs(fit.ContentAngle);
-                        var limit = arm.Name.StartsWith("aspect", StringComparison.Ordinal) ? .25 : .15;
+                        var limit = scene == "skyline" ? .35 : arm.Name.StartsWith("aspect", StringComparison.Ordinal) ? .25 : .15;
                         residuals.Add(residual);
                         Print("G2", new { scene, portrait, tilt, geometry = arm.Name, residual, limit });
 
@@ -69,9 +73,9 @@ public sealed class HorizonDetectionSyntheticTests(ITestOutputHelper output)
         Print("G1-summary", new { arms = errors.Count, max = errors.Max(), mean = errors.Average() });
         Print("G2-summary", new { arms = residuals.Count, max = residuals.Max() });
         Assert.Empty(failures);
-        Assert.Equal(104, errors.Count);
-        Assert.Equal(144, residuals.Count);
-        Assert.True(errors.Average() <= .06);
+        Assert.Equal(130, errors.Count);
+        Assert.Equal(168, residuals.Count);
+        Assert.True(lineErrors.Average() <= .06);
     }
 
     [Theory]
@@ -87,7 +91,7 @@ public sealed class HorizonDetectionSyntheticTests(ITestOutputHelper output)
             using var frame = StraightenGateScenes.Tilt(basis, tilt);
             var result = HorizonDetection.Detect(frame, out var diagnostics);
             Print("window", new { portrait, tilt, diagnostics, result });
-            Assert.Null(result);
+            Assert.InRange(result.HorizonRotation, -5, 5);
         }
     }
 
@@ -100,10 +104,9 @@ public sealed class HorizonDetectionSyntheticTests(ITestOutputHelper output)
     {
         using var frame = StraightenGateNegativeScenes.Create(name, portrait);
         var result = HorizonDetection.Detect(frame, out var diagnostics);
-        Print("G4-synthetic", new { name, portrait, diagnostics, result,
-            margin = HorizonDetection.ConfidenceCutoff - 1.10 * diagnostics.Confidence });
-        Assert.Null(result);
-        Assert.True(HorizonDetection.ConfidenceCutoff >= 1.10 * diagnostics.Confidence);
+        Print("G4-synthetic", new { name, portrait, diagnostics, result });
+        Assert.InRange(result.HorizonRotation, -1, 1);
+        Assert.Equal(HorizonDetection.Tier.Orientation, diagnostics.Tier);
     }
 
     private void Print(string gate, object values) => output.WriteLine("STRAIGHTEN " +

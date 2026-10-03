@@ -120,7 +120,7 @@ public sealed partial class AutoStraightenTests : IDisposable
     [AvaloniaTheory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task NoResultAndAlreadyLevelUseThreeSecondStatus(bool featureless)
+    public async Task StructurelessSetsDraftAndEqualResultShowsAlreadyLevel(bool featureless)
     {
         using var catalog = await _fixture.CreateCatalogAsync();
         var loader = new TiltedLoader(featureless: featureless);
@@ -131,10 +131,18 @@ public sealed partial class AutoStraightenTests : IDisposable
 
         await vm.AutoStraightenCommand.ExecuteAsync(null);
 
-        var message = featureless ? "No clear horizon found" : "Already level";
-        Assert.Equal(before, vm.HorizonRotation);
-        Assert.Equal(message, vm.StatusMessage);
-        await TestWaits.UntilAsync(() => vm.StatusMessage != message);
+        if (featureless)
+        {
+            Assert.Equal(0, vm.HorizonRotation);
+            Assert.Null(vm.TransientStatus);
+        }
+        else
+        {
+            Assert.Equal(before, vm.HorizonRotation);
+            Assert.Equal("Already level", vm.StatusMessage);
+            await TestWaits.UntilAsync(() => vm.StatusMessage != "Already level");
+        }
+
         Assert.Empty(vm.HistoryEntries);
     }
 
@@ -203,8 +211,7 @@ public sealed partial class AutoStraightenTests : IDisposable
             if (!featureless)
             {
                 var result = HorizonDetection.Detect(pixels);
-                Assert.NotNull(result);
-                Expected = Math.Clamp(Math.Round(result.Value.HorizonRotation, 2), -5, 5);
+                Expected = Math.Clamp(Math.Round(result.HorizonRotation, 2), -5, 5);
             }
 
             return new BaseImage(pixels, new BaseImageInfo(BaseSourceKind.Standard,

@@ -5,6 +5,7 @@
     <RootNamespace>HappyPhoton.Tests</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <OutputType>Exe</OutputType>
     <NoWarn>$(NoWarn);xUnit1051</NoWarn>
     <IsPackable>false</IsPackable>

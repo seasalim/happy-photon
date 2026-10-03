@@ -70,18 +70,9 @@ public sealed class HorizonDetectionFixtureTests(ITestOutputHelper output)
         if (max.HasValue) Assert.True(max <= .35);
     }
 
-    // Owner ruling (2026-10-01): each clear-structure photo answers on its untilted arm
-    // and on at least 70 % of its arms. DSCF0075 is precision-only: its stair-edge cluster
-    // is a coherent rival to the facade, so several of its arms are genuinely ambiguous.
-    private const double RecallFloor = .7;
-
     private List<double> CheckG3(string name, MagickImage basis, double label, bool recall, bool checkPhoto = true)
     {
         var errors = new List<double>();
-        var arms = 0;
-        var untiltedReturns = false;
-        var highestWrongConfidence = 0d;
-        var recallConfidences = new List<double>();
 
         foreach (var tilt in new double[] { -3, -1.5, -.5, 0, .5, 1.5, 3 })
         {
@@ -89,35 +80,27 @@ public sealed class HorizonDetectionFixtureTests(ITestOutputHelper output)
 
             using var frame = StraightenGateScenes.Tilt(basis, tilt);
             var result = HorizonDetection.Detect(frame, out var diagnostics);
-            var error = Math.Abs(diagnostics.RawPeak - (label - tilt));
-            arms++;
-            if (error > .35) highestWrongConfidence = Math.Max(highestWrongConfidence, diagnostics.Confidence);
-            if (tilt == 0) untiltedReturns = result.HasValue;
-            recallConfidences.Add(diagnostics.Confidence);
+            var error = Math.Abs(result.HorizonRotation - (label - tilt));
+            Print("G3", new { name, tilt, label, diagnostics, result, error });
 
-            if (result is { } accepted)
+            // Owner exception: X-Trans decode variance makes this RAW's tier decode-dependent.
+            if (name == StraightenGateWp3BaselineTests.BestEffortPhoto)
             {
-                errors.Add(Math.Abs(accepted.HorizonRotation - (label - tilt)));
+                Assert.InRange(result.HorizonRotation, -5, 5);
+                Assert.True(error <= Math.Abs(label - tilt) + StraightenGateWp3BaselineTests.NoHarmMargin);
+
+                continue;
             }
 
-            Print("G3", new { name, tilt, label, diagnostics, result, error });
+            Assert.Equal(HorizonDetection.Tier.Lines, diagnostics.Tier);
+            errors.Add(error);
         }
 
-        var median = errors.Count > 0 ? FinishingGateSupport.Median(errors) : (double?)null;
-        var max = errors.Count > 0 ? errors.Max() : (double?)null;
-        var recallCeiling = recallConfidences.OrderDescending().ElementAt((int)Math.Ceiling(RecallFloor * arms) - 1);
-        Print("G3-summary", new { name, arms, returned = errors.Count, untiltedReturns, median, max,
-            highestWrongConfidence, wrongMargin = HorizonDetection.ConfidenceCutoff - highestWrongConfidence,
-            recallCeiling, recallMargin = recallCeiling - HorizonDetection.ConfidenceCutoff });
-        if (!checkPhoto) return errors;
+        if (errors.Count == 0) return errors;
 
-        Assert.All(errors, error => Assert.True(error <= .35, $"Wrong answer: {name}, error={error}"));
-
-        if (recall)
-        {
-            Assert.True(untiltedReturns, $"Untilted recall arm abstained: {name}");
-            Assert.True(errors.Count >= RecallFloor * arms, $"Recall below 70%: {name}, {errors.Count}/{arms}");
-        }
+        Print("G3-summary", new { name, arms = errors.Count,
+            median = FinishingGateSupport.Median(errors), max = errors.Max() });
+        if (checkPhoto) Assert.All(errors, error => Assert.True(error <= .35, $"Wrong answer: {name}, error={error}"));
 
         return errors;
     }
@@ -144,10 +127,9 @@ public sealed class HorizonDetectionFixtureTests(ITestOutputHelper output)
     private void CheckG4(string name, MagickImage basis)
     {
         var result = HorizonDetection.Detect(basis, out var diagnostics);
-        Print("G4", new { name, diagnostics, result,
-            margin = HorizonDetection.ConfidenceCutoff - 1.10 * diagnostics.Confidence });
-        Assert.Null(result);
-        Assert.True(HorizonDetection.ConfidenceCutoff >= 1.10 * diagnostics.Confidence);
+        Print("G4", new { name, diagnostics, result });
+        Assert.InRange(result.HorizonRotation, -1, 1);
+        Assert.NotEqual(HorizonDetection.Tier.Lines, diagnostics.Tier);
     }
 
     [Theory]
@@ -187,14 +169,13 @@ public sealed class HorizonDetectionFixtureTests(ITestOutputHelper output)
         using var raw = StraightenGateOwnerFixtures.Load("DSCF0076.RAF");
         var jpegResult = HorizonDetection.Detect(jpeg.Interactive.Pixels, out var jpegDiagnostics);
         var rawResult = HorizonDetection.Detect(raw.Interactive.Pixels, out var rawDiagnostics);
-        var agrees = jpegResult is null && rawResult is null || jpegResult is { } j && rawResult is { } r &&
-            Math.Abs(j.HorizonRotation - r.HorizonRotation) <= .10;
+        var agrees = Math.Abs(jpegResult.HorizonRotation - rawResult.HorizonRotation) <= .10;
         Print("raw-jpeg-report-only", new { jpegResult, rawResult, jpegDiagnostics, rawDiagnostics, agrees });
     }
 
     private static void RequireReport() => Assert.SkipUnless(
         Environment.GetEnvironmentVariable("HAPPY_PHOTON_STRAIGHTEN_REPORT") == "1",
-        "Report-only straighten photos require HAPPY_PHOTON_STRAIGHTEN_REPORT=1 after final cutoff freeze");
+        "Report-only straighten photos require HAPPY_PHOTON_STRAIGHTEN_REPORT=1 for the report sweep");
 
     private void Print(string gate, object values) => output.WriteLine("STRAIGHTEN " +
         JsonSerializer.Serialize(new { gate, pid = Environment.ProcessId, values }));

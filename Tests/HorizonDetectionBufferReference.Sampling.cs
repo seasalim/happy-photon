@@ -4,10 +4,19 @@ using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using ImageMagick;
 
-namespace HappyPhoton.Services;
+using HappyPhoton.Services;
 
-public static partial class HorizonDetection
+namespace HappyPhoton.Tests;
+
+// Frozen 9e1f950 sampling arithmetic, before pooled scratch storage.
+internal static partial class HorizonDetectionBufferReference
 {
+    private const int Border = 16;
+
+    private const int DerivativeRadius = 5;
+
+    private const double DerivativeSigma = 1.5;
+
     private const int EncodingSteps = ushort.MaxValue;
 
     private static readonly double EncodingJoinEnd = Math.Ceiling(.0031308 * EncodingSteps) / EncodingSteps;
@@ -55,9 +64,9 @@ public static partial class HorizonDetection
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static unsafe void ReadLuminance(MagickImage image, int width, int height, double[] plane)
+    internal static unsafe double[] ReadLuminance(MagickImage image, int width, int height)
     {
-        Array.Clear(plane, 0, width * height);
+        var plane = new double[width * height];
         using var pixels = image.GetPixelsUnsafe();
         var layout = RenderKernelSupport.GetLayout(pixels);
         var sx = image.Width / (double)width;
@@ -111,6 +120,8 @@ public static partial class HorizonDetection
                 plane[i] = EncodeLuminance(plane[i] / denominator);
             }
         }
+
+        return plane;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -185,16 +196,15 @@ public static partial class HorizonDetection
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static void Gradients(double[] plane, int width, int height, double[] gx, double[] gy)
+    internal static (double[] X, double[] Y) Gradients(double[] plane, int width, int height)
     {
         // Precompute the matched Gaussian/derivative coefficients and pair symmetric
         // taps. This changes rounding, not the derivative's scale. SIMD lanes follow
         // the paired scalar arithmetic without fused multiply-add.
         var kernel = GaussianKernel;
-        using var smoothScratch = new Scratch<double>(width * height);
-        using var derivativeScratch = new Scratch<double>(width * height);
-        var smoothX = smoothScratch.Values;
-        var derivativeX = derivativeScratch.Values;
+        var smoothX = new double[plane.Length];
+        var derivativeX = new double[plane.Length];
+        var gy = new double[plane.Length];
         var lanes = Vector<double>.Count;
 
         for (var y = DerivativeRadius; y < height - DerivativeRadius; y++)
@@ -255,7 +265,7 @@ public static partial class HorizonDetection
                         new Vector<double>(DerivativeKernel[DerivativeRadius + k]);
                 }
 
-                dx.CopyTo(gx, i);
+                dx.CopyTo(plane, i);
                 dy.CopyTo(gy, i);
             }
 
@@ -272,9 +282,11 @@ public static partial class HorizonDetection
                     dy += (smoothX[i + offset] - smoothX[i - offset]) * DerivativeKernel[DerivativeRadius + k];
                 }
 
-                gx[i] = dx;
+                plane[i] = dx;
                 gy[i] = dy;
             }
         }
+
+        return (plane, gy);
     }
 }

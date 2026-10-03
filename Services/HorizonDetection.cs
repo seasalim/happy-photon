@@ -12,8 +12,6 @@ public static partial class HorizonDetection
 
     private const double BinWidth = .1;
 
-    private const double PeakLimit = 5.15;
-
     private const double RotationLimit = 5;
 
     private const double DerivativeSigma = 1.5;
@@ -22,25 +20,30 @@ public static partial class HorizonDetection
 
     private const double FamilyTolerance = .35;
 
-    private const double AgreementTolerance = .25;
+    internal const double AgreementTolerance = .25;
 
     // A family with less than a fifth of the stronger cluster's evidence cannot
     // overturn it alone. The inlier share is a soft confidence term, not a veto.
-    private const double MaximumInlierSpread = .2;
+    internal const double MaximumInlierSpread = .2;
 
-    // A reference cluster must hold at least twice the length of the strongest coherent
-    // competitor in its family: comparable clusters are ambiguous, diffuse minorities are not.
-    private const double MaximumCompetitorRatio = .5;
+    // Comparable rivals are ambiguous; weaker rivals reduce confidence continuously.
+    internal const double MaximumCompetitorRatio = .9;
+
+    // Frozen baseline separation between long structure and misleading short edges.
+    internal const double AnswerFloor = 450;
+
+    // A materially cleaner family wins disagreement; otherwise retain stronger evidence.
+    internal const double RivalGap = .3;
 
     // All in-window lines, inliers or not, scatter the answer's support: a degree of
     // scatter (three times the inlier window) halves the confidence (cross-review C-1, C-2).
     private const double AllLineSpreadScale = 1;
 
-    private const double MinimumRelativeEvidence = .2;
+    internal const double MinimumRelativeEvidence = .2;
 
-    // Frozen by the spec rule: at least 1.10 x the highest G4 confidence and above every
-    // labelled arm whose answer would be wrong, measured with the owner arms included.
-    internal const double ConfidenceCutoff = .20;
+    internal enum Tier { Lines, Skyline, Orientation }
+
+    internal readonly record struct SkylineDiagnostics(double Share, double Span, double ContentAngle);
 
     public readonly record struct Result(double HorizonRotation, double Confidence);
 
@@ -51,7 +54,7 @@ public static partial class HorizonDetection
     internal readonly record struct Diagnostics(double RawPeak, double Spread, double AxisDisagreement,
         double SupportingLength, double InlierShare, double LineCountTerm, double Confidence,
         FamilyDiagnostics Horizontal, FamilyDiagnostics Vertical, int NegativeLines, int PositiveLines,
-        StageDiagnostics Stages);
+        StageDiagnostics Stages, Tier Tier = Tier.Lines, SkylineDiagnostics Skyline = default);
 
     internal record struct StageDiagnostics
     {
@@ -72,9 +75,9 @@ public static partial class HorizonDetection
         public int RejectedWindow { get; set; }
     }
 
-    public static Result? Detect(MagickImage image) => Detect(image, out _);
+    public static Result Detect(MagickImage image) => Detect(image, out _);
 
-    internal static Result? Detect(MagickImage image, out Diagnostics diagnostics,
+    internal static Result Detect(MagickImage image, out Diagnostics diagnostics,
         Action<CandidateDiagnostics>? traceCandidate = null)
     {
         ArgumentNullException.ThrowIfNull(image);
@@ -83,11 +86,25 @@ public static partial class HorizonDetection
         var width = (int)Math.Round(image.Width * scale);
         var height = (int)Math.Round(image.Height * scale);
         diagnostics = default;
-        if (width <= Border * 2 || height <= Border * 2) return null;
 
-        var plane = ReadLuminance(image, width, height);
-        var (gx, gy) = Gradients(plane, width, height);
-        var edges = Canny(gx, gy, width, height);
+        if (width <= Border * 2 || height <= Border * 2)
+        {
+            diagnostics = diagnostics with { Tier = Tier.Orientation };
+
+            return new(0, 0);
+        }
+
+        using var luminance = new Scratch<double>(width * height);
+        using var gradientX = new Scratch<double>(width * height);
+        using var gradientY = new Scratch<double>(width * height);
+        using var gradientMagnitude = new Scratch<double>(width * height);
+        var plane = luminance.Values;
+        var gx = gradientX.Values;
+        var gy = gradientY.Values;
+        var magnitude = gradientMagnitude.Values;
+        ReadLuminance(image, width, height, plane);
+        Gradients(plane, width, height, gx, gy);
+        var edges = Canny(gx, gy, width, height, magnitude);
         var stages = new StageDiagnostics { EdgePixels = edges.Count };
         var lines = FindLines(edges, width, height, scale, width / (double)image.Width,
             height / (double)image.Height, ref stages, traceCandidate);
@@ -95,20 +112,27 @@ public static partial class HorizonDetection
         var vertical = Summarize(lines, true);
         var evidenceFloor = Math.Max(MinimumBaseSupport,
             MinimumRelativeEvidence * Math.Max(horizontal.InlierLength, vertical.InlierLength));
-        var hAgrees = Agrees(horizontal, evidenceFloor);
-        var vAgrees = Agrees(vertical, evidenceFloor);
+        var hAgrees = Qualifies(horizontal, evidenceFloor) && horizontal.InlierLength >= AnswerFloor;
+        var vAgrees = Qualifies(vertical, evidenceFloor) && vertical.InlierLength >= AnswerFloor;
         var disagreement = horizontal.Lines > 0 && vertical.Lines > 0
             ? Math.Abs(horizontal.Mean - vertical.Mean) : 0;
         var stronger = horizontal.InlierLength >= vertical.InlierLength ? horizontal : vertical;
         var selected = hAgrees == vAgrees ? stronger : hAgrees ? horizontal : vertical;
-        var length = hAgrees && vAgrees ? horizontal.InlierLength + vertical.InlierLength : selected.InlierLength;
+        var combined = hAgrees && vAgrees && disagreement <= AgreementTolerance;
+
+        if (hAgrees && vAgrees && !combined && Math.Abs(Rival(horizontal) - Rival(vertical)) >= RivalGap)
+        {
+            selected = Rival(horizontal) < Rival(vertical) ? horizontal : vertical;
+        }
+
+        var length = combined ? horizontal.InlierLength + vertical.InlierLength : selected.InlierLength;
         var allLength = horizontal.Length + vertical.Length;
         var share = allLength > 0 ? length / allLength : 0;
         var spread = allLength > 0 ? Math.Sqrt((horizontal.Length * horizontal.Spread * horizontal.Spread +
             vertical.Length * vertical.Spread * vertical.Spread) / allLength) : 0;
-        var effective = hAgrees && vAgrees ? horizontal.EffectiveLines + vertical.EffectiveLines : selected.EffectiveLines;
+        var effective = combined ? horizontal.EffectiveLines + vertical.EffectiveLines : selected.EffectiveLines;
         var countTerm = .75 + .25 * (1 - Math.Exp(-effective));
-        var inlierSpread = hAgrees && vAgrees
+        var inlierSpread = combined
             ? Math.Sqrt((horizontal.InlierLength * Math.Pow(horizontal.InlierSpread, 2) +
                 vertical.InlierLength * Math.Pow(vertical.InlierSpread, 2)) / length)
             : selected.InlierSpread;
@@ -118,27 +142,39 @@ public static partial class HorizonDetection
         var confidence = length / Math.Max(image.Width, image.Height) * share * countTerm /
             (1 + Math.Pow(inlierSpread / MaximumInlierSpread, 2)) / (1 + Math.Pow(spread / AllLineSpreadScale, 2));
 
-        if (!hAgrees && !vAgrees || hAgrees && vAgrees && disagreement > AgreementTolerance)
-        {
-            confidence = 0;
-        }
-        else if (hAgrees && vAgrees)
+        var rival = combined ? (horizontal.CompetitorLength + vertical.CompetitorLength) / length : Rival(selected);
+        confidence *= 1 - rival;
+
+        if (combined)
         {
             confidence /= 1 + Math.Pow(disagreement / AgreementTolerance, 2);
         }
 
-        var tilt = hAgrees && vAgrees ? (horizontal.Mean * horizontal.InlierLength +
+        var tilt = combined ? (horizontal.Mean * horizontal.InlierLength +
             vertical.Mean * vertical.InlierLength) / length : selected.Mean;
         diagnostics = new(-tilt, spread, disagreement, length, share, countTerm, confidence,
             horizontal, vertical, lines.Count(l => l.Tilt < 0), lines.Count(l => l.Tilt > 0), stages);
 
-        return Math.Abs(tilt) <= PeakLimit && confidence >= ConfidenceCutoff
-            ? new(Math.Clamp(-tilt, -RotationLimit, RotationLimit), confidence) : null;
+        if (hAgrees || vAgrees)
+        {
+            return new(Math.Clamp(-tilt, -RotationLimit, RotationLimit), confidence);
+        }
+
+        var skyline = Skyline(plane, width, height, image.Width / (double)width, image.Height / (double)height);
+        var tier = skyline.Share >= SkylineShare && skyline.Span >= SkylineSpan ? Tier.Skyline : Tier.Orientation;
+        var fallback = tier == Tier.Skyline ? new Result(-skyline.ContentAngle, skyline.Share) :
+            Orientation(gx, gy, magnitude, width, height, image.Width / (double)width, image.Height / (double)height);
+        diagnostics = diagnostics with { Tier = tier, Skyline = skyline, Confidence = fallback.Confidence };
+
+        return fallback with { HorizonRotation = Math.Clamp(fallback.HorizonRotation, -RotationLimit, RotationLimit) };
     }
 
-    private static bool Agrees(FamilyDiagnostics family, double evidenceFloor) =>
+    internal static bool Qualifies(FamilyDiagnostics family, double evidenceFloor) =>
         family.InlierLength >= evidenceFloor && family.InlierSpread <= MaximumInlierSpread &&
-        family.CompetitorLength <= MaximumCompetitorRatio * family.InlierLength;
+        family.CompetitorLength < MaximumCompetitorRatio * family.InlierLength;
+
+    private static double Rival(FamilyDiagnostics family) =>
+        family.InlierLength > 0 ? family.CompetitorLength / family.InlierLength : 1;
 
     internal static FamilyDiagnostics Summarize(IReadOnlyList<Line> lines, bool vertical)
     {
@@ -177,7 +213,7 @@ public static partial class HorizonDetection
 
     private const double LowThresholdRatio = .15;
 
-    private const double MinimumBaseSupport = 200;
+    internal const double MinimumBaseSupport = 200;
 
     // A two-base-pixel bow is 1.28 working pixels at a 1600px base. Include it plus
     // subpixel edge noise, rather than fitting only the centre of a quantized rho cell.

@@ -11,7 +11,7 @@ public sealed class HorizonDetectionRobustnessTests(ITestOutputHelper output)
     [Theory]
     [InlineData(1)]
     [InlineData(3)]
-    public void ConflictingFieldsAbstain(double angle)
+    public void ConflictingFieldsUseBoundedOrientation(double angle)
     {
         // Equal-sized left/right fields, mirrored about the centre, with identical contrast and period.
         using var frame = Create((x, y) => Math.Sin(2 * Math.PI *
@@ -21,7 +21,8 @@ public sealed class HorizonDetectionRobustnessTests(ITestOutputHelper output)
         Assert.True(diagnostics.NegativeLines > 0 && diagnostics.PositiveLines > 0,
             "Both conflicting fields must supply fitted lines");
         Assert.True(diagnostics.Spread >= angle * .5, "Disagreement must see the opposing field");
-        Assert.Null(result);
+        Assert.InRange(result.HorizonRotation, -5, 5);
+        Assert.Equal(HorizonDetection.Tier.Orientation, diagnostics.Tier);
     }
 
     [Theory]
@@ -118,9 +119,8 @@ public sealed class HorizonDetectionRobustnessTests(ITestOutputHelper output)
             "The scene must keep the level cluster's share under 0.6");
         Assert.True(diagnostics.Horizontal.CompetitorLength <= .5 * diagnostics.Horizontal.InlierLength,
             "The competitor must stay a minority cluster");
-        Assert.NotNull(result);
-        Assert.True(Math.Abs(result.Value.HorizonRotation + roll) <= .15,
-            $"diffuse minority: roll {roll}, correction {result.Value.HorizonRotation}");
+        Assert.True(Math.Abs(result.HorizonRotation + roll) <= .15,
+            $"diffuse minority: roll {roll}, correction {result.HorizonRotation}");
     }
 
     [Fact]
@@ -156,8 +156,7 @@ public sealed class HorizonDetectionRobustnessTests(ITestOutputHelper output)
             });
             var result = HorizonDetection.Detect(scene, out var diagnostics);
             Print("outlier-spread", outlier, diagnostics, result);
-            Assert.NotNull(result);
-            Assert.True(Math.Abs(result.Value.HorizonRotation) <= .15);
+            Assert.True(Math.Abs(result.HorizonRotation) <= .15);
 
             return diagnostics.Confidence;
         }
@@ -170,11 +169,8 @@ public sealed class HorizonDetectionRobustnessTests(ITestOutputHelper output)
         var result = HorizonDetection.Detect(frame, out var diagnostics);
         Print(scene, roll, diagnostics, result);
 
-        if (result is { } accepted)
-        {
-            Assert.True(Math.Abs(accepted.HorizonRotation + roll) <= .15,
-                $"{scene}: roll {roll}, correction {accepted.HorizonRotation}");
-        }
+        Assert.True(Math.Abs(result.HorizonRotation + roll) <= .15,
+            $"{scene}: roll {roll}, correction {result.HorizonRotation}");
     }
 
     private void Print(string scene, double roll, HorizonDetection.Diagnostics diagnostics,

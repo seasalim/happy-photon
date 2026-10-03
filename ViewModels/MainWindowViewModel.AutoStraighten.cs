@@ -61,13 +61,7 @@ public partial class MainWindowViewModel
 
         if (!IsCurrent()) return;
 
-        if (sample.Value is not { } result)
-        {
-            ShowTransientStatus("No clear horizon found");
-            return;
-        }
-
-        var angle = Math.Clamp(Math.Round(result.HorizonRotation, 2), -5, 5);
+        var angle = Math.Clamp(Math.Round(sample.Value.HorizonRotation, 2), -5, 5);
 
         if (angle == HorizonRotation)
         {

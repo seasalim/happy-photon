@@ -38,8 +38,12 @@ projection uses the closed-form inverse of the cubic below that knee and divisio
 above it. This keeps the map monotone at every slider setting.
 
 Crop Auto samples the preview [base frame](DECODE.md#orientation) before repairs and
-Geometry on a button press. It sets only draft Horizon within ±5°, with a frozen
-confidence cutoff of 0.20; it never runs inside the render pipeline.
+Geometry on a button press. It always sets its best estimate of draft Horizon within
+±5°; it never runs inside the render pipeline. The first qualifying tier answers:
+line families (450 base-pixel inlier floor, rival ratio < 0.9), skyline (all-pairs
+Theil–Sen fit to upper-two-thirds bright-above transitions, ≥30% within 3 working
+pixels spanning ≥50% of the width), then near-level gradient orientation without
+a floor. Tier and confidence are diagnostics; confidence no longer gates answers.
 
 ### 1.1 Request contract
 

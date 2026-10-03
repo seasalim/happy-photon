@@ -1,17 +1,35 @@
 using System.Runtime.CompilerServices;
 
-namespace HappyPhoton.Services;
+using System.Reflection;
+using HappyPhoton.Services;
 
-public static partial class HorizonDetection
+namespace HappyPhoton.Tests;
+
+// Frozen 9e1f950 Canny allocations and arithmetic; suppression is unchanged.
+internal static partial class HorizonDetectionBufferReference
 {
+    private const double HighPercentile = .70;
+
+    private const double LowThresholdRatio = .15;
+
+    private const double Window = 6.65;
+
+    internal readonly record struct Edge(double X, double Y, double Tilt, bool Vertical);
+
+    private static double Fold(double angle) => angle - 90 * Math.Floor((angle + 45) / 90);
+
+    private static int Suppress(double[] gx, double[] gy, double[] magnitude,
+        int width, int height, double high, double low, byte[] state, int[] pending) =>
+        (int)typeof(HorizonDetection).GetMethod("Suppress", BindingFlags.Static | BindingFlags.NonPublic)!
+            .Invoke(null, [gx, gy, magnitude, width, height, high, low, state, pending])!;
+
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static unsafe List<Edge> Canny(double[] gx, double[] gy, int width, int height,
-        double[] magnitude)
+    internal static unsafe List<Edge> Canny(double[] gx, double[] gy, int width, int height,
+        out double[] gradientMagnitude)
     {
-        // Subpixel sampling reads outside the written interior even at zero weight.
-        Array.Clear(magnitude, 0, width * height);
-        using var distributionScratch = new Scratch<double>(width * height);
-        var distribution = distributionScratch.Values;
+        var magnitude = new double[gx.Length];
+        gradientMagnitude = magnitude;
+        var distribution = new double[gx.Length];
         var count = 0;
 
         for (var y = Border; y < height - Border; y++)
@@ -28,11 +46,8 @@ public static partial class HorizonDetection
 
         var high = SelectMagnitude(distribution, count, (int)((count - 1) * HighPercentile));
         var low = high * LowThresholdRatio;
-        using var stateScratch = new Scratch<byte>(width * height);
-        using var pendingScratch = new Scratch<int>(width * height);
-        var state = stateScratch.Values;
-        var pending = pendingScratch.Values;
-        Array.Clear(state, 0, width * height);
+        var state = new byte[gx.Length];
+        var pending = new int[gx.Length];
         var pendingCount = Suppress(gx, gy, magnitude, width, height, high, low, state, pending);
 
         fixed (double* samples = magnitude)
@@ -92,12 +107,11 @@ public static partial class HorizonDetection
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     internal static double SelectMagnitude(double[] values, int count, int rank)
     {
-        using var histogramScratch = new Scratch<int>(1 << 16);
-        var histogram = histogramScratch.Values;
+        var histogram = new int[1 << 16];
 
         for (var shift = 48; shift >= 0; shift -= 16)
         {
-            Array.Clear(histogram, 0, 1 << 16);
+            Array.Clear(histogram);
 
             for (var i = 0; i < count; i++)
             {

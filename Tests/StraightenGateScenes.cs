@@ -15,6 +15,8 @@ internal static class StraightenGateScenes
     // Samples are linear Rec.2020, quantized only after box averaging.
     internal static MagickImage Create(string name, bool portrait)
     {
+        if (name == "skyline") return StraightenGateSkylineScene.Create(portrait);
+
         if (name == "facade-blurred")
         {
             // Blur the linear Q16 base at its original resolution, before any tilt.

@@ -65,8 +65,8 @@ public sealed class AutoStraightenTimingTests(ITestOutputHelper output)
                 return (result, elapsed: Stopwatch.GetElapsedTime(start).TotalMilliseconds);
             });
             Assert.NotNull(sample);
-            Assert.Equal(positive, sample.Value.result.HasValue);
-            if (positive) Assert.NotEqual(0, sample.Value.result!.Value.HorizonRotation);
+            Assert.InRange(sample.Value.result.HorizonRotation, -5, 5);
+            if (positive) Assert.NotEqual(0, sample.Value.result.HorizonRotation);
             token ??= sample.BaseToken;
             Assert.Same(token, sample.BaseToken);
             if (i >= 0) detection[i] = sample.Value.elapsed;
@@ -76,7 +76,7 @@ public sealed class AutoStraightenTimingTests(ITestOutputHelper output)
 
         for (var i = -3; i < presses.Length; i++)
         {
-            vm.HorizonRotation = 0;
+            vm.HorizonRotation = 5;
             vm.TransientStatus = null;
             await SettleAsync(vm);
             Assert.True(await vm.ImageService.Previews.IsPreviewBaseCurrentAsync(image, settings, token!));
@@ -84,8 +84,7 @@ public sealed class AutoStraightenTimingTests(ITestOutputHelper output)
             var start = Stopwatch.GetTimestamp();
             void Observe(object? sender, PropertyChangedEventArgs e)
             {
-                if (e.PropertyName != (positive ? nameof(vm.HorizonRotation) : nameof(vm.TransientStatus))) return;
-                if (!positive && vm.TransientStatus != "No clear horizon found") return;
+                if (e.PropertyName != nameof(vm.HorizonRotation)) return;
 
                 Assert.True(Dispatcher.UIThread.CheckAccess());
                 elapsed ??= Stopwatch.GetElapsedTime(start).TotalMilliseconds;

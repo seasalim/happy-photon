@@ -4,7 +4,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-internal static class StraightenGateOwnerFixtures
+internal static partial class StraightenGateOwnerFixtures
 {
     internal const string DirectoryVariable = "HAPPY_PHOTON_STRAIGHTEN_DIR";
 
@@ -21,7 +21,17 @@ internal static class StraightenGateOwnerFixtures
         ["IMG_4952.JPG"] = "762611c38106f4725f507070a380d802ec0d6b83c5185184775fa3b789c772d1",
         ["IMG_5177.JPG"] = "2e513675ccb3e13e9d438eaa3f36436d636c9a24efb04aa4b94ccdd4592e9232",
         ["IMG_5569.JPG"] = "37874d51732ae60ba53b30122338d88d6484ef9df8e36086b2850d00af2ef57e",
-        ["IMG_6854.HEIC"] = "c59bd4de0e5470e5b358df9cd7712f54fffd60f786acae93462eb7f7b5e6a158"
+        ["IMG_6854.HEIC"] = "c59bd4de0e5470e5b358df9cd7712f54fffd60f786acae93462eb7f7b5e6a158",
+        // STRAIGHTEN D-8 landscapes (owner, 2026-10-02); DSCF8521 and DSCF8525 are report-only.
+        ["DSCF6915.JPG"] = "3d2d463de33a13259d5c2c42cd30ae1e04005e6fe7c2bbdea0aa514ab991fa6b",
+        ["DSCF7257.RAF"] = "2df1988c6294a61f852f25083373be4025c4647ad5a3fe711f60bcb3f609e9c0",
+        ["DSCF7806.JPG"] = "28aab44cb8dab691d8fb4d7c39ba74816e33ac072d97a6bdc73cff22062d4c10",
+        ["DSCF7825.JPG"] = "d2cb4b2daac08175ce83b364b76ff277d33ff10709d594392848b8c0388a77d1",
+        ["DSCF8355.JPG"] = "51677ddc984c5632d5e37eae2d743194b8e7f214c7822c92cf7185b0e1930e81",
+        ["DSCF8477.JPG"] = "02e50e838818d34bc926f758c7fc8a7b2a26757fec2a27f87801cc48f927a52a",
+        ["DSCF8495.JPG"] = "e3222b0b602a65fe6d47fd22bba69f8e8b901b490937eeb0a4ac81383eedca5a",
+        ["DSCF8521.JPG"] = "4796890e55beeabcd278d87b82244ffe2c506bd96ffda1b7f365d0a4960be620",
+        ["DSCF8525.JPG"] = "a48a8e6e2aa0c5dc0088f36449d917261c49890208a67492ed4da7fc60812dc4"
     };
 
     internal static readonly string[] Labels =

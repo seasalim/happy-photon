@@ -1,7 +1,7 @@
 # Run under the workflow measure lease; baseline-role wrappers already hold it.
 param(
     [ValidateSet('G1','G1Blurred','G2','G3','G4','G5','G5Detector','Dump','Owner','OwnerDump')][string]$Gate = 'G5',
-    [ValidateSet('canon-eos-6d-iso-6400.cr2','iphone-14-pro-iso-1000.heic','nikon-d300-colorchecker.nef')]
+    [ValidateSet('canon-eos-6d-iso-6400.cr2','iphone-14-pro-iso-1000.heic','nikon-d300-colorchecker.nef','skyline','fbm')]
     [string]$Fixture = 'canon-eos-6d-iso-6400.cr2',
     [switch]$HorizontalRelabelOnly,
     [ValidateRange(1,5)][int]$Processes = 5,
@@ -100,8 +100,10 @@ if ($Gate -in @('G5', 'G5Detector')) {
     $medians = @($rows | ForEach-Object { $_.values.median })
     $ordered = @($medians | Sort-Object)
     $median = $ordered[[int][Math]::Floor($ordered.Count / 2)]
-    $minimum = if ($Gate -eq 'G5Detector') { 0 } elseif ($Fixture.EndsWith('.heic')) { 15 } else { 22 }
-    $maximum = if ($Gate -eq 'G5Detector') { 50 } elseif ($Fixture.EndsWith('.heic')) { 30 } else { 40 }
+    # WP3's synthetic fallback frames: 55 ms from their own tier (the 30 ms floor was baseline-only).
+    $synthetic = $Fixture -in @('skyline', 'fbm')
+    $minimum = if ($synthetic) { 0 } elseif ($Gate -eq 'G5Detector') { 0 } elseif ($Fixture.EndsWith('.heic')) { 15 } else { 22 }
+    $maximum = if ($synthetic) { 55 } elseif ($Gate -eq 'G5Detector') { $(if ($Fixture.EndsWith('.nef')) { 55 } else { 50 }) } elseif ($Fixture.EndsWith('.heic')) { 30 } else { 40 }
     $valid = $median -ge $minimum -and $median -le $maximum
     Write-Output ('STRAIGHTEN_SUMMARY ' + (@{ fixture = $Fixture; processes = $Processes;
         medians = $medians; median_ms = $median; valid = $valid; qualified_sample_count = ($Processes -eq 5);
