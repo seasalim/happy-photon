@@ -5,7 +5,7 @@
 #   . ./scripts/app-window.ps1
 #   Resize-AppWindow 2222 1272        # client area 2200x1260 at 150% scaling
 #   Send-AppClick 1576 1012; Send-AppKeys 0x50, 0x35   # select a tile, then P and 5
-#   Save-AppShot docs/screenshots/Screenshot_Browse.png
+#   Save-AppShot docs/screenshots/Screenshot_Develop.png
 #
 # Input is posted with PostMessage straight to the window, so it works while the app is
 # in the background. Coordinates are physical client pixels; read them off a capture.

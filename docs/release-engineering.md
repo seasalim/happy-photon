@@ -254,4 +254,6 @@ when a screenshot changes. The before/after photographs under
 `dotnet run --file scripts/generate-site-photos.cs`; rerun it when the
 render pipeline changes enough to alter them. Regenerate the social card with
 `dotnet run --file scripts/generate-social-card.cs`. Pages builds never run the app.
+Public images (README, site, social card, Store listing) show only the valley, canal and night-sky
+fixtures, and only the Develop workspace.
 Upload `packaging/windows/StoreListing/AppTileIcon.png` and the README screenshots to Partner Center at the next release.

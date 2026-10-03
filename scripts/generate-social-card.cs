@@ -14,7 +14,7 @@ if (args.Length > 1)
 
 var root = Path.GetFullPath(args.Length == 1 ? args[0] : Directory.GetCurrentDirectory());
 var iconPath = Path.Combine(root, "Assets", "happy-photon-icon.svg");
-var screenshotPath = Path.Combine(root, "docs", "screenshots", "Screenshot_Browse.png");
+var screenshotPath = Path.Combine(root, "docs", "screenshots", "Screenshot_Develop.png");
 var headingFont = Path.Combine(root, "Assets", "Fonts", "Sora-Bold.ttf");
 var bodyFont = Path.Combine(root, "Assets", "Fonts", "HankenGrotesk-Regular.ttf");
 var tokensPath = Path.Combine(root, "site", "assets", "css", "tokens.css");

@@ -30,12 +30,7 @@ var shots = new (string Source, string Name, EditSettings Edit, (double L, doubl
     {
         Exposure = 1.3, Contrast = 45, Highlights = -10, Shadows = 10, Vibrance = 45, Saturation = 15, Curve = SCurve(0.1),
         Wb = new WhiteBalanceSettings { Mode = WbMode.Custom, Kelvin = 3900, Tint = 6 }
-    }, (0.24, 0.1, 0.76, 0.62)),
-    ("nikon-d300-colorchecker.nef", "colorchecker", new EditSettings
-    {
-        Exposure = 0.35, Contrast = 20, Vibrance = 20, Curve = SCurve(0.04)
-    }, (0.1, 0.16, 0.9, 0.9)),
-
+    }, (0.24, 0.1, 0.76, 0.62))
 };
 
 var service = new ImageExportService(new RenderPipeline(), new RawBaseLoader(), new ExportMetadataService());

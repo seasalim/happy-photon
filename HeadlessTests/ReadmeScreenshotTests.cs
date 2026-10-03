@@ -18,25 +18,18 @@ public sealed class ReadmeScreenshotTests
 
     private const double RenderScaling = 1.5;
 
-    // Committed CC0 assets from Tests/assets, plus CC0 compatibility fixtures that
-    // capture-readme-screenshots.ps1 fetches and verifies into artifacts/compatibility-fixtures.
+    // Committed CC0 assets from Tests/assets; these are the only photographs public images show.
     private static readonly DemoPhoto[] Photos =
     [
         new("canon-eos-350d.cr2", "canal-at-dusk.CR2", 4, ColorLabel.Yellow, ImageFlag.Picked),
         new("canon-eos-6d-iso-6400.cr2", "milky-way.CR2", 5, ColorLabel.Blue, ImageFlag.Picked),
-        new("pentax-k-r.dng", "paddock.DNG", 0, ColorLabel.None, ImageFlag.Rejected),
-        new("panasonic-s9-standard.RW2", "street.RW2", 3, ColorLabel.None, ImageFlag.Unflagged),
-        new("canon-r5m2-raw-apsc.CR3", "tomatoes.CR3", 2, ColorLabel.Red, ImageFlag.Unflagged),
-        new("sony-a9m3-lossy.ARW", "tool-wall.ARW", 3, ColorLabel.None, ImageFlag.Unflagged),
-        new("fuji-xt50-compressed.RAF", "trees.RAF", 4, ColorLabel.Purple, ImageFlag.Unflagged),
         new("fujifilm-x30.raf", "valley.RAF", 5, ColorLabel.Green, ImageFlag.Picked)
     ];
 
     [AvaloniaTheory]
-    [InlineData("readme-browse", false, false)]
-    [InlineData("readme-develop", true, false)]
-    [InlineData("readme-develop-midgray-assess", true, true)]
-    public async Task CaptureReadme(string scene, bool develop, bool assess)
+    [InlineData("readme-develop", false)]
+    [InlineData("readme-develop-midgray-assess", true)]
+    public async Task CaptureReadme(string scene, bool assess)
     {
         Assert.SkipUnless(Environment.GetEnvironmentVariable("HAPPY_PHOTON_README_SHOTS") == "1",
             "Opt in with scripts/capture-readme-screenshots.ps1.");
@@ -46,10 +39,7 @@ public sealed class ReadmeScreenshotTests
         CopyPhotos(demo);
         using var catalog = await fixture.CreateCatalogAsync("catalog");
 
-        if (develop)
-        {
-            await SeedEditsAsync(catalog, Path.Combine(demo, assess ? "canal-at-dusk.CR2" : "valley.RAF"), assess);
-        }
+        await SeedEditsAsync(catalog, Path.Combine(demo, assess ? "canal-at-dusk.CR2" : "valley.RAF"), assess);
 
         await using var vm = fixture.CreateViewModel(catalog);
         await vm.InitializeAsync();
@@ -61,7 +51,6 @@ public sealed class ReadmeScreenshotTests
             ExportTipsSeen = true
         });
         vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        vm.RestoreBrowseThumbnailSize(BrowseThumbnailSize.Large);
         vm.SetRootFolder(demo);
         await TestWaits.UntilAsync(() => vm.Browse.TotalCount == Photos.Length);
         vm.RequestThumbnailRange(0, Photos.Length);
@@ -73,14 +62,11 @@ public sealed class ReadmeScreenshotTests
         vm.SelectedImage.IsSelected = true;
         vm.RefreshSelectedCount();
 
-        if (develop)
-        {
-            vm.SwitchToDevelopCommand.Execute(null);
-            await TestWaits.UntilAsync(() => vm.PreviewImage != null && vm.IsHistoryLoaded &&
-                !vm.IsDevelopPreviewLoading);
-            vm.IsColorAssessmentMode = assess;
-            Assert.NotEmpty(vm.HistoryEntries);
-        }
+        vm.SwitchToDevelopCommand.Execute(null);
+        await TestWaits.UntilAsync(() => vm.PreviewImage != null && vm.IsHistoryLoaded &&
+            !vm.IsDevelopPreviewLoading);
+        vm.IsColorAssessmentMode = assess;
+        Assert.NotEmpty(vm.HistoryEntries);
 
         await TestWaits.UntilAsync(() => vm.SelectedImage.MetadataLoaded && vm.Histogram != null &&
             !vm.IsBackgroundActivityStatusVisible);
@@ -92,23 +78,11 @@ public sealed class ReadmeScreenshotTests
             renderedWindow.SetRenderScaling(RenderScaling);
             renderedWindow.Width = CaptureSize.Width / RenderScaling;
             renderedWindow.Height = CaptureSize.Height / RenderScaling;
-
-            if (!develop)
-            {
-                var workspace = renderedWindow.FindControl<Border>("WorkspaceLeftPanel")!
-                    .GetVisualParent<Grid>()!;
-                workspace.ColumnDefinitions[4].Width = new GridLength(280);
-            }
-
             renderedWindow.UpdateLayout();
-
-            if (develop)
-            {
-                ShowcaseTestHelper.SettleExpanderChevrons(renderedWindow);
-            }
+            ShowcaseTestHelper.SettleExpanderChevrons(renderedWindow);
 
             Assert.Equal(RenderScaling, renderedWindow.RenderScaling);
-            Assert.False(vm.IsBrowseTipsVisible || vm.IsDevelopTipsVisible);
+            Assert.False(vm.IsDevelopTipsVisible);
             Assert.Contains(renderedWindow.GetVisualDescendants().OfType<TextBlock>(),
                 text => text.Text == $"{Photos.Length} photos · 1 selected");
             Assert.All(vm.Browse.AllImages, image => Assert.NotNull(image.Thumbnail));
@@ -117,16 +91,9 @@ public sealed class ReadmeScreenshotTests
 
     private static void CopyPhotos(string demo)
     {
-        var availability = new SourceAvailabilityService();
-
         foreach (var photo in Photos)
         {
-            var committed = GoldenTestPaths.Asset(photo.Source);
-            var path = File.Exists(committed)
-                ? committed
-                : Path.Combine(GoldenTestPaths.RepositoryRoot, "artifacts", "compatibility-fixtures", photo.Source);
-            Assert.Equal(SourceAvailability.AvailableLocally, availability.GetAvailability(path));
-            File.Copy(path, Path.Combine(demo, photo.Name));
+            File.Copy(GoldenTestPaths.Asset(photo.Source), Path.Combine(demo, photo.Name));
         }
     }
 

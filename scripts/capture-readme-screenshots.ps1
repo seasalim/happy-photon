@@ -13,13 +13,6 @@ try {
         throw 'Screenshot build failed.'
     }
 
-    # The Demo folder adds four CC0 compatibility fixtures; fetch verifies or downloads them.
-    & dotnet run --file scripts/fetch-compatibility-fixtures.cs -- `
-        canon-r5m2-raw-apsc fuji-xt50-compressed panasonic-s9-standard sony-a9m3-lossy
-    if ($LASTEXITCODE -ne 0) {
-        throw 'Could not fetch the README demo fixtures.'
-    }
-
     $env:HAPPY_PHOTON_README_SHOTS = '1'
     & dotnet test HeadlessTests/HappyPhoton.Headless.Tests.csproj -c Release --no-build --no-restore `
         --filter 'FullyQualifiedName~ReadmeScreenshotTests' --blame-hang-timeout 90s
@@ -28,7 +21,6 @@ try {
     }
 
     $shots = [ordered]@{
-        'readme-browse' = 'Screenshot_Browse.png'
         'readme-develop' = 'Screenshot_Develop.png'
         'readme-develop-midgray-assess' = 'Screenshot_Develop_MidGray_Assess.png'
     }

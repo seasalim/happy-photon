@@ -116,9 +116,6 @@ assess, or export the physical files separately.
 Online-only photographs carry a cloud badge or placeholder. Select one and choose
 **Download and open** to approve access to that original.
 
-![Happy Photon Browse showing the folder tree, filters, thumbnail grid, and
-assessment controls](screenshots/Screenshot_Browse.png)
-
 ## 2. Cull before you develop
 
 Flags answer **what should happen to this frame?**
