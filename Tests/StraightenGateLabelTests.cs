@@ -93,7 +93,8 @@ public sealed class StraightenGateLabelTests(ITestOutputHelper output)
         view.AutoLevel();
         view.GammaCorrect(2.2);
         view.Depth = 8;
-        var draw = new Drawables().FontPointSize(19);
+        var font = Path.Combine(GoldenTestPaths.RepositoryRoot, "Assets", "Fonts", "HankenGrotesk-Regular.ttf");
+        var draw = new Drawables().Font(font).FontPointSize(19);
 
         for (var i = 0; i < regions.Length; i++)
         {
