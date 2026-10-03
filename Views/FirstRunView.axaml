@@ -29,7 +29,7 @@
                                FontFamily="{StaticResource FontHeading}"
                                FontSize="{StaticResource FontSizeDisplay}"
                                FontWeight="Bold"
-                               Foreground="{StaticResource BrandCyan}"
+                               Foreground="{StaticResource Brand}"
                                TextAlignment="Center"/>
                     <TextBlock Text="A calm, local workspace for browsing and non-destructive photo editing."
                                Classes="dialog-body" Foreground="{DynamicResource TextSecondary}"

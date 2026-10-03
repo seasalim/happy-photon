@@ -31,7 +31,8 @@
     </ControlTheme>
     <!-- Hue is reserved for brand and color-semantic data. -->
     <SolidColorBrush x:Key="BurstChipInk" Color="#0e0e13"/>
-    <Color x:Key="BrandCyanColor">#00f0ff</Color>
+    <!-- The brand colour, muted teal: reserved for the icon and the welcome heading. -->
+    <Color x:Key="BrandColor">#3aa6b9</Color>
     <Color x:Key="LocalMaskColor">#ff24e4</Color>
     <Color x:Key="LuminanceTrackDarkColor">#171717</Color>
     <Color x:Key="LuminanceTrackLightColor">#e7e7e7</Color>
@@ -39,7 +40,7 @@
         <GradientStop Offset="0" Color="{StaticResource LuminanceTrackDarkColor}"/>
         <GradientStop Offset="1" Color="{StaticResource LuminanceTrackLightColor}"/>
     </LinearGradientBrush>
-    <SolidColorBrush x:Key="BrandCyan" Color="{StaticResource BrandCyanColor}"/>
+    <SolidColorBrush x:Key="Brand" Color="{StaticResource BrandColor}"/>
     <Color x:Key="WhiteBalanceCoolColor">#74f7ff</Color>
     <Color x:Key="WhiteBalanceNeutralColor">#9df7b0</Color>
     <Color x:Key="WhiteBalanceWarmColor">#f4ff69</Color>
@@ -148,16 +149,16 @@
             <Color x:Key="SurfaceHighColor">#2a292f</Color>
             <Color x:Key="SurfaceHighestColor">#35343a</Color>
             <Color x:Key="SurfaceBrightColor">#39383e</Color>
-            <Color x:Key="OutlineColor">#849495</Color>
-            <Color x:Key="OutlineVariantColor">#3b494b</Color>
-            <Color x:Key="TextPrimaryColor">#e4e1e9</Color>
-            <Color x:Key="TextSecondaryColor">#b9cacb</Color>
-            <Color x:Key="TextMutedColor">#849495</Color>
-            <Color x:Key="TextDisabledColor">#849495</Color>
+            <Color x:Key="OutlineColor">#919191</Color>
+            <Color x:Key="OutlineVariantColor">#464646</Color>
+            <Color x:Key="TextPrimaryColor">#e2e2e2</Color>
+            <Color x:Key="TextSecondaryColor">#c7c7c7</Color>
+            <Color x:Key="TextMutedColor">#919191</Color>
+            <Color x:Key="TextDisabledColor">#919191</Color>
             <Color x:Key="RawFileBackgroundColor">#1f1f25</Color>
             <Color x:Key="ViewerSurroundColor">#131318</Color>
             <Color x:Key="FullScreenBackdropColor">#000000</Color>
-            <Color x:Key="SelectionSurfaceColor">#4b4a52</Color>
+            <Color x:Key="SelectionSurfaceColor">#4b4b4b</Color>
             <Color x:Key="ControlHoverColor">#353535</Color>
             <Color x:Key="ControlSelectedColor">#4b4b4b</Color>
             <Color x:Key="ControlActiveColor">#e4e4e4</Color>

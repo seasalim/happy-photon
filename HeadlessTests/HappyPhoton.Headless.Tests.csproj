@@ -55,6 +55,8 @@
     <Compile Include="..\Tests\EditAutoSaveRefreshRaceTests.cs" Link="EditAutoSaveRefreshRaceTests.cs" />
     <Compile Include="..\Tests\FirstRunWindowTests.cs" Link="FirstRunWindowTests.cs" />
     <Compile Include="..\Tests\GoldenTestPaths.cs" Link="GoldenTestPaths.cs" />
+    <Compile Include="..\Tests\PrecisionDeltaE.cs" Link="PrecisionDeltaE.cs" />
+    <Compile Include="..\Tests\SrgbLabConverter.cs" Link="SrgbLabConverter.cs" />
     <Compile Include="..\Tests\HelpAboutDialogTests.cs" Link="HelpAboutDialogTests.cs" />
     <Compile Include="..\Tests\ImageFileThumbnailLifetimeTests.cs" Link="ImageFileThumbnailLifetimeTests.cs" />
     <Compile Include="..\Tests\BrowseSelectionMenuTests.cs" Link="BrowseSelectionMenuTests.cs" />

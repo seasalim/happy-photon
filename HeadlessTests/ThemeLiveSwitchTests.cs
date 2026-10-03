@@ -150,13 +150,13 @@ public sealed class ThemeLiveSwitchTests
                 ThemeResourceTests.Brush("TextMuted", ThemeVariant.Dark).Color,
                 ColorOf(presetHeader.Foreground));
             Assert.Equal(Color.Parse("#00f0ff"), ColorOf(burstStripe.Background));
-            Assert.Equal(Color.Parse("#4b4a52"), ColorOf(thumbnail.Background));
+            Assert.Equal(Color.Parse("#4b4b4b"), ColorOf(thumbnail.Background));
             Assert.Equal(
                 ThemeResourceTests.Brush("ActiveImageRing", ThemeVariant.Dark).Color,
                 ColorOf(thumbnail.BorderBrush));
             Assert.Equal(0.32, undo.Opacity);
             Assert.Equal(0.32, reset.Opacity);
-            Assert.Equal(Color.Parse("#849495"), ColorOf(reset.Foreground));
+            Assert.Equal(Color.Parse("#919191"), ColorOf(reset.Foreground));
             AssertBrandSurfaces(
                 brandMark,
                 photonWordmark,

@@ -47,7 +47,7 @@ Store or GitHub action. There are no automatic update requests.
 - Control chrome uses achromatic hover, selection, active and focus states.
 - Browse shows selection by tile tone alone (unselected < hover < selected, at least ΔL\* 8
   apart in both themes) and the active photo by the ring; tiles carry no check badge.
-- Brand cyan is reserved for the icon and welcome heading.
+- The brand colour is reserved for the icon and welcome heading.
 - Semantic color identifies bursts, color labels, mixer bands, white-balance tracks,
   clipping/scope channels, and errors/destructive actions.
 - Reject uses an invariant near-black surface, light glyph and hairline.
@@ -69,7 +69,7 @@ introduce no color cast beside photographs. Semantic colors retain their meaning
 | `ViewerSurround` | Theme-specific photograph surround |
 | `ControlHover`, `ControlSelected`, `ControlActive`, `OnControlActive` | Neutral interaction states |
 | `SystemAccentColor*` | Achromatic Fluent control ramp |
-| `BrandCyan`, `BrandMark` | Brand identity, separate from control accents |
+| `Brand`, `BrandMark` | Brand identity, separate from control accents |
 | `AssessmentGray`, `AssessmentWhite` | Invariant assessment references; never aliases of theme surround |
 
 ## Typography

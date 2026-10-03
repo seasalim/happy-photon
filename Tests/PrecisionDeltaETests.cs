@@ -1,0 +1,63 @@
+using Xunit;
+
+namespace HappyPhoton.Tests;
+
+public sealed class PrecisionDeltaETests
+{
+    [Fact]
+    public void PublishedSrgbMatrix_AgreesWithDerivationAndOracle() =>
+        ColorScienceMatrixAssertions.AssertPublishedAndOracle(
+            PrecisionDeltaE.SrgbToXyzD65,
+            "linear-srgb-d65",
+            2.5e-4);
+
+    // Published supplementary test data from Sharma, Wu, and Dalal (2005).
+    public static TheoryData<PrecisionLab, PrecisionLab, double> SharmaVectors => new()
+    {
+        { new(50, 2.6772, -79.7751), new(50, 0, -82.7485), 2.0425 },
+        { new(50, 3.1571, -77.2803), new(50, 0, -82.7485), 2.8615 },
+        { new(50, 2.8361, -74.0200), new(50, 0, -82.7485), 3.4412 },
+        { new(50, -1.3802, -84.2814), new(50, 0, -82.7485), 1.0000 },
+        { new(50, -1.1848, -84.8006), new(50, 0, -82.7485), 1.0000 },
+        { new(50, -0.9009, -85.5211), new(50, 0, -82.7485), 1.0000 },
+        { new(50, 0, 0), new(50, -1, 2), 2.3669 },
+        { new(50, -1, 2), new(50, 0, 0), 2.3669 },
+        { new(50, 2.49, -0.001), new(50, -2.49, 0.0009), 7.1792 },
+        { new(50, 2.49, -0.001), new(50, -2.49, 0.0010), 7.1792 },
+        { new(50, 2.49, -0.001), new(50, -2.49, 0.0011), 7.2195 },
+        { new(50, -0.001, 2.49), new(50, 0.0009, -2.49), 4.8045 },
+        { new(50, -0.001, 2.49), new(50, 0.0010, -2.49), 4.8045 },
+        { new(50, -0.001, 2.49), new(50, 0.0011, -2.49), 4.7461 },
+        { new(50, 2.5, 0), new(50, 0, -2.5), 4.3065 },
+        { new(50, 2.5, 0), new(73, 25, -18), 27.1492 },
+        { new(50, 2.5, 0), new(61, -5, 29), 22.8977 },
+        { new(50, 2.5, 0), new(56, -27, -3), 31.9030 },
+        { new(50, 2.5, 0), new(58, 24, 15), 19.4535 },
+        { new(50, 2.5, 0), new(50, 3.1736, 0.5854), 1.0000 },
+        { new(50, 2.5, 0), new(50, 3.2972, 0), 1.0000 },
+        { new(50, 2.5, 0), new(50, 1.8634, 0.5757), 1.0000 },
+        { new(50, 2.5, 0), new(50, 3.2592, 0.3350), 1.0000 },
+        { new(60.2574, -34.0099, 36.2677), new(60.4626, -34.1751, 39.4387), 1.2644 },
+        { new(63.0109, -31.0961, -5.8663), new(62.8187, -29.7946, -4.0864), 1.2630 },
+        { new(61.2901, 3.7196, -5.3901), new(61.4292, 2.2480, -4.9620), 1.8731 },
+        { new(35.0831, -44.1164, 3.7933), new(35.0232, -40.0716, 1.5901), 1.8645 },
+        { new(22.7233, 20.0904, -46.6940), new(23.0331, 14.9730, -42.5619), 2.0373 },
+        { new(36.4612, 47.8580, 18.3852), new(36.2715, 50.5065, 21.2231), 1.4146 },
+        { new(90.8027, -2.0831, 1.4410), new(91.1528, -1.6435, 0.0447), 1.4441 },
+        { new(90.9257, -0.5406, -0.9208), new(88.6381, -0.8985, -0.7239), 1.5381 },
+        { new(6.7747, -0.2908, -2.4247), new(5.8714, -0.0985, -2.2286), 0.6377 },
+        { new(2.0776, 0.0795, -1.1350), new(0.9033, -0.0636, -0.5514), 0.9082 }
+    };
+
+    [Theory]
+    [MemberData(nameof(SharmaVectors))]
+    public void Ciede2000_MatchesPublishedReferenceVectors(
+        PrecisionLab first,
+        PrecisionLab second,
+        double expected)
+    {
+        var actual = PrecisionDeltaE.Ciede2000(first, second);
+
+        Assert.InRange(actual, expected - 0.00005, expected + 0.00005);
+    }
+}

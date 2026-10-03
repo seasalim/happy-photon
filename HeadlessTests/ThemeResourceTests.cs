@@ -140,6 +140,19 @@ public sealed class ThemeResourceTests
         }
     }
 
+    [AvaloniaFact]
+    public void Dark_ChromeNeutralsAreStrictlyAchromatic()
+    {
+        foreach (var key in new[]
+        {
+            "Outline", "OutlineVariant", "TextPrimary", "TextSecondary",
+            "TextMuted", "TextDisabled", "SelectionSurface"
+        })
+        {
+            AssertAchromatic(key, Brush(key, ThemeVariant.Dark).Color);
+        }
+    }
+
     // Asserted through the BrandMark resource rather than by opening the asset
     // by name, so the theme dictionary is pinned to an asset of the right
     // character. Checking the rendered pixels rather than a file path also keeps
@@ -149,10 +162,10 @@ public sealed class ThemeResourceTests
     {
         Assert.True(
             HasChroma(HappyPhotonThemes.MidGray),
-            "The Middle Gray brand mark lost its cyan.");
+            "The Middle Gray brand mark lost its colour.");
         Assert.True(
             HasChroma(ThemeVariant.Dark),
-            "The Dark brand mark lost its cyan.");
+            "The Dark brand mark lost its colour.");
     }
 
     private static bool HasChroma(ThemeVariant variant)

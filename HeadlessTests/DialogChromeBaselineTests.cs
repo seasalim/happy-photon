@@ -149,7 +149,7 @@ public sealed class DialogChromeBaselineTests(ITestOutputHelper output)
 
         Assert.True(dialog.IsVisible);
         Assert.Equal(Color.Parse(requestedTheme == "Dark" ? "#1b1b20" : "#3d3d3d"), background);
-        Assert.Equal(Color.Parse(requestedTheme == "Dark" ? "#e4e1e9" : "#ffffff"), foreground);
+        Assert.Equal(Color.Parse(requestedTheme == "Dark" ? "#e2e2e2" : "#ffffff"), foreground);
 
         output.WriteLine($"G5 run={run} dialog={dialog.GetType().Name}; requested={requestedTheme}; " +
             $"actual={dialog.ActualThemeVariant}; open={dialog.IsVisible}; " +
