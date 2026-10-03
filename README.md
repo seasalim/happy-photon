@@ -37,77 +37,45 @@ into three matching workspaces: **Browse**, **Develop**, and **Export**.
 ![Happy Photon Develop in the Middle Gray theme assessing a canal photograph against
 a mid-gray surround and white reference border](docs/screenshots/Screenshot_Develop_MidGray_Assess.png)
 
-## New in 0.2.5
-
-- **Adjust the parts that need it.** Draw a linear gradient across a sky or place a
-  radial mask around a subject. Change Exposure, Temperature, Tint, and Saturation
-  within each mask, and use feathering for smooth transitions.
-- **Place masks precisely.** Drag controls on the photograph or enter numeric
-  geometry. Radial masks can affect the inside or outside of the ellipse; centered
-  placement gives you a quick starting point.
-- **Keep editing tools close.** Crop and Locals sit beneath the histogram, with
-  focused controls for creating, selecting, and adjusting masks.
-- **A Windows download fallback.** The Microsoft Store remains recommended, with an
-  unsigned Windows x64 ZIP available from [GitHub Releases](https://github.com/seasalim/happy-photon/releases)
-  for direct download and manual updates.
-
-Every keyboard shortcut and gesture also has a visible control, so nothing is hidden
-behind a key you have to know.
-
 ## Pro-level processing, Happy Photon simplicity
 
-Happy Photon pairs its fast, three-decision workflow with a deep image engine.
+Happy Photon pairs its three-decision workflow with a deep image engine.
 
-- **Bring your decisions with you.** Import ratings, flags, color labels, and
-  supported crops from Lightroom Classic. Opt-in XMP sidecars keep those decisions
-  portable without rewriting original pixels.
-- **Cull at full size.** Browse Loupe keeps the folder tree and assessment controls
-  close while you navigate, compare, and move into Develop. Lightroom-familiar
-  shortcuts, dense thumbnail rows, monochrome controls, and overlay scrollbars
-  keep attention on the photographs.
-- **Treat a capture as one decision.** J+R groups same-name RAW and JPEG files for
-  shared flags, ratings, and labels; J|R switches between them in Develop without
-  losing your viewport. Compare two to four photographs in sync, and keep up to
-  eight independent, labeled versions of each file for editing and export.
-- **Wide-gamut from input to output.** Images are developed in a 16-bit linear
-  Rec.2020 working space, with perceptual OKLCh color processing and color-managed
-  export to sRGB or Display P3. Windows previews follow the active monitor profile;
-  macOS previews carry sRGB intent into the system compositor.
-- **A RAW pipeline built for real cameras.** Scene-referred AgX tone rendering,
-  measured as-shot white balance, highlight reconstruction, DCP camera profiles,
-  true monochrome RAW support, and lens corrections from embedded prescriptions or
-  the bundled Lensfun database, including distortion, chromatic aberration, and
-  vignetting corrections. Nikon lens identities are recovered from maker notes.
-- **Advanced color and tone controls.** Kelvin and tint, Auto and eyedropper white
-  balance, exposure, highlights, shadows, contrast, saturation, skin-aware vibrance,
-  an eight-band HSL color mixer, and composite plus per-channel RGB tone curves.
-- **Local light and color.** Combine linear and radial masks to brighten a face,
-  darken a sky, or adjust warmth and color in part of the frame. Mask edits stay
-  non-destructive, with undo/redo and the same adjustments carried into export.
-- **Detail and finishing tools.** Capture sharpening that responds at Fit, wavelet
-  luminance and chroma denoising, crop, horizon straightening,
-  vertical and horizontal perspective correction with an alignment grid, vignette,
-  deterministic film grain, and independent screen or print output sharpening.
-- **Scopes that help you make decisions.** Display histogram, luminance waveform, RAW
-  sensor histogram, source-highlight and display-floor clipping overlays, device-true
-  zoom, press-and-hold loupe, synchronized compare and before/after, and an invariant
-  mid-gray assessment surround. Fit views never enlarge a photograph beyond 1:1.
-- **A Develop history built for exploration.** Revisit committed adjustments,
-  rotation, horizon, and crops in a persistent history. Jump to a step, preview it
-  in the Navigator, undo and redo, or clear the steps above a chosen point.
-- **Professional handoff without a detour.** Export JPEG, PNG, WebP, or lossless
-  16-bit TIFF with embedded ICC profiles, normalized EXIF, optional GPS stripping,
-  collision protection, and the same rendering pipeline used by the preview.
-  A dedicated Export workspace proofs the output pixels, keeps selected captures
-  in a filmstrip, and runs the queue while you continue working.
+- **Cull quickly.** Lightroom-familiar shortcuts, a full-size Loupe, synchronized
+  Compare of two to four photos, and RAW+JPEG pairs handled as one capture. Bring
+  ratings, flags, labels, and crops over from Lightroom Classic, and write XMP
+  sidecars when you need them.
+- **Edit a whole shoot.** Sync one photo's settings across a selection, paste
+  chosen groups with Paste Settings, start from built-in looks or your own presets,
+  and keep up to eight versions of each photo.
+- **Wide-gamut color.** A 16-bit linear Rec.2020 working space, perceptual OKLCh
+  processing, and color-managed preview and export to sRGB or Display P3.
+- **A RAW pipeline for real cameras.** AgX tone rendering, highlight
+  reconstruction, DCP camera profiles, monochrome RAW, and lens corrections from
+  embedded data or Lensfun, with a manual lens picker when matching needs help.
+- **Tone and color.** Auto and eyedropper white balance, Whites and Blacks, Texture
+  and Clarity, skin-aware Vibrance, an eight-band HSL mixer, and RGB tone curves.
+- **Local adjustments.** Linear, radial, and brush masks, limited by luminance or
+  hue range, adjust exposure, whites and blacks, white balance, and saturation in
+  part of the frame.
+- **Spot removal.** Heal or clone dust and blemishes, and paste the repairs onto
+  other photos from the same camera.
+- **Geometry and detail.** Crop with Auto straighten, perspective correction,
+  capture sharpening, wavelet noise reduction, vignette, and film grain.
+- **Scopes for decisions.** Histogram, waveform, RAW histogram, clipping overlays,
+  press-and-hold 1:1, before/after, and a mid-gray assessment surround.
+- **Export without a detour.** JPEG, PNG, WebP, or 16-bit TIFF with embedded ICC
+  profiles, proofed in a dedicated Export workspace, with optional watermarks,
+  location stripping, and screen or print sharpening.
 
-Every edit remains non-destructive and is saved automatically. Undo and redo, personal
-presets, versions, hover previews, and copy/paste across a series make the advanced
-controls practical for an entire shoot rather than just one hero frame.
+Every edit is non-destructive, saved automatically, and kept in a browsable history.
+The catalog is backed up weekly and can be restored from Settings. Every shortcut
+and gesture also has a visible control, so nothing hides behind a key you have to know.
 
 ## Supported systems
 
-- Windows x64
+- Windows x64, from the Microsoft Store or as an unsigned ZIP from
+  [GitHub Releases](https://github.com/seasalim/happy-photon/releases)
 - Linux x64
 - macOS 14 or newer on Apple Silicon
 
@@ -117,7 +85,7 @@ open through the same decoder but are not part of the verified set. RAW
 decoding uses the bundled, audited [LibRaw 0.22.2](https://www.libraw.org/news/libraw-0-22-2-release)
 generation, so a listed extension does not guarantee support
 for every camera model or compression variant—especially newer bodies. The
-in-app workflow provides global adjustments plus linear and radial local masks. Lens corrections apply to
+in-app workflow provides global adjustments, linear, radial, and brush masks, and spot removal. Lens corrections apply to
 RAW files only, from embedded prescriptions in a qualified subset of DNG and Fujifilm
 RAF files or from an exact camera and lens match in the bundled Lensfun database. It
 does not currently include layer compositing, HDR output, or custom
