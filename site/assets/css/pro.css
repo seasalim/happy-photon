@@ -46,7 +46,7 @@
 @media (max-width: 980px) {
   .pro-scope-section, .pro-raw-grid, .pro-boundary-grid { grid-template-columns: 1fr; }
   .pro-pipeline { grid-template-columns: 1fr; padding-left: 28px; }
-  .pro-pipeline::before { inset: 0 auto 0 0; width: 3px; height: auto; background: linear-gradient(180deg, #7213ff, #00f0ff 45%, #ffd36b 75%, #ff24e4); }
+  .pro-pipeline::before { inset: 0 auto 0 0; width: 3px; height: auto; background: var(--spectrum-vertical); }
   .pro-pipeline li { min-height: 0; }
   .pro-pipeline b { margin-top: 18px; }
   .pro-scope-shot { order: -1; }

@@ -32,7 +32,7 @@
 .hero-stamp:hover, .hero-stamp:focus-visible { transform: rotate(4deg) scale(1.08); }
 .hero-stamp-face { width: 42px; height: auto; margin: 0 auto -2px; fill: currentColor; }
 .hero-stamp-title { font: 800 0.92rem/1.05 "Sora", sans-serif; letter-spacing: 0.04em; text-transform: uppercase; }
-.hero-stamp-detail { max-width: 112px; margin: 0 auto; color: color-mix(in srgb, var(--on-primary) 72%, var(--primary-container)); font: 600 0.55rem/1.35 "JetBrains Mono", monospace; letter-spacing: 0.06em; text-transform: uppercase; }
+.hero-stamp-detail { max-width: 112px; margin: 0 auto; color: var(--on-primary); font: 600 0.55rem/1.35 "JetBrains Mono", monospace; letter-spacing: 0.06em; text-transform: uppercase; }
 
 /* Trust strip */
 .trust-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-block: 88px 0; color: var(--on-surface); text-decoration: none; }
@@ -44,7 +44,7 @@
 .workflow-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 0; padding: 0; list-style: none; counter-reset: step; }
 .workflow-card { position: relative; display: flex; flex-direction: column; padding: 16px 16px 30px; border: 1px solid var(--outline-variant); border-radius: var(--radius-xl); background: linear-gradient(160deg, var(--surface-container), var(--surface-low)); transition: transform 500ms var(--ease-spring), border-color 300ms ease; }
 .workflow-card:hover { transform: translateY(-6px); border-color: color-mix(in srgb, var(--primary-container) 40%, var(--outline-variant)); }
-.workflow-card.featured-card { border-color: color-mix(in srgb, var(--primary-container) 50%, var(--outline-variant)); box-shadow: var(--shadow-cyan); }
+.workflow-card.featured-card { border-color: color-mix(in srgb, var(--primary-container) 50%, var(--outline-variant)); box-shadow: var(--shadow-brand); }
 .workflow-card > :not(.workflow-visual) { margin-inline: 16px; }
 .workflow-visual { position: relative; aspect-ratio: 16 / 11; overflow: hidden; margin-bottom: 28px; border-radius: calc(var(--radius-xl) - 8px); background: var(--surface-lowest); }
 .step-number { color: var(--primary-fixed-dim); font: 500 0.75rem/1 "JetBrains Mono", monospace; letter-spacing: 0.1em; }
@@ -171,7 +171,7 @@
 .platform-guides-section { border-top: 1px solid var(--outline-variant); background: linear-gradient(180deg, var(--surface-lowest), var(--surface)); }
 .guide-card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
 .guide-card { min-height: 320px; display: flex; flex-direction: column; padding: 32px; border: 1px solid var(--outline-variant); border-radius: var(--radius-xl); background: linear-gradient(160deg, var(--surface-container), var(--surface-low)); color: inherit; text-decoration: none; transition: transform 500ms var(--ease-spring), border-color 300ms ease, box-shadow 300ms ease; }
-.guide-card:hover { border-color: color-mix(in srgb, var(--primary-container) 55%, var(--outline-variant)); box-shadow: var(--shadow-cyan); transform: translateY(-6px); }
+.guide-card:hover { border-color: color-mix(in srgb, var(--primary-container) 55%, var(--outline-variant)); box-shadow: var(--shadow-brand); transform: translateY(-6px); }
 .guide-card-icon { width: 56px; height: 56px; display: grid; place-items: center; margin-bottom: 36px; border-radius: 16px; background: color-mix(in srgb, var(--primary-container) 12%, transparent); color: var(--primary-fixed-dim); }
 .guide-card .card-detail { margin: 0; }
 .guide-card h3 { margin: 12px 0; font-size: 1.45rem; }
@@ -207,7 +207,7 @@
   .bento { grid-template-columns: repeat(2, 1fr); }
   .bento-hero { grid-row: auto; }
   .beam { grid-template-columns: 1fr; padding: 0 0 0 44px; }
-  .beam::before { top: 0; bottom: 0; left: 8px; right: auto; width: 3px; height: auto; background: linear-gradient(180deg, #7213ff, #00f0ff 45%, #ffd36b 75%, #ff24e4); }
+  .beam::before { top: 0; bottom: 0; left: 8px; right: auto; width: 3px; height: auto; background: var(--spectrum-vertical); }
   .beam::after { display: none; }
   .beam li::before { top: 28px; left: -42px; }
   .beam li::after { display: none; }

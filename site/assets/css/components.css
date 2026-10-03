@@ -90,7 +90,7 @@
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
   background: var(--surface-lowest);
-  box-shadow: var(--shadow-deep), var(--shadow-cyan);
+  box-shadow: var(--shadow-deep), var(--shadow-brand);
 }
 .app-shot img { width: 100%; height: auto; }
 .window-bar { height: 38px; display: flex; align-items: center; gap: 7px; padding-inline: 16px; border-bottom: 1px solid var(--outline-variant); background: var(--surface-low); }
