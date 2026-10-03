@@ -27,12 +27,6 @@
 .hero-compare .compare-label { top: auto; bottom: 22px; }
 .photo-credit { margin-top: 20px; color: var(--outline); font: 500 0.72rem/1.6 "JetBrains Mono", monospace; letter-spacing: 0.03em; }
 .photo-credit span { color: var(--primary-fixed-dim); }
-.hero-stamp { position: absolute; z-index: 3; top: -64px; right: -8px; width: 156px; height: 156px; display: grid; place-content: center; gap: 6px; padding: 22px; border-radius: 50%; background: var(--primary-container); color: var(--on-primary); text-decoration: none; text-align: center; transform: rotate(-9deg); box-shadow: 0 0 0 4px var(--surface), 0 0 50px color-mix(in srgb, var(--primary-container) 50%, transparent); transition: transform 300ms var(--ease-spring); }
-.hero-stamp::before { content: ""; position: absolute; inset: 7px; border: 2px dashed color-mix(in srgb, var(--on-primary) 40%, transparent); border-radius: 50%; pointer-events: none; }
-.hero-stamp:hover, .hero-stamp:focus-visible { transform: rotate(4deg) scale(1.08); }
-.hero-stamp-face { width: 42px; height: auto; margin: 0 auto -2px; fill: currentColor; }
-.hero-stamp-title { font: 800 0.92rem/1.05 "Sora", sans-serif; letter-spacing: 0.04em; text-transform: uppercase; }
-.hero-stamp-detail { max-width: 112px; margin: 0 auto; color: var(--on-primary); font: 600 0.55rem/1.35 "JetBrains Mono", monospace; letter-spacing: 0.06em; text-transform: uppercase; }
 
 /* Trust strip */
 .trust-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-block: 88px 0; color: var(--on-surface); text-decoration: none; }
@@ -224,10 +218,6 @@
   .hero-compare, .hero-compare .compare-media { border-radius: var(--radius-lg); }
   .hero-compare .compare-media { aspect-ratio: 4 / 5; }
   .hero-recipe { display: none; }
-  .hero-stamp { top: -54px; right: 4px; width: 116px; height: 116px; padding: 14px; }
-  .hero-stamp-face { width: 30px; }
-  .hero-stamp-title { font-size: 0.72rem; }
-  .hero-stamp-detail { display: none; }
   .compare-label, .hero-compare .compare-label { top: auto; bottom: 12px; font-size: 0.6rem; }
   .compare-label-before { left: 12px; }
   .compare-label-after { right: 12px; }
