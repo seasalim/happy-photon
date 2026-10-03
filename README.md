@@ -1,19 +1,13 @@
 # <img src="Assets/happy-photon-icon.png" alt="Happy Photon icon" width="48" align="absmiddle"> Happy Photon - Photo Editing, Simplified.
 
-### A focused workflow backed by a serious photographic pipeline.
+### A calm workflow backed by a serious photographic pipeline.
 
 Happy Photon is an open-source desktop application for browsing, developing, and
-exporting your photographs. It keeps the workflow approachable without asking you to
-give up wide-gamut color, precise RAW development, or high-quality delivery.
+exporting your photographs.
 
-It was originally built for an audience of one to solve a specific use case:
-a friendly and easy to use application that reduces photo editing overhead to a minimum, and does not require paying any fees.
+It's meant to be a fast, friendly, fun and easy to use application that reduces editing overhead to a minimum.
 
-Photographers who are ready to graduate from complex workflows and regular users who
-never fell into the complexity trap in the first place may appreciate Happy Photon's
-ethos.
-
-Always: originals stay untouched, the catalog stays local, and no account or
+Originals stay untouched, edits are non-destructive, the catalog stays local, and no account or
 subscription is required.
 
 ![Happy Photon Develop view editing a valley landscape with the histogram,
