@@ -122,7 +122,7 @@
                              ToolTip.Tip="Small thumbnails"
                              AutomationProperties.Name="Small thumbnails">
                     <Viewbox><Canvas Width="16" Height="16">
-                        <Path Data="M1 1h3v3H1z M6.5 1h3v3h-3z M12 1h3v3h-3z M1 6.5h3v3H1z M6.5 6.5h3v3h-3z M12 6.5h3v3h-3z M1 12h3v3H1z M6.5 12h3v3h-3z M12 12h3v3h-3z" Fill="Transparent" StrokeThickness="1.4" StrokeJoin="Round"/>
+                        <Path Data="M1.5 1.5h3v3h-3z M6.5 1.5h3v3h-3z M11.5 1.5h3v3h-3z M1.5 6.5h3v3h-3z M6.5 6.5h3v3h-3z M11.5 6.5h3v3h-3z M1.5 11.5h3v3h-3z M6.5 11.5h3v3h-3z M11.5 11.5h3v3h-3z" Fill="Transparent" StrokeThickness="1.4" StrokeJoin="Round"/>
                     </Canvas></Viewbox>
                 </RadioButton>
                 <RadioButton x:Name="MediumThumbnailButton"
@@ -134,7 +134,7 @@
                              ToolTip.Tip="Medium thumbnails"
                              AutomationProperties.Name="Medium thumbnails">
                     <Viewbox><Canvas Width="16" Height="16">
-                        <Path Data="M1 1h6v6H1z M9 1h6v6H9z M1 9h6v6H1z M9 9h6v6H9z" Fill="Transparent" StrokeThickness="1.4" StrokeJoin="Round"/>
+                        <Path Data="M1.5 1.5h5v5h-5z M9.5 1.5h5v5h-5z M1.5 9.5h5v5h-5z M9.5 9.5h5v5h-5z" Fill="Transparent" StrokeThickness="1.4" StrokeJoin="Round"/>
                     </Canvas></Viewbox>
                 </RadioButton>
                 <RadioButton x:Name="LargeThumbnailButton"
@@ -146,7 +146,7 @@
                              ToolTip.Tip="Large thumbnails"
                              AutomationProperties.Name="Large thumbnails">
                     <Viewbox><Canvas Width="16" Height="16">
-                        <Path Data="M1 2h14v5H1z M1 9h14v5H1z" Fill="Transparent" StrokeThickness="1.4" StrokeJoin="Round"/>
+                        <Path Data="M1.5 1.5h13v13h-13z" Fill="Transparent" StrokeThickness="1.4" StrokeJoin="Round"/>
                     </Canvas></Viewbox>
                 </RadioButton>
         </StackPanel>
