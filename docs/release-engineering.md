@@ -243,13 +243,15 @@ Official references:
 ## Website
 
 GitHub Pages deploys the site from `site/` via `.github/workflows/pages.yml`
-(`scripts/build-site.ps1` + `scripts/check-site.ps1`). The committed webp
+(`scripts/build-site.ps1` + `scripts/check-site.ps1`). README screenshots are
+captured with `pwsh scripts/capture-readme-screenshots.ps1` using a temporary
+catalog and CC0 test fixtures. The committed webp
 screenshots under `site/assets/images/` are regenerated from
 `docs/screenshots/` with `dotnet run --file scripts/generate-site-images.cs`
 when a screenshot changes. The before/after photographs under
 `site/assets/images/photos/` are rendered from the CC0 RAW fixtures in
 `Tests/assets` through the app's export pipeline with
 `dotnet run --file scripts/generate-site-photos.cs`; rerun it when the
-render pipeline changes enough to alter them. Pages builds never run the app.
-On Windows, `scripts/app-window.ps1` can capture and drive a running app window in the
-background to retake the screenshots; its header lists usage and caveats.
+render pipeline changes enough to alter them. Regenerate the social card with
+`dotnet run --file scripts/generate-social-card.cs`. Pages builds never run the app.
+Upload `packaging/windows/StoreListing/AppTileIcon.png` and the README screenshots to Partner Center at the next release.
