@@ -10,6 +10,7 @@ public sealed class SyncTransferParityViewModelTests(ITestOutputHelper output)
     [AvaloniaFact]
     public Task G1_Locals() => ReplayDestinationAsync("locals");
 
+    [Trait("Category", "Quarantined")]
     [AvaloniaFact]
     public Task G1_Crop() => ReplayDestinationAsync("crop");
 

@@ -6,6 +6,15 @@
   ],
   "tests": [
     {
+      "fullyQualifiedName": "HappyPhoton.Tests.SyncTransferParityViewModelTests.G1_Crop",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "issue": "https://github.com/seasalim/happy-photon/issues/10",
+      "owner": "@seasalim",
+      "reason": "Owner-directed quarantine after one Windows CI watchdog timeout in SQLite; local and previous CI runs pass. Entry-gate exception and investigation are recorded in the repair issue.",
+      "introducedOn": "2026-10-03",
+      "expiresOn": "2026-11-02"
+    },
+    {
       "fullyQualifiedName": "HappyPhoton.Tests.BeforeAfterSplitHeadlessTests.ToggleRendersAndSynchronizesBeforeWhileAfterStaysLive",
       "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
       "issue": "https://github.com/seasalim/happy-photon/issues/6",
