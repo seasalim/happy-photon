@@ -187,8 +187,11 @@ Never treat the ad-hoc-signed manual Mac build as a public release.
 After the release is complete and its certified Microsoft Store version is live
 on the website, optionally start the next development line in a separate commit.
 Advance both `HappyPhoton.csproj` and the manual `Release` workflow default to
-the same `<next-version>-dev.1` value. Verify the resolved project version and
-the full solution tests without changing the published tag or release assets.
+the same `<next-version>-dev.1` value. For this metadata-only change, verify the
+resolved project version and matching workflow default, check the latest nightly
+result, and run policy checks plus `ReleaseStampingTests` and the guard tests.
+Do not repeat the full suite solely for a development version bump. Keep the
+published tag and release assets unchanged.
 
 ## Microsoft Store package
 
