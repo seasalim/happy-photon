@@ -6,6 +6,15 @@
   ],
   "tests": [
     {
+      "fullyQualifiedName": "HappyPhoton.Tests.SyncTransferParityViewModelTests.G1_Lens",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "issue": "https://github.com/seasalim/happy-photon/issues/12",
+      "owner": "@seasalim",
+      "reason": "Owner-directed quarantine after a Windows CI inactivity timeout with G1_Lens unfinished; unchanged application/test source passed release qualification. Entry-gate exception and investigation are recorded in the repair issue.",
+      "introducedOn": "2026-10-03",
+      "expiresOn": "2026-11-02"
+    },
+    {
       "fullyQualifiedName": "HappyPhoton.Tests.SyncProfileDevelopTests.CopyLoadedIdentitySurvivesNavigationAndUnavailableSourceWithNoSourceOpens",
       "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
       "issue": "https://github.com/seasalim/happy-photon/issues/11",

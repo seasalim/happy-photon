@@ -20,6 +20,7 @@ public sealed class SyncTransferParityViewModelTests(ITestOutputHelper output)
     [AvaloniaFact]
     public Task G1_RawProfile() => ReplayDestinationAsync("raw-profile");
 
+    [Trait("Category", "Quarantined")]
     [AvaloniaFact]
     public Task G1_Lens() => ReplayDestinationAsync("lens");
 
