@@ -23,6 +23,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
+      actions: read
     outputs:
       version: ${{ steps.metadata.outputs.version }}
       source-revision: ${{ steps.metadata.outputs.source-revision }}
@@ -69,6 +70,13 @@ jobs:
           echo "is-tag=$is_tag" >> "$GITHUB_OUTPUT"
           echo "is-prerelease=$is_prerelease" >> "$GITHUB_OUTPUT"
 
+      - name: Require exact-commit CI qualification
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SOURCE_REVISION: ${{ steps.metadata.outputs.source-revision }}
+        run: ./scripts/check-release-ci.ps1 -Repository $env:GITHUB_REPOSITORY -SourceRevision $env:RELEASE_SOURCE_REVISION
+
   windows:
     name: Package Windows x64
     needs: prepare
@@ -88,12 +96,6 @@ jobs:
         run: |
           dotnet restore HappyPhoton.sln --locked-mode -p:ContinuousIntegrationBuild=true
           dotnet restore HappyPhoton.csproj --locked-mode -p:RuntimeIdentifier=win-x64 -p:PublishReadyToRun=true -p:ContinuousIntegrationBuild=true
-      - name: Test
-        run: >
-          dotnet test HappyPhoton.sln
-          --configuration Release
-          --no-restore
-          -p:ContinuousIntegrationBuild=true
       - name: Build Microsoft Store MSIX
         if: needs.prepare.outputs.is-prerelease == 'false'
         shell: pwsh
@@ -170,13 +172,6 @@ jobs:
         run: |
           dotnet restore HappyPhoton.sln --locked-mode -p:ContinuousIntegrationBuild=true
           dotnet restore HappyPhoton.csproj --locked-mode -p:RuntimeIdentifier=linux-x64 -p:PublishReadyToRun=true -p:ContinuousIntegrationBuild=true
-
-      - name: Test
-        run: >
-          dotnet test HappyPhoton.sln
-          --configuration Release
-          --no-restore
-          -p:ContinuousIntegrationBuild=true
 
       - name: Publish
         run: >
@@ -273,13 +268,6 @@ jobs:
         run: |
           dotnet restore HappyPhoton.sln --locked-mode -p:ContinuousIntegrationBuild=true
           dotnet restore HappyPhoton.csproj --locked-mode -p:RuntimeIdentifier=osx-arm64 -p:PublishReadyToRun=true -p:ContinuousIntegrationBuild=true
-
-      - name: Test
-        run: >
-          dotnet test HappyPhoton.sln
-          --configuration Release
-          --no-restore
-          -p:ContinuousIntegrationBuild=true
 
       - name: Validate Apple signing configuration
         if: needs.prepare.outputs.is-tag == 'true'

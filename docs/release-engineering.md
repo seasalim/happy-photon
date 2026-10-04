@@ -59,8 +59,7 @@ the macOS job passes the same values through
 This makes all artifacts from one workflow identify the same source. The
 commit timestamp, rather than workflow wall-clock time, also preserves the
 deterministic Linux archive design when the same commit is rebuilt. Ordinary
-local builds and the release workflow's pre-publish tests intentionally remain
-unstamped.
+local builds and CI tests intentionally remain unstamped.
 
 CI resolves the revision and commit timestamp once per platform job before its
 retained publish. The earlier build and `dotnet test --no-build` use unstamped
@@ -154,6 +153,11 @@ and validation/performance evidence, and only after that review is the
 package committed or integrated.
 
 ## Creating a candidate
+
+Candidate and tagged packaging require the latest main-branch CI run for the
+exact source commit to pass policy and all three platform verification jobs.
+The release workflow records that CI run and reuses its qualification instead
+of repeating the full suites; package validation and launch smoke tests remain.
 
 1. Run CI on the intended commit and review all three platform jobs.
 2. Run the `Release` workflow manually with the intended final version, such
