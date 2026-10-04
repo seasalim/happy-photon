@@ -34,5 +34,18 @@ internal static class StartupTrace
                 Mark("gate-" + viewModel.StartupGateState.ToString().ToLowerInvariant());
             }
         };
+
+        var populated = false;
+        viewModel.Browse.PropertyChanged += (_, args) =>
+        {
+            if (!populated &&
+                args.PropertyName == nameof(BrowseImageState.TotalCount) &&
+                viewModel.Browse.TotalCount > 0)
+            {
+                // The next frame runs after the rest of SetImages and its handlers.
+                populated = true;
+                window.RequestAnimationFrame(_ => Mark("browse-populated"));
+            }
+        };
     }
 }

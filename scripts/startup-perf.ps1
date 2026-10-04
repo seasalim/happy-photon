@@ -9,7 +9,8 @@ param(
 )
 
 # Launches the Release (win-x64-msix profile) publish against an isolated, seeded
-# catalog and records first frame and startup-gate milestones from StartupTrace.
+# catalog and records first frame, startup-gate and first Browse population milestones
+# from StartupTrace.
 # -RuntimeEnvironment runs an A/B without republishing, e.g. @{ DOTNET_ReadyToRun = '0' }.
 # -Cold launches each run from a fresh unbuffered (robocopy /J) copy of the publish.
 
@@ -53,7 +54,9 @@ function Invoke-Launch([string] $Directory, [string] $Trace) {
     $clock = [Diagnostics.Stopwatch]::StartNew()
     try {
         while ($clock.Elapsed.TotalSeconds -lt 60 -and -not $process.HasExited) {
-            if ((Test-Path $Trace) -and (Select-String -Path $Trace -Pattern '^gate-' -Quiet)) { break }
+            # The gate can lift before the first folder load lands; wait for both.
+            if ((Test-Path $Trace) -and (Select-String -Path $Trace -Pattern '^gate-' -Quiet) -and
+                (Select-String -Path $Trace -Pattern '^browse-populated,' -Quiet)) { break }
             Start-Sleep -Milliseconds 50
         }
     } finally {
@@ -94,11 +97,27 @@ $summary = [ordered]@{
     runs = $results
     medians = [ordered]@{}
 }
-foreach ($milestone in @('show', 'first-frame', 'gate-ready')) {
+foreach ($run in $results) {
+    if ($run.Contains('gate-ready') -and $run.Contains('browse-populated')) {
+        $run['gate-to-grid'] = $run['browse-populated'] - $run['gate-ready']
+    }
+}
+foreach ($milestone in @('show', 'first-frame', 'gate-ready', 'browse-populated', 'gate-to-grid')) {
     $values = @($results | Where-Object { $_.Contains($milestone) } | ForEach-Object { $_[$milestone] } | Sort-Object)
     $summary.medians[$milestone] = if ($values.Count) { $values[[int][Math]::Floor($values.Count / 2)] } else { $null }
     Write-Host ("{0,-12} median={1} ms  n={2}" -f $milestone, $summary.medians[$milestone], $values.Count)
 }
+# A launch that misses a milestone would drop out of its median, so it voids the set.
+$required = @('show', 'first-frame', 'gate-ready', 'browse-populated')
+$incomplete = @(for ($run = 0; $run -lt $results.Count; $run++) {
+    if (@($required | Where-Object { -not $results[$run].Contains($_) }).Count) { $run }
+})
+$summary.incompleteRuns = $incomplete
 $summary | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $runDirectory 'result.json')
 Write-Host "Result: $(Join-Path $runDirectory 'result.json')"
+if ($incomplete.Count) {
+    Write-Host "Incomplete runs (missing a milestone): $($incomplete -join ', ')"
+    exit 1
+}
+
 exit 0

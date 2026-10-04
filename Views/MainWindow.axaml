@@ -186,6 +186,7 @@
                                        IsVisible="{Binding IsBrowseMode}"
                                        Images="{Binding Browse.VisibleImages}"
                                        TotalImageCount="{Binding Browse.TotalCount}"
+                                       IsFolderLoading="{Binding IsBrowseFolderLoading}"
                                        EmptyHeadingText="{Binding BrowseEmptyHeading}"
                                        EmptyMessageText="{Binding BrowseEmptyMessage}"
                                        FileTypeFilter="{Binding Browse.FileTypeFilter, Mode=TwoWay}"

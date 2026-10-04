@@ -8,6 +8,9 @@ namespace HappyPhoton.ViewModels;
 public partial class MainWindowViewModel
 {
     [ObservableProperty]
+    private bool _isBrowseFolderLoading;
+
+    [ObservableProperty]
     private bool _currentFolderHasSubfolders;
 
     public string? BrowsingFolderName => RootFolders.FirstOrDefault()?.Name;
@@ -222,6 +225,9 @@ public partial class MainWindowViewModel
     }
 
     partial void OnCurrentFolderHasSubfoldersChanged(bool value) =>
+        NotifyBrowseEmptyStateChanged();
+
+    partial void OnIsBrowseFolderLoadingChanged(bool value) =>
         NotifyBrowseEmptyStateChanged();
 
     private void OnBrowseStateChanged(object? sender, EventArgs e)

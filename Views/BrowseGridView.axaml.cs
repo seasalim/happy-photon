@@ -54,6 +54,9 @@ public partial class BrowseGridView : UserControl
     public static readonly StyledProperty<int> TotalImageCountProperty =
         AvaloniaProperty.Register<BrowseGridView, int>(nameof(TotalImageCount));
 
+    public static readonly StyledProperty<bool> IsFolderLoadingProperty =
+        AvaloniaProperty.Register<BrowseGridView, bool>(nameof(IsFolderLoading));
+
     public static readonly StyledProperty<string> EmptyMessageTextProperty =
         AvaloniaProperty.Register<BrowseGridView, string>(nameof(EmptyMessageText), "Select a folder to view images");
 
@@ -124,6 +127,12 @@ public partial class BrowseGridView : UserControl
     {
         get => GetValue(TotalImageCountProperty);
         set => SetValue(TotalImageCountProperty, value);
+    }
+
+    public bool IsFolderLoading
+    {
+        get => GetValue(IsFolderLoadingProperty);
+        set => SetValue(IsFolderLoadingProperty, value);
     }
 
     public string EmptyMessageText
@@ -232,6 +241,7 @@ public partial class BrowseGridView : UserControl
             }
         }
         else if (change.Property == TotalImageCountProperty ||
+                 change.Property == IsFolderLoadingProperty ||
                  change.Property == EmptyMessageTextProperty ||
                  change.Property == EmptyHeadingTextProperty)
         {
@@ -293,13 +303,14 @@ public partial class BrowseGridView : UserControl
 
     private void UpdateEmptyState()
     {
-        var isEmpty = Images == null || Images.Count == 0;
+        var isEmpty = !IsFolderLoading && (Images == null || Images.Count == 0);
         var isFilteredEmpty = isEmpty && TotalImageCount > 0;
+
         EmptyHeading.Text = EmptyHeadingText;
         EmptyMessage.Text = EmptyMessageText;
         EmptyState.IsVisible = isEmpty && !isFilteredEmpty;
         FilteredEmptyState.IsVisible = isFilteredEmpty;
-        ThumbnailGrid.IsVisible = !isEmpty;
+        ThumbnailGrid.IsVisible = !IsFolderLoading && !isEmpty;
     }
 
     private void OnThumbnailPointerPressed(object? sender, PointerPressedEventArgs e)

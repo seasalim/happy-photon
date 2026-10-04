@@ -16,6 +16,9 @@ Color assessment is session-only composition and never changes output pixels.
 3. Tips never change edits, selection or filters; DESIGN.md owns their presentation.
 4. Shift+wheel over enabled, unlocked sliders steps by `SmallChange`, accumulates fractional deltas, and clamps at both ends (cyclic controls stop one step below the wrapping maximum); each burst renders like a drag and commits one history step, ending before image selection changes.
 
+Browse shows empty states only when no folder load is in flight; its grid and
+both empty panels stay hidden during a load.
+
 ## 2. Develop right panel — target layout (top → bottom)
 
 Crop, Spots and Locals are exclusive tool modes beneath the fixed scope box. Their active

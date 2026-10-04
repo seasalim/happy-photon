@@ -10,23 +10,29 @@ namespace HappyPhoton.ViewModels;
 public partial class MainWindowViewModel
 {
     private readonly Action<Action> _postSelection;
-    private long _activeBaseRefreshRequestId;
+
+    internal Func<string, FolderScanResult>? ScanBrowseFolder { get; set; }
 
     public async Task<int> LoadFolderAsync(string folderPath)
     {
         ClearBatchOffer();
         CancelAdjacentPreviewWarm(true, dropRetained: true);
         var generation = Interlocked.Increment(ref _browseGeneration);
+        IsBrowseFolderLoading = true;
         await CancelXmpReconcileAsync();
+        if (!IsBrowseGenerationCurrent(generation)) return 0;
+
         _xmpIndexedSidecars = [];
         CancelSourceHydration();
         var requestCts = new CancellationTokenSource();
         var previousThumbnailLoad = Interlocked.Exchange(
             ref _thumbnailLoadingCts, requestCts);
+
         if (previousThumbnailLoad != null)
         {
             _ = CancelAsync(previousThumbnailLoad);
         }
+
         var cancellationToken = requestCts.Token;
 
         // Cancel any in-progress preview loading
@@ -40,7 +46,7 @@ public partial class MainWindowViewModel
         {
             var folderContents = await Task.Run(
                 () => (
-                    scan: _folderService.ScanFolder(folderPath),
+                    scan: (ScanBrowseFolder ?? _folderService.ScanFolder)(folderPath),
                     hasSubfolders: _folderTreeService.HasSubfolders(folderPath)),
                 cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
@@ -60,10 +66,12 @@ public partial class MainWindowViewModel
                     imagePaths, cancellationToken),
                 cancellationToken);
             var imageFiles = new List<ImageFile>();
+
             foreach (var source in sourceFiles)
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 var versions = catalogStates[source.FilePath];
+
                 foreach (var state in versions)
                 {
                     var imageFile = state.Version == 1
@@ -82,6 +90,7 @@ public partial class MainWindowViewModel
             ResetThumbnailViewport();
             RecomputeCapturePairs(imageFiles);
             Browse.SetImages(imageFiles);
+            if (IsBrowseGenerationCurrent(generation)) IsBrowseFolderLoading = false;
 
             // Defer first image selection until after UI settles.
             if (Browse.VisibleImages.Count > 0)
@@ -102,6 +111,7 @@ public partial class MainWindowViewModel
             await StartXmpReconcileAsync(generation);
             ReportPendingXmpAssessments(imageFiles);
             StartBurstAnalysisIfRequested();
+
             return generation;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -113,29 +123,39 @@ public partial class MainWindowViewModel
                     ref _thumbnailLoadingCts, null, requestCts);
                 requestCts.Dispose();
             }
+
+            if (!pumpStarted && IsBrowseGenerationCurrent(generation))
+            {
+                CurrentFolderHasSubfolders = false;
+                ResetBurstState();
+                Browse.SetImages(Array.Empty<ImageFile>());
+                IsBrowseFolderLoading = false;
+            }
+
             return 0;
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine(
                 $"Folder load failed for {folderPath}: {ex.Message}");
-            var wasCurrent = false;
+
             if (!pumpStarted)
             {
                 // Before the pump starts, LoadFolderAsync still owns disposal.
-                wasCurrent = ReferenceEquals(
-                    Interlocked.CompareExchange(
-                        ref _thumbnailLoadingCts, null, requestCts),
-                    requestCts);
+                Interlocked.CompareExchange(
+                    ref _thumbnailLoadingCts, null, requestCts);
                 requestCts.Dispose();
             }
-            if (wasCurrent)
+
+            if (!pumpStarted && IsBrowseGenerationCurrent(generation))
             {
                 CurrentFolderHasSubfolders = false;
                 ResetBurstState();
                 Browse.SetImages(Array.Empty<ImageFile>());
+                IsBrowseFolderLoading = false;
                 ShowTransientStatus($"Unable to load folder: {ex.Message}");
             }
+
             return 0;
         }
     }
@@ -397,101 +417,4 @@ public partial class MainWindowViewModel
         _bitmapRetirement.Retire(
             thumbnail,
             () => ReferenceEquals(image.Thumbnail, thumbnail));
-
-    private void OnPreviewRefreshed(object? sender, PreviewRefresh refresh)
-    {
-        var outcome = RenderOutcome.FromRefresh(
-            refresh,
-            refresh.DetachBitmap(),
-            refresh.DetachClippingMask(),
-            refresh.DetachPromotionLease(),
-            PreviewSurfaceIntent.Edited);
-        Dispatcher.UIThread.Post(() =>
-        {
-            // Requested intent belongs to the UI thread. A refresh preserves
-            // whatever intent is current when its outcome is actually applied.
-            outcome.Intent = _requestedPreviewIntent;
-            var image = outcome.Image;
-            ApplyRenderOutcome(outcome);
-            if (image != null)
-            {
-                _ = TrackDirectThumbnailOperation(RefreshThumbnailAsync(image));
-            }
-        });
-    }
-
-    internal void ApplyPreviewRefresh(
-        ImageFile imageFile,
-        Bitmap bitmap,
-        HistogramData histogram,
-        bool hasHistogram,
-        HistogramData? rawHistogram,
-        long generation,
-        ClippingStats? clipping = null,
-        bool? isRawSource = null,
-        DcpProfileState? profileState = null,
-        ClippingMask? clippingMask = null,
-        bool isMonochrome = false)
-    {
-        using var refresh = new PreviewRefresh(
-            imageFile,
-            bitmap,
-            histogram,
-            hasHistogram,
-            generation,
-            rawHistogram,
-            clipping,
-            isRawSource ?? imageFile.IsRaw,
-            profileState,
-            clippingMask,
-            isMonochrome: isMonochrome);
-        ApplyRenderOutcome(RenderOutcome.FromRefresh(
-            refresh,
-            refresh.DetachBitmap(),
-            refresh.DetachClippingMask(),
-            promotionLease: null,
-            _requestedPreviewIntent));
-    }
-
-    private void OnBaseRefreshStateChanged(
-        object? sender,
-        PreviewBaseRefreshState state) =>
-        Dispatcher.UIThread.Post(() => ApplyBaseRefreshState(state));
-
-    internal void ApplyBaseRefreshState(PreviewBaseRefreshState state)
-    {
-        if (!ReferenceEquals(SelectedImage, state.ImageFile))
-        {
-            return;
-        }
-
-        RefreshLocalRangeMask();
-        if (state.IsRefreshing)
-        {
-            Volatile.Write(
-                ref _activeBaseRefreshRequestId,
-                state.RequestId);
-            if (IsWorkspacePreviewSurfaceActive || IsFullScreenMode)
-            {
-                ApplyRenderOutcome(new RenderOutcome
-                {
-                    Image = state.ImageFile,
-                    Generation = Volatile.Read(
-                        ref _latestPreviewOutcomeGeneration),
-                    Class = RenderOutcomeClass.StateDefining,
-                    Intent = _requestedPreviewIntent,
-                    ClippingMode = OutcomeFieldMode.Clear,
-                    RawHistogramMode = OutcomeFieldMode.Clear
-                });
-            }
-            return;
-        }
-
-        if (Volatile.Read(ref _activeBaseRefreshRequestId) ==
-            state.RequestId)
-        {
-            Volatile.Write(ref _activeBaseRefreshRequestId, 0);
-            NotifyRawHistogramState();
-        }
-    }
 }

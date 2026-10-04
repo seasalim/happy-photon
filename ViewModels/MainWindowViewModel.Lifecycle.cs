@@ -25,6 +25,7 @@ public partial class MainWindowViewModel
         DisposeBackgroundActivity();
         await DisposeUpdatesAsync();
         Interlocked.Increment(ref _browseGeneration);
+        IsBrowseFolderLoading = false;
         await CancelXmpReconcileAsync();
         if (_xmpWriter != null)
         {

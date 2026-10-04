@@ -115,6 +115,8 @@ The first frame paints Dark; saved theme loads afterward and dynamic resources r
 the realized tree. The appearance picker stays disabled until settings arrive.
 
 The first-frame startup gate disables workspace controls/shortcuts until `Ready`.
+`Ready` does not wait for the first folder scan; Browse stays blank until the
+folder's images land.
 Invalid/unreadable pointers, including missing catalog folders, require explicit
 quarantine/recovery. Schema mismatch offers journaled **Set aside and retry** for both
 roots unless environment-managed; catalog/settings failures offer Retry, Restore from backup and Close.
