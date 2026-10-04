@@ -81,9 +81,7 @@ generation, so a listed extension does not guarantee support
 for every camera model or compression variant—especially newer bodies. The
 in-app workflow provides global adjustments, linear, radial, and brush masks, and spot removal. Lens corrections apply to
 RAW files only, from embedded prescriptions in a qualified subset of DNG and Fujifilm
-RAF files or from an exact camera and lens match in the bundled Lensfun database. It
-does not currently include layer compositing, HDR output, or custom
-output color profiles.
+RAF files or from an exact camera and lens match in the bundled Lensfun database.
 
 HEIC/HEIF read support is probed at runtime and can vary with the bundled codec.
 Intel macOS is not a supported public target.
