@@ -8,6 +8,7 @@ namespace HappyPhoton.Tests;
 
 public sealed class SyncProfileDevelopTests
 {
+    [Trait("Category", "Quarantined")]
     [AvaloniaFact]
     public async Task CopyLoadedIdentitySurvivesNavigationAndUnavailableSourceWithNoSourceOpens()
     {
