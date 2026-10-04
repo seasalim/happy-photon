@@ -68,7 +68,7 @@ public partial class RawProfilePicker : UserControl
                 [
                     new FilePickerFileType("DNG camera profiles")
                     {
-                        Patterns = ["*.dcp"]
+                        Patterns = ["*.dcp", "*.DCP"]
                     }
                 ]
             });

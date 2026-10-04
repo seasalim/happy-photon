@@ -35,18 +35,20 @@ internal sealed record RawProfileRenderState
 
 internal sealed record RawProfileDiscoveryState(
     bool AdobeScanCompleted,
-    bool ImageProfilesCompleted,
     int AdobeProfilesScanned,
-    int AdobeIdentityMatchCount)
+    int AdobeIdentityMatchCount,
+    string? ChosenFileRejection = null)
 {
     internal static RawProfileDiscoveryState Empty { get; } =
-        new(false, false, 0, 0);
+        new(false, 0, 0);
 }
 
 internal static class RawProfilePickerProjector
 {
-    internal const string NoProfilesMessage =
-        "NO READABLE CAMERA PROFILES FOUND IN ADOBE FOLDERS OR THIS FILE";
+    internal const string NoAdobeProfilesMessage =
+        "NO ADOBE CAMERA PROFILES ON THIS COMPUTER";
+    internal const string OpenToScanMessage =
+        "OPEN TO SCAN LOCAL CAMERA PROFILES";
     internal const string ScanningMessage =
         "SCANNING LOCAL CAMERA PROFILES…";
     internal const string AwaitingIdentityMessage =
@@ -218,26 +220,37 @@ internal static class RawProfilePickerProjector
         RawProfileDiscoveryState discoveryState)
     {
         if (!isRawCapable) return string.Empty;
+
         if (!string.IsNullOrWhiteSpace(transientError))
         {
             return Uppercase(transientError);
         }
+
         if (isLoading) return ScanningMessage;
+
+        var count = profiles.Count(option =>
+            !option.IsBuiltIn && option.CanSelect);
+
+        if (count == 0 && !string.IsNullOrWhiteSpace(discoveryState.ChosenFileRejection))
+        {
+            return Uppercase(discoveryState.ChosenFileRejection);
+        }
+
         if (renderState != null &&
             ProfilesEqual(renderState.Selection, selection) &&
             renderState.State.Status != DcpProfileErrorCode.None)
         {
             return Uppercase(renderState.State.Message ?? RejectionFallback);
         }
+
         if (selected?.Status is { } optionWarning)
         {
             return Uppercase(optionWarning);
         }
 
-        var count = profiles.Count(option =>
-            !option.IsBuiltIn && option.CanSelect);
         var camera = cameraIdentity?.Normalized;
         if (string.IsNullOrWhiteSpace(camera)) camera = "RAW CAMERA";
+
         if (count == 0)
         {
             if (!discoveryState.AdobeScanCompleted)
@@ -247,8 +260,9 @@ internal static class RawProfilePickerProjector
                     ? renderState == null
                         ? AwaitingIdentityMessage
                         : IdentityUnavailableMessage
-                    : ScanningMessage;
+                    : OpenToScanMessage;
             }
+
             if (discoveryState.AdobeIdentityMatchCount == 0 &&
                 discoveryState.AdobeProfilesScanned > 0)
             {
@@ -257,16 +271,15 @@ internal static class RawProfilePickerProjector
                     $"{(scanned == 1 ? "PROFILE" : "PROFILES")} SCANNED · " +
                     $"NONE DECLARE {camera}";
             }
+
             if (discoveryState.AdobeIdentityMatchCount > 0)
             {
                 return "MATCHING LOCAL CAMERA PROFILES COULD NOT BE LOADED";
             }
-            if (discoveryState.ImageProfilesCompleted)
-            {
-                return NoProfilesMessage;
-            }
-            return ScanningMessage;
+
+            return NoAdobeProfilesMessage;
         }
+
         return $"{camera} · {count} {(count == 1 ? "PROFILE" : "PROFILES")}";
     }
 

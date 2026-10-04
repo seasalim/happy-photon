@@ -154,14 +154,13 @@ public partial class MainWindowViewModel
             _rawProfileDiscoveryState = new RawProfileDiscoveryState(
                 result.AdobeScanAttempted ||
                     _rawProfileDiscoveryState.AdobeScanCompleted,
-                includeImageProfiles ||
-                    _rawProfileDiscoveryState.ImageProfilesCompleted,
                 result.AdobeScanAttempted
                     ? result.AdobeProfilesScanned
                     : _rawProfileDiscoveryState.AdobeProfilesScanned,
                 result.AdobeScanAttempted
                     ? result.AdobeIdentityMatchCount
-                    : _rawProfileDiscoveryState.AdobeIdentityMatchCount);
+                    : _rawProfileDiscoveryState.AdobeIdentityMatchCount,
+                _rawProfileDiscoveryState.ChosenFileRejection);
             _isRawProfileDiscoveryActive = false;
             PublishRawProfilePickerState();
 
@@ -209,6 +208,7 @@ public partial class MainWindowViewModel
         var image = SelectedImage;
         if (image == null || !IsColorEditingEnabled || option == null ||
             !option.IsProfile || !option.CanSelect) return;
+
         if (RawProfilePickerProjector.ProfilesEqual(
             image.EditSettings.RawProfile,
             option.Selection)) return;
@@ -262,25 +262,37 @@ public partial class MainWindowViewModel
     {
         var image = SelectedImage;
         if (image == null || !IsColorEditingEnabled) return;
+
         if (string.IsNullOrWhiteSpace(path))
         {
-            _rawProfileTransientError =
-                "The selected camera profile is not available as a local file.";
-            PublishRawProfilePickerState();
+            RejectChosenRawProfile(
+                "The selected camera profile is not available as a local file.");
             return;
         }
+
         var option = ImageService.DcpDiscovery.InspectUserFile(path);
+
         if (!option.CanSelect)
         {
-            _rawProfileTransientError = option.Message ??
-                "The selected file is not a supported camera profile.";
-            PublishRawProfilePickerState();
+            RejectChosenRawProfile(option.Message ??
+                "The selected file is not a supported camera profile.");
             return;
         }
+
         ImageService.InvalidateRawProfiles();
+        _rawProfileDiscoveryState = _rawProfileDiscoveryState with { ChosenFileRejection = null };
         var viewModel = new RawProfileOptionViewModel(option);
         await SelectRawProfileAsync(viewModel);
         await RefreshRawProfilesCoreAsync(confirmSelection: false);
+    }
+
+    private void RejectChosenRawProfile(string reason)
+    {
+        // The transient error answers the choice at once; the kept reason
+        // survives a rescan while no external profile is selectable.
+        _rawProfileTransientError = reason;
+        _rawProfileDiscoveryState = _rawProfileDiscoveryState with { ChosenFileRejection = reason };
+        PublishRawProfilePickerState();
     }
 
     private void WriteRawProfileSelection(
@@ -296,6 +308,7 @@ public partial class MainWindowViewModel
             SupersedeRawProfileDiscovery();
         }
         image.EditSettings.RawProfile = selection?.Clone();
+        _rawProfileDiscoveryState = _rawProfileDiscoveryState with { ChosenFileRejection = null };
         if (selectedOption != null)
         {
             _rawProfileDiscoverySnapshot =

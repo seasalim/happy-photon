@@ -47,7 +47,7 @@ public sealed class RawProfilePickerProjectorTests
             "CANON EOS R5 · 1 PROFILE",
             Project(selection, valid, renderState: null).StatusMessage);
         Assert.Equal(
-            RawProfilePickerProjector.NoProfilesMessage,
+            RawProfilePickerProjector.NoAdobeProfilesMessage,
             Project(
                 selection: null,
                 discovered: [],
@@ -116,7 +116,7 @@ public sealed class RawProfilePickerProjectorTests
     }
 
     [Fact]
-    public void EmptyClaimsRequireTheirBackingDiscoveryScopes()
+    public void EmptyClaimsRequireOnlyTheirBackingAdobeScope()
     {
         Assert.Equal(
             RawProfilePickerProjector.AwaitingIdentityMessage,
@@ -130,12 +130,22 @@ public sealed class RawProfilePickerProjectorTests
                 isLoading: false,
                 transientError: null).StatusMessage);
         Assert.Equal(
-            RawProfilePickerProjector.ScanningMessage,
+            RawProfilePickerProjector.OpenToScanMessage,
             Project(
                 selection: null,
                 discovered: [],
                 renderState: null,
                 discoveryState: RawProfileDiscoveryState.Empty).StatusMessage);
+        Assert.Equal(
+            RawProfilePickerProjector.IdentityUnavailableMessage,
+            RawProfilePickerProjector.Project(true, null, [], cameraIdentity: null,
+                new RawProfileRenderState(null, new DcpProfileState(string.Empty,
+                    DcpProfileErrorCode.None, null, null, null, null)),
+                RawProfileDiscoveryState.Empty, isLoading: false, transientError: null).StatusMessage);
+        Assert.Equal(
+            "MATCHING LOCAL CAMERA PROFILES COULD NOT BE LOADED",
+            Project(null, [], null,
+                discoveryState: Completed(profilesScanned: 1, identityMatches: 1)).StatusMessage);
         Assert.Equal(
             "3 LOCAL CAMERA PROFILES SCANNED · NONE DECLARE CANON EOS R5",
             Project(
@@ -144,25 +154,70 @@ public sealed class RawProfilePickerProjectorTests
                 renderState: null,
                 discoveryState: Completed(
                     profilesScanned: 3,
-                    identityMatches: 0,
-                    imageProfilesCompleted: false)).StatusMessage);
+                    identityMatches: 0)).StatusMessage);
         Assert.Equal(
-            RawProfilePickerProjector.ScanningMessage,
-            Project(
-                selection: null,
-                discovered: [],
-                renderState: null,
-                discoveryState: Completed(
-                    profilesScanned: 0,
-                    identityMatches: 0,
-                    imageProfilesCompleted: false)).StatusMessage);
-        Assert.Equal(
-            RawProfilePickerProjector.NoProfilesMessage,
+            RawProfilePickerProjector.NoAdobeProfilesMessage,
             Project(
                 selection: null,
                 discovered: [],
                 renderState: null,
                 discoveryState: Completed()).StatusMessage);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void IdleDiscoveryStatesNeverReportScanning(bool adobeCompleted)
+    {
+        foreach (var identity in new CameraIdentity?[] { null, new("Canon", "EOS R5") })
+        {
+            foreach (var counts in new[] { (0, 0), (3, 0), (3, 1) })
+            {
+                var state = RawProfilePickerProjector.Project(true, null, [], identity,
+                    renderState: null,
+                    new RawProfileDiscoveryState(adobeCompleted, counts.Item1, counts.Item2),
+                    isLoading: false, transientError: null);
+
+                Assert.NotEqual(RawProfilePickerProjector.ScanningMessage, state.StatusMessage);
+            }
+        }
+    }
+
+    [Fact]
+    public void RejectedChoiceOverridesEmptyClaimsButNotSelectableProfiles()
+    {
+        var discovery = Completed() with { ChosenFileRejection = "Chosen file rejection" };
+
+        Assert.Equal("CHOSEN FILE REJECTION", Project(null, [], null,
+            discoveryState: discovery).StatusMessage);
+        Assert.Equal("CANON EOS R5 · 1 PROFILE", Project(null,
+            [Option(Selection("valid.dcp", 'a'))], null,
+            discoveryState: discovery).StatusMessage);
+        Assert.Equal(RawProfilePickerProjector.ScanningMessage, Project(null, [], null,
+            loading: true, discoveryState: discovery).StatusMessage);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void RejectedChoiceOverridesStaleWarningsBelowLoading(bool hasRenderRejection)
+    {
+        var selection = Selection("missing.dcp", 'a');
+        var warning = Option(selection, DcpProfileErrorCode.Missing, "Option warning");
+        var render = hasRenderRejection
+            ? new RawProfileRenderState(selection,
+                State(selection, DcpProfileErrorCode.Missing, "Render rejection"))
+            : null;
+        var discovery = Completed() with { ChosenFileRejection = "Latest rejection" };
+
+        Assert.Equal("LATEST REJECTION", Project(selection, [warning], render,
+            discoveryState: discovery).StatusMessage);
+        Assert.Equal(RawProfilePickerProjector.ScanningMessage,
+            Project(selection, [warning], render, loading: true,
+                discoveryState: discovery).StatusMessage);
+        Assert.Equal(hasRenderRejection ? "RENDER REJECTION" : "OPTION WARNING",
+            Project(selection, [warning, Option(Selection("valid.dcp", 'b'))], render,
+                discoveryState: discovery).StatusMessage);
     }
 
     private static RawProfilePickerState Project(
@@ -184,10 +239,8 @@ public sealed class RawProfilePickerProjectorTests
 
     private static RawProfileDiscoveryState Completed(
         int profilesScanned = 0,
-        int identityMatches = 0,
-        bool imageProfilesCompleted = true) => new(
+        int identityMatches = 0) => new(
             AdobeScanCompleted: true,
-            imageProfilesCompleted,
             profilesScanned,
             identityMatches);
 

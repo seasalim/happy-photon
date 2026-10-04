@@ -54,7 +54,7 @@ public sealed partial class RawProfileTransitionTests : IDisposable
         var falseEmpty = emissions.Concat([
                 vm.RawProfilePickerState.StatusMessage])
             .Count(status =>
-                status == RawProfilePickerProjector.NoProfilesMessage);
+                status == RawProfilePickerProjector.NoAdobeProfilesMessage);
         Assert.Equal(0, falseEmpty);
     }
 
@@ -247,11 +247,11 @@ public sealed partial class RawProfileTransitionTests : IDisposable
     }
 
     [Fact]
-    public async Task InvalidFileErrorClearsWhenRefreshStarts()
+    public async Task InvalidFileErrorSurvivesRefreshAfterLoadingStatus()
     {
         using var catalog = await _fx.CreateCatalogAsync("recovery");
         await using var vm = CreateViewModel(catalog);
-        vm.SelectedImage = new ImageFile(_fx.Path("recovery.dng"));
+        vm.SelectedImage = new ImageFile(_fx.Path("recovery.cr2"));
         await vm.AddRawProfileFileAsync(_fx.Path("invalid.dcp"));
         Assert.Contains(
             "NOT A SUPPORTED CAMERA PROFILE",
@@ -266,7 +266,7 @@ public sealed partial class RawProfileTransitionTests : IDisposable
 
         gate.Release.TrySetResult();
         await refresh;
-        Assert.DoesNotContain(
+        Assert.Contains(
             "NOT A SUPPORTED CAMERA PROFILE",
             vm.RawProfilePickerState.StatusMessage);
     }

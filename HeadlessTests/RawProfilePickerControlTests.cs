@@ -103,7 +103,7 @@ public sealed class RawProfilePickerControlTests : IDisposable
                 RawProfilePickerProjector.AwaitingIdentityMessage,
                 picker.FindControl<TextBlock>("RawProfileStatusText")!.Text);
             Assert.NotEqual(
-                RawProfilePickerProjector.NoProfilesMessage,
+                RawProfilePickerProjector.NoAdobeProfilesMessage,
                 picker.FindControl<TextBlock>("RawProfileStatusText")!.Text);
         }
         finally

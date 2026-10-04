@@ -104,6 +104,49 @@ public sealed class RawProfileViewModelTests : IDisposable
             vm.RawProfilePickerState.StatusMessage);
         Assert.False(vm.RawProfilePickerState.SelectedOption?.CanSelect);
         AssertBuiltInPresent(vm);
+
+        var rejected = SyntheticDcpFactory.WriteTemporary(_fx.Root,
+            new SyntheticDcpOptions { ExtraLongTag = 52551 }, "rejected.dcp");
+        var reason = vm.ImageService.DcpDiscovery.InspectUserFile(rejected).Message!
+            .ToUpperInvariant();
+        await vm.AddRawProfileFileAsync(rejected);
+        Assert.Equal(reason, vm.RawProfilePickerState.StatusMessage);
+        await vm.OpenRawProfilePickerCommand.ExecuteAsync(null);
+        Assert.Equal(reason, vm.RawProfilePickerState.StatusMessage);
+
+        await vm.AddRawProfileFileAsync(null);
+        const string localFileReason =
+            "THE SELECTED CAMERA PROFILE IS NOT AVAILABLE AS A LOCAL FILE.";
+        Assert.Equal(localFileReason, vm.RawProfilePickerState.StatusMessage);
+        await vm.OpenRawProfilePickerCommand.ExecuteAsync(null);
+        Assert.Equal(localFileReason, vm.RawProfilePickerState.StatusMessage);
+        Assert.False(vm.RawProfilePickerState.SelectedOption?.CanSelect);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ChosenFileRejectionSupersedesTransientDiscoveryError(bool nullPath)
+    {
+        using var catalog = await _fx.CreateCatalogAsync("transient-rejection");
+        await using var vm = CreateViewModel(catalog);
+        vm.SelectedImage = new ImageFile(_fx.Path("transient.cr2"));
+        vm.ImageService.DcpDiscovery.DiscoveryGateAsync = () =>
+            Task.FromException(new IOException("Discovery failed"));
+        await vm.OpenRawProfilePickerCommand.ExecuteAsync(null);
+        Assert.Equal("DISCOVERY FAILED", vm.RawProfilePickerState.StatusMessage);
+
+        var path = nullPath ? null : SyntheticDcpFactory.WriteTemporary(_fx.Root,
+            new SyntheticDcpOptions { ExtraLongTag = 52551 }, "rejected.dcp");
+        var reason = nullPath
+            ? "THE SELECTED CAMERA PROFILE IS NOT AVAILABLE AS A LOCAL FILE."
+            : vm.ImageService.DcpDiscovery.InspectUserFile(path!).Message!.ToUpperInvariant();
+        await vm.AddRawProfileFileAsync(path);
+        Assert.Equal(reason, vm.RawProfilePickerState.StatusMessage);
+
+        vm.ImageService.DcpDiscovery.DiscoveryGateAsync = null;
+        await vm.OpenRawProfilePickerCommand.ExecuteAsync(null);
+        Assert.Equal(reason, vm.RawProfilePickerState.StatusMessage);
     }
 
     [Fact]
@@ -117,6 +160,58 @@ public sealed class RawProfileViewModelTests : IDisposable
 
         Assert.Contains("LOCAL FILE", vm.RawProfilePickerState.StatusMessage);
         Assert.Null(vm.SelectedImage.EditSettings.RawProfile);
+
+        await vm.OpenRawProfilePickerCommand.ExecuteAsync(null);
+
+        Assert.Contains("LOCAL FILE", vm.RawProfilePickerState.StatusMessage);
+        var valid = SyntheticDcpFactory.WriteTemporary(_fx.Root);
+        await vm.AddRawProfileFileAsync(valid);
+        Assert.DoesNotContain("LOCAL FILE", vm.RawProfilePickerState.StatusMessage);
+
+        await vm.AddRawProfileFileAsync(null);
+        vm.SelectedImage = new ImageFile(_fx.Path("next.cr2"));
+        Assert.DoesNotContain("LOCAL FILE", vm.RawProfilePickerState.StatusMessage);
+    }
+
+    [Theory]
+    [InlineData(true,
+        "DCP tag 52551 belongs to an unsupported custom, triple-illuminant, or HDR profile variant.")]
+    [InlineData(false,
+        "Tag 50721 has count 12; expected 9.")]
+    public async Task RejectedAdobeVariantSurvivesReopenAndValidChoiceClearsReason(
+        bool hdr, string reason)
+    {
+        using var catalog = await _fx.CreateCatalogAsync("rejected-variant");
+        await using var vm = CreateViewModel(catalog);
+        vm.SelectedImage = new ImageFile(_fx.Path("variant.cr2"));
+        var options = hdr
+            ? new SyntheticDcpOptions { ExtraLongTag = 52551 }
+            : new SyntheticDcpOptions { ColorMatrix1 = [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1] };
+        var rejected = SyntheticDcpFactory.WriteTemporary(_fx.Root, options, "rejected.dcp");
+        var inspected = vm.ImageService.DcpDiscovery.InspectUserFile(rejected);
+        Assert.Equal(hdr ? DcpProfileErrorCode.UnsupportedVariant :
+            DcpProfileErrorCode.InvalidContainer, inspected.Status);
+        Assert.Equal(reason, inspected.Message);
+
+        await vm.AddRawProfileFileAsync(rejected);
+        Assert.Equal(reason.ToUpperInvariant(), vm.RawProfilePickerState.StatusMessage);
+        await vm.OpenRawProfilePickerCommand.ExecuteAsync(null);
+        Assert.Equal(reason.ToUpperInvariant(), vm.RawProfilePickerState.StatusMessage);
+        Assert.Null(vm.SelectedImage.EditSettings.RawProfile);
+
+        var valid = SyntheticDcpFactory.WriteTemporary(_fx.Root,
+            new SyntheticDcpOptions { Name = "Valid choice" }, "valid.DCP");
+        await vm.AddRawProfileFileAsync(valid);
+        Assert.Equal("Valid choice", vm.RawProfilePickerState.SelectedOption?.Label);
+        Assert.DoesNotContain(reason.ToUpperInvariant(), vm.RawProfilePickerState.StatusMessage);
+
+        await vm.AddRawProfileFileAsync(rejected);
+        Assert.Equal(reason.ToUpperInvariant(), vm.RawProfilePickerState.StatusMessage);
+        Assert.Equal("Valid choice", vm.RawProfilePickerState.SelectedOption?.Label);
+
+        await vm.SelectRawProfileAsync(RawProfileOptionViewModel.BuiltIn());
+        await vm.OpenRawProfilePickerCommand.ExecuteAsync(null);
+        Assert.DoesNotContain(reason.ToUpperInvariant(), vm.RawProfilePickerState.StatusMessage);
     }
 
     [Fact]

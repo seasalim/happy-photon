@@ -168,6 +168,17 @@ scene→display answer). No profiles ship; reads are local-only: a user-picked
 file, the local Adobe `CameraRaw\CameraProfiles` folder, and the DNG's own
 embedded profile tags. The picker presents an honest empty state.
 
+Windows searches `Adobe/CameraRaw/CameraProfiles` under roaming application data
+and common application data.
+macOS searches those application-data roots plus
+`/Library/Application Support/Adobe/CameraRaw/CameraProfiles` and
+`~/Library/Application Support/Adobe/CameraRaw/CameraProfiles`.
+Linux searches `Adobe/CameraRaw/CameraProfiles` under the .NET application-data
+roots (normally `~/.config` and `/usr/share`), then
+`<prefix>/drive_c/ProgramData/Adobe/CameraRaw/CameraProfiles` and
+`<prefix>/drive_c/users/*/AppData/Roaming/Adobe/CameraRaw/CameraProfiles`, where
+`<prefix>` is `$WINEPREFIX` or `~/.wine`; user directories are expanded on each scan.
+
 ### 7.2 Profile inputs
 
 Parsed from the TIFF-IFD profile container: `ProfileName`,

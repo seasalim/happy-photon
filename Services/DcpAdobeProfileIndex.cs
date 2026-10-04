@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Runtime.InteropServices;
 
 namespace HappyPhoton.Services;
 
@@ -103,7 +104,9 @@ internal sealed class DcpAdobeProfileIndex
             AttributesToSkip = 0,
             MatchCasing = MatchCasing.CaseInsensitive
         };
-        foreach (var root in _roots.Distinct(StringComparer.OrdinalIgnoreCase))
+
+        foreach (var root in _roots.SelectMany(ExpandRoot)
+            .Distinct(StringComparer.OrdinalIgnoreCase))
         {
             try
             {
@@ -133,24 +136,75 @@ internal sealed class DcpAdobeProfileIndex
     private static string CacheKey(ExternalProfileFile file) =>
         $"{file.Path}|{file.Length}|{file.LastWriteTicks}";
 
-    internal static IReadOnlyList<string> GetDefaultRoots()
+    private static IReadOnlyList<string> ExpandRoot(string root)
     {
+        var wildcard = root.IndexOf($"{Path.DirectorySeparatorChar}*{Path.DirectorySeparatorChar}",
+            StringComparison.Ordinal);
+        if (wildcard < 0) return [root];
+
+        try
+        {
+            return Directory.GetDirectories(root[..wildcard], "*",
+                new EnumerationOptions { IgnoreInaccessible = true, AttributesToSkip = 0 })
+                .Select(directory => Path.Combine(directory, root[(wildcard + 3)..]))
+                .ToList();
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            return [];
+        }
+    }
+
+    internal static IReadOnlyList<string> GetDefaultRoots() => GetDefaultRoots(
+        OperatingSystem.IsWindows() ? OSPlatform.Windows :
+            OperatingSystem.IsMacOS() ? OSPlatform.OSX : OSPlatform.Linux,
+        Environment.GetEnvironmentVariable,
+        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
+
+    internal static IReadOnlyList<string> GetDefaultRoots(
+        OSPlatform platform,
+        Func<string, string?> environment,
+        string home,
+        Func<Environment.SpecialFolder, string>? folderPath = null)
+    {
+        folderPath ??= Environment.GetFolderPath;
         var roots = new List<string>();
-        var roaming = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        var roaming = folderPath(Environment.SpecialFolder.ApplicationData);
         if (roaming.Length > 0)
             roots.Add(Path.Combine(roaming, "Adobe", "CameraRaw", "CameraProfiles"));
-        var common = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+
+        var common = folderPath(Environment.SpecialFolder.CommonApplicationData);
         if (common.Length > 0)
             roots.Add(Path.Combine(common, "Adobe", "CameraRaw", "CameraProfiles"));
-        if (OperatingSystem.IsMacOS())
+
+        if (platform == OSPlatform.OSX)
         {
             roots.Add(Path.Combine("/Library", "Application Support",
                 "Adobe", "CameraRaw", "CameraProfiles"));
-            var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
             if (home.Length > 0)
                 roots.Add(Path.Combine(home, "Library", "Application Support",
                     "Adobe", "CameraRaw", "CameraProfiles"));
         }
+
+        if (platform == OSPlatform.Linux)
+        {
+            var prefix = environment("WINEPREFIX");
+
+            if (string.IsNullOrEmpty(prefix) && home.Length > 0)
+            {
+                prefix = Path.Combine(home, ".wine");
+            }
+
+            if (!string.IsNullOrEmpty(prefix))
+            {
+                roots.Add(Path.Combine(prefix, "drive_c", "ProgramData",
+                    "Adobe", "CameraRaw", "CameraProfiles"));
+                roots.Add(Path.Combine(prefix, "drive_c", "users", "*", "AppData", "Roaming",
+                    "Adobe", "CameraRaw", "CameraProfiles"));
+            }
+        }
+
         return roots.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 
