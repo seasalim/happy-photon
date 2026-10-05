@@ -1,6 +1,6 @@
 using System.Diagnostics;
-using Avalonia.Controls;
 using HappyPhoton.ViewModels;
+using HappyPhoton.Views;
 
 namespace HappyPhoton;
 
@@ -11,7 +11,7 @@ namespace HappyPhoton;
 /// </summary>
 internal static class StartupTrace
 {
-    internal static void Attach(Window window, MainWindowViewModel viewModel)
+    internal static void Attach(MainWindow window, MainWindowViewModel viewModel)
     {
         if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF")) ||
             Environment.GetEnvironmentVariable("HAPPY_PHOTON_STARTUP_TRACE") is not { Length: > 0 } path)
@@ -25,9 +25,15 @@ internal static class StartupTrace
             $"{milestone},{(DateTime.UtcNow - start).TotalMilliseconds:F1}{Environment.NewLine}");
 
         Mark("show");
-        window.Opened += (_, _) => window.RequestAnimationFrame(_ => Mark("first-frame"));
+        window.FirstFramePainted += () => Mark("first-frame");
         viewModel.PropertyChanged += (_, args) =>
         {
+            if (args.PropertyName == nameof(MainWindowViewModel.IsStartupProgressVisible) &&
+                viewModel.IsStartupProgressVisible)
+            {
+                Mark("gate-shown");
+            }
+
             if (args.PropertyName == nameof(MainWindowViewModel.StartupGateState) &&
                 viewModel.StartupGateState != StartupGateState.Initializing)
             {

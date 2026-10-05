@@ -22,7 +22,8 @@ public sealed class IdleAnimationQuiescenceTests
     public async Task ChromeBars_AreIndeterminateOnlyWhileTheirWorkRuns()
     {
         using var catalog = new CatalogService(NewRoot());
-        var vm = NewViewModel(catalog);
+        var clock = new TestTimeProvider();
+        var vm = new MainWindowViewModel(catalog, baseLoader: null, timeProvider: clock);
         var gate = new StartupGateView { DataContext = vm };
         var develop = new DevelopEditPanel { DataContext = vm };
         var window = new Window
@@ -36,9 +37,19 @@ public sealed class IdleAnimationQuiescenceTests
         var firstRunBar = GetBar(gate, "FirstRunProgressBar");
 
         Assert.True(vm.IsStartupInitializing);
-        Assert.True(startupBar.IsIndeterminate);
+        Assert.False(startupBar.IsIndeterminate);
         Assert.False(firstRunBar.IsIndeterminate);
         Assert.Empty(develop.GetLogicalDescendants().OfType<ProgressBar>());
+
+        vm.MarkFirstFramePainted();
+        clock.Advance(TimeSpan.FromMilliseconds(499));
+        Dispatcher.UIThread.RunJobs();
+        Assert.False(startupBar.IsIndeterminate);
+        Assert.False(Assert.IsType<StackPanel>(startupBar.Parent).IsVisible);
+        clock.Advance(TimeSpan.FromMilliseconds(1));
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(startupBar.IsIndeterminate);
+        Assert.True(Assert.IsType<StackPanel>(startupBar.Parent).IsVisible);
 
         vm.ShowFirstRunWelcome(null);
         vm.IsFirstRunBusy = true;

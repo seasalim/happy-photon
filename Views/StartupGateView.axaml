@@ -39,13 +39,13 @@
                 </Grid>
             </Border>
 
-            <StackPanel IsVisible="{Binding IsStartupInitializing}"
+            <StackPanel IsVisible="{Binding IsStartupProgressVisible}"
                         Width="260"
                         Spacing="16"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center">
                 <ProgressBar Name="StartupProgressBar"
-                             IsIndeterminate="{Binding IsStartupInitializing}"
+                             IsIndeterminate="{Binding IsStartupProgressVisible}"
                              Height="3"/>
                 <TextBlock Text="Opening your local catalog…"
                            Foreground="{DynamicResource TextSecondary}"

@@ -414,11 +414,14 @@ public partial class MainWindowViewModel
 
     partial void OnStartupGateStateChanged(StartupGateState value)
     {
+        _startupProgress.Update(_firstFramePainted && IsStartupInitializing);
+
         if (value == StartupGateState.Ready)
         {
             BackupNoticeLoad = LoadBackupNoticeAsync();
             _ = PresentRestoreNoticeAsync?.Invoke();
         }
+
         NotifyFirstRunPresentationChanged();
         OnPropertyChanged(nameof(IsStartupGateVisible));
         OnPropertyChanged(nameof(IsStartupInitializing));

@@ -57,6 +57,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             availabilityService ?? new SourceAvailabilityService();
         _timeProvider = timeProvider ?? TimeProvider.System;
         _developLoadingMessage = new(_timeProvider, value => IsDevelopLoadingMessageVisible = value);
+        _startupProgress = new(_timeProvider, value => IsStartupProgressVisible = value, 500);
         _displayColorManagementService =
             displayColorManagementService ?? new DisplayColorManagementService();
         _rawRuntimeHealth = rawRuntimeHealth;

@@ -115,6 +115,7 @@ The first frame paints Dark; saved theme loads afterward and dynamic resources r
 the realized tree. The appearance picker stays disabled until settings arrive.
 
 The first-frame startup gate disables workspace controls/shortcuts until `Ready`.
+Its progress text and bar appear only if initializing lasts beyond 500 ms after the first painted frame.
 `Ready` does not wait for the first folder scan; Browse stays blank until the
 folder's images land.
 Invalid/unreadable pointers, including missing catalog folders, require explicit

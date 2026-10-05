@@ -1,6 +1,7 @@
 namespace HappyPhoton.ViewModels;
 
-internal sealed class LoadingMessageGrace(TimeProvider clock, Action<bool> publish) : IDisposable
+internal sealed class LoadingMessageGrace(
+    TimeProvider clock, Action<bool> publish, int graceMilliseconds = LoadingMessageGrace.GraceMilliseconds) : IDisposable
 {
     internal const int GraceMilliseconds = 300;
     private readonly object _sync = new();
@@ -17,7 +18,7 @@ internal sealed class LoadingMessageGrace(TimeProvider clock, Action<bool> publi
             previous?.Cancel();
             previous?.Dispose();
             if (interval == null) { publish(false); return; }
-            _ = DebouncedAction.RunAsync("loading message", TimeSpan.FromMilliseconds(GraceMilliseconds),
+            _ = DebouncedAction.RunAsync("loading message", TimeSpan.FromMilliseconds(graceMilliseconds),
                 interval.Token, () =>
                 {
                     // Serialize publication with invalidation, including dispatcher-less callers.

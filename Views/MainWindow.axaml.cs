@@ -23,6 +23,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        InitializeStartupProgress();
         InitializeWindowChrome();
         InitializeDisplayColorManagement();
         HookFullScreenExitReveal();

@@ -55,7 +55,8 @@ function Invoke-Launch([string] $Directory, [string] $Trace) {
     try {
         while ($clock.Elapsed.TotalSeconds -lt 60 -and -not $process.HasExited) {
             # The gate can lift before the first folder load lands; wait for both.
-            if ((Test-Path $Trace) -and (Select-String -Path $Trace -Pattern '^gate-' -Quiet) -and
+            if ((Test-Path $Trace) -and
+                (Select-String -Path $Trace -Pattern '^gate-(ready|welcome|error|pointerrecovery),' -Quiet) -and
                 (Select-String -Path $Trace -Pattern '^browse-populated,' -Quiet)) { break }
             Start-Sleep -Milliseconds 50
         }
@@ -107,6 +108,11 @@ foreach ($milestone in @('show', 'first-frame', 'gate-ready', 'browse-populated'
     $summary.medians[$milestone] = if ($values.Count) { $values[[int][Math]::Floor($values.Count / 2)] } else { $null }
     Write-Host ("{0,-12} median={1} ms  n={2}" -f $milestone, $summary.medians[$milestone], $values.Count)
 }
+# Progress visibility is optional; only completed gate states end a launch.
+$shown = @($results | Where-Object { $_.Contains('gate-shown') }).Count
+$summary.gateShownCount = $shown
+Write-Host ("gate-shown   launches={0} of {1}" -f $shown, $results.Count)
+
 # A launch that misses a milestone would drop out of its median, so it voids the set.
 $required = @('show', 'first-frame', 'gate-ready', 'browse-populated')
 $incomplete = @(for ($run = 0; $run -lt $results.Count; $run++) {

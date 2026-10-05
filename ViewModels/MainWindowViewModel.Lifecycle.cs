@@ -6,6 +6,7 @@ public partial class MainWindowViewModel
     {
         ClearBatchOffer();
         _developLoadingMessage.Dispose();
+        _startupProgress.Dispose();
         _historyLoadsClosed = true;
         CloseRenderOutcomeChannel();
         await CancelAndDrainAutoStraightenAsync();
