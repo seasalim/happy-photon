@@ -44,7 +44,7 @@ public partial class MainWindowViewModel
     {
         if (StatusMessage != displayed || StartupGateState != StartupGateState.Ready) return;
 
-        if (_oneTimeNotice.IsPending && displayed == DcpHintNotice) _dcpHintPresented = true;
+        if (_oneTimeNotice.IsPending && displayed == DcpHintNoticeText) _dcpHintPresented = true;
 
         await _oneTimeNotice.AcknowledgeAsync(_catalogService, displayed);
     }

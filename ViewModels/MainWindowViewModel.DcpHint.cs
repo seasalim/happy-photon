@@ -8,6 +8,8 @@ public partial class MainWindowViewModel
     internal const string DcpHintPresentedKey = "dcp_hint_presented";
     internal const string DcpHintNotice =
         "Develop › Profile › Get Adobe camera profiles… · no Adobe camera profiles on this computer";
+    internal const string DcpHintLinuxSentence =
+        "On Linux, DNG Converter runs under WINE; Happy Photon reads profiles from your WINE prefix.";
 
     private CancellationTokenSource? _dcpHintProbeCts;
     private DcpAdobeProfilePresence? _dcpHintPresence;
@@ -19,13 +21,20 @@ public partial class MainWindowViewModel
     internal Func<CancellationToken, Task<DcpAdobeProfilePresence>> ProbeDcpProfilesAsync { get; set; } =
         token => DcpAdobeProfileIndex.ProbeAsync(cancellationToken: token);
 
-    internal OSPlatform DcpHintPlatform { get; set; } = OperatingSystem.IsWindows()
-        ? OSPlatform.Windows : OperatingSystem.IsMacOS() ? OSPlatform.OSX : OSPlatform.Linux;
+    internal OSPlatform DcpHintPlatform { get; set; } = OperatingSystem.IsWindows() ? OSPlatform.Windows :
+        OperatingSystem.IsMacOS() ? OSPlatform.OSX :
+        OperatingSystem.IsLinux() ? OSPlatform.Linux : OSPlatform.Create("UNSUPPORTED");
 
     internal Task DcpHintProbe { get; private set; } = Task.CompletedTask;
 
     internal static bool SupportsDcpHint(OSPlatform platform) =>
-        platform == OSPlatform.Windows || platform == OSPlatform.OSX;
+        platform == OSPlatform.Windows || platform == OSPlatform.OSX || platform == OSPlatform.Linux;
+
+    public string? DcpHintLinuxNote => DcpHintPlatform == OSPlatform.Linux ? DcpHintLinuxSentence : null;
+
+    internal string DcpHintNoticeText => DcpHintPlatform == OSPlatform.Linux
+        ? $"{DcpHintNotice} · {DcpHintLinuxSentence}"
+        : DcpHintNotice;
 
     public bool IsDcpHintNoteVisible => IsFirstRunAllSetStep && SupportsDcpHint(DcpHintPlatform) &&
         _dcpHintPresence == DcpAdobeProfilePresence.None && _dcpHintKeyLoaded && !_dcpHintPresented;
@@ -118,7 +127,7 @@ public partial class MainWindowViewModel
         await _dcpHintKeyLoad;
         if (!_dcpHintKeyLoaded || _dcpHintPresented) return;
 
-        _oneTimeNotice.Offer(DcpHintNotice, DcpHintPresentedKey, "true");
+        _oneTimeNotice.Offer(DcpHintNoticeText, DcpHintPresentedKey, "true");
         OnPropertyChanged(nameof(StatusMessage));
     }
 }

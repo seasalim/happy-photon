@@ -15,10 +15,12 @@ public sealed partial class DcpHintTests
     [AvaloniaTheory]
     [InlineData("Windows", true)]
     [InlineData("OSX", true)]
-    [InlineData("Linux", false)]
+    [InlineData("Linux", true)]
+    [InlineData("FreeBSD", false)]
     public async Task PlatformRuleControlsNoteAndNotice(string platform, bool expected)
     {
         var os = OSPlatform.Create(platform.ToUpperInvariant());
+        var linux = os == OSPlatform.Linux;
         Assert.Equal(expected, MainWindowViewModel.SupportsDcpHint(os));
         using var files = new CatalogVmFixture();
         using var catalog = await files.CreateCatalogAsync();
@@ -29,6 +31,7 @@ public sealed partial class DcpHintTests
         vm.FirstRunStep = FirstRunStep.AllSet;
         await vm.DcpHintProbe;
         Assert.Equal(expected, vm.IsDcpHintNoteVisible);
+        Assert.Equal(linux ? MainWindowViewModel.DcpHintLinuxSentence : null, vm.DcpHintLinuxNote);
 
         await using var existing = DcpHintTestScene.Create(catalog);
         existing.DcpHintPlatform = os;
@@ -36,7 +39,8 @@ public sealed partial class DcpHintTests
         await existing.BackupNoticeLoad;
         existing.ImageService.DcpDiscovery.EnumerateAdobeDirectory = _ => [];
         await DcpHintTestScene.ScanAsync(existing, files.Path("image.cr2"));
-        Assert.Equal(expected ? MainWindowViewModel.DcpHintNotice : null, existing.StatusMessage);
+        Assert.Equal(expected ? existing.DcpHintNoticeText : null, existing.StatusMessage);
+        Assert.Equal(linux, existing.DcpHintNoticeText.Contains("WINE", StringComparison.Ordinal));
     }
 
     [AvaloniaFact]
