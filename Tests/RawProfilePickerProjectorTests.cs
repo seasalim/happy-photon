@@ -222,7 +222,7 @@ public sealed class RawProfilePickerProjectorTests
 
     [Theory]
     [InlineData(false, 2, 1, "ADOBE PROFILE FOLDERS COULD NOT BE READ")]
-    [InlineData(true, 0, 0, "NO ADOBE CAMERA PROFILES ON THIS COMPUTER")]
+    [InlineData(true, 0, 0, "NO ADOBE CAMERA PROFILES FOUND")]
     [InlineData(true, 2, 0, "2 ADOBE PROFILE FILES FOUND · NONE READABLE")]
     [InlineData(true, 2, 2, "2 LOCAL CAMERA PROFILES SCANNED · NONE DECLARE CANON EOS R5")]
     public void EmptyScanMessagesAndLinkFollowEvidence(bool complete, int candidates, int readable, string message)

@@ -67,36 +67,40 @@
         <Grid RowDefinitions="Auto,*,Auto">
             <StackPanel Grid.Row="0" IsEnabled="{Binding HasSelectedImage}">
                 <Border x:Name="DevelopScopeBox"
-                        Margin="15,15,15,10"
-                        Padding="5"
-                        Background="{DynamicResource SurfaceLow}"
+                        Padding="10,4,10,8"
+                        Background="{DynamicResource SurfaceHigh}"
+                        BorderBrush="{DynamicResource Divider}" BorderThickness="0,0,0,1"
                         IsEnabled="{Binding HasSelectedImage}">
-                    <StackPanel Spacing="5">
+                    <StackPanel>
                         <views:ScopeSelectorRow x:Name="ScopeSelector"/>
-                        <Grid>
-                            <views:HistogramView
-                                x:Name="DevelopHistogram"
-                                Histogram="{Binding EffectiveHistogram}"
-                                Clipping="{Binding DisplayClippingStats}"
-                                IsClippingOverlayLatched="{Binding IsClippingOverlayLatched}"
-                                ShowDisplayClippingIndicators="True"
-                                IsVisible="{Binding IsHistogramScopeEffective}"/>
-                            <views:WaveformView
-                                x:Name="DevelopWaveform"
-                                Waveform="{Binding EffectiveWaveform}"
-                                IsVisible="{Binding IsWaveformScopeEffective}"/>
-                        </Grid>
-                        <Grid x:Name="ShootingInfoRow" Classes="shooting-info" ColumnDefinitions="*,*,*,*"
-                              IsVisible="{Binding SelectedImage.HasShootingInfo, FallbackValue=False}">
-                            <TextBlock Text="{Binding SelectedImage.IsoDisplay}" TextAlignment="Left"/>
-                            <TextBlock Grid.Column="1" Text="{Binding SelectedImage.FocalLengthDisplay}" TextAlignment="Center"
-                                       ToolTip.Tip="{Binding SelectedImage.ExposureTooltip}"/>
-                            <TextBlock Grid.Column="2" Text="{Binding SelectedImage.ApertureDisplay}" TextAlignment="Center"/>
-                            <TextBlock Grid.Column="3" Text="{Binding SelectedImage.ShutterDisplay}" TextAlignment="Right"/>
-                        </Grid>
+                        <Border x:Name="DevelopScopeWell" Background="{DynamicResource SurfaceLow}" Padding="4">
+                            <StackPanel Spacing="5">
+                                <Grid>
+                                    <views:HistogramView
+                                        x:Name="DevelopHistogram"
+                                        Histogram="{Binding EffectiveHistogram}"
+                                        Clipping="{Binding DisplayClippingStats}"
+                                        IsClippingOverlayLatched="{Binding IsClippingOverlayLatched}"
+                                        ShowDisplayClippingIndicators="True"
+                                        IsVisible="{Binding IsHistogramScopeEffective}"/>
+                                    <views:WaveformView
+                                        x:Name="DevelopWaveform"
+                                        Waveform="{Binding EffectiveWaveform}"
+                                        IsVisible="{Binding IsWaveformScopeEffective}"/>
+                                </Grid>
+                                <Grid x:Name="ShootingInfoRow" Classes="shooting-info" ColumnDefinitions="*,*,*,*"
+                                      IsVisible="{Binding SelectedImage.HasShootingInfo, FallbackValue=False}">
+                                    <TextBlock Text="{Binding SelectedImage.IsoDisplay}" TextAlignment="Left"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding SelectedImage.FocalLengthDisplay}" TextAlignment="Center"
+                                               ToolTip.Tip="{Binding SelectedImage.ExposureTooltip}"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding SelectedImage.ApertureDisplay}" TextAlignment="Center"/>
+                                    <TextBlock Grid.Column="3" Text="{Binding SelectedImage.ShutterDisplay}" TextAlignment="Right"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </Border>
-                <StackPanel x:Name="DevelopToolRow" Orientation="Horizontal" Spacing="4" Margin="15,0,15,8">
+                <StackPanel x:Name="DevelopToolRow" Orientation="Horizontal" Spacing="4" Margin="15,8,15,8">
                     <ToggleButton x:Name="CropModeButton" Classes="icon-button tool crop" Classes.has-content="{Binding HasCommittedCrop}"
                                   IsChecked="{Binding IsCropMode, Mode=OneWay}" Command="{Binding ToggleCropModeCommand}"
                                   AutomationProperties.Name="Crop" ToolTip.Tip="Crop Image (R)" IsEnabled="{Binding CanEditSelectedImage}">
@@ -165,7 +169,7 @@
                           Grid.Row="1"
                           VerticalScrollBarVisibility="Hidden"
                           HorizontalScrollBarVisibility="Disabled">
-                <StackPanel Margin="15,5,15,15"
+                <StackPanel Margin="15,0,15,15"
                             Spacing="4"
                             IsEnabled="{Binding HasSelectedImage}">
                     <views:CropEditSection/>

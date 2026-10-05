@@ -49,7 +49,7 @@ internal sealed record RawProfileDiscoveryState(
 internal static class RawProfilePickerProjector
 {
     internal const string NoAdobeProfilesMessage =
-        "NO ADOBE CAMERA PROFILES ON THIS COMPUTER";
+        "NO ADOBE CAMERA PROFILES FOUND";
     internal const string OpenToScanMessage =
         "OPEN TO SCAN LOCAL CAMERA PROFILES";
     internal const string ScanningMessage =

@@ -28,25 +28,28 @@
             IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
         <Grid RowDefinitions="Auto,*,Auto">
             <Border x:Name="BrowseHistogramBox"
-                    Margin="15,15,15,10"
-                    Padding="5"
-                    Background="{DynamicResource SurfaceLow}"
+                    Padding="10,4,10,8"
+                    Background="{DynamicResource SurfaceHigh}"
+                    BorderBrush="{DynamicResource Divider}" BorderThickness="0,0,0,1"
                     IsEnabled="{Binding HasSelectedImage}">
-                <Grid RowDefinitions="Auto,Auto">
-                    <TextBlock x:Name="BrowseHistogramHeader"
-                               Classes="section-label"
-                               Text="Histogram"
-                               Margin="0,0,0,5"/>
-                    <views:HistogramView x:Name="BrowseHistogram"
-                                         Grid.Row="1"
-                                         Histogram="{Binding Histogram}"/>
-                </Grid>
+                <StackPanel>
+                    <Grid Height="24" Margin="0,0,0,4">
+                        <TextBlock x:Name="BrowseHistogramHeader"
+                                   Classes="section-label"
+                                   Text="Histogram"
+                                   VerticalAlignment="Center"/>
+                    </Grid>
+                    <Border x:Name="BrowseHistogramWell" Background="{DynamicResource SurfaceLow}" Padding="4">
+                        <views:HistogramView x:Name="BrowseHistogram"
+                                             Histogram="{Binding Histogram}"/>
+                    </Border>
+                </StackPanel>
             </Border>
 
             <ScrollViewer Grid.Row="1"
                           VerticalScrollBarVisibility="Hidden"
                           HorizontalScrollBarVisibility="Disabled">
-                <StackPanel Margin="15,5,15,15" Spacing="16">
+                <StackPanel Margin="15,8,15,15" Spacing="16">
                     <TextBlock x:Name="ReviewEmptyHint"
                                Text="Select a photo to review its details"
                                Foreground="{DynamicResource TextMuted}"

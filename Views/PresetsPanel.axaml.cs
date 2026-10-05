@@ -209,7 +209,8 @@ public partial class PresetsPanel : UserControl
             Header = new TextBlock
             {
                 Text = name,
-                Classes = { "preset-header" }
+                Classes = { "preset-header" },
+                VerticalAlignment = VerticalAlignment.Center
             },
             IsExpanded = PresetGroups?.GetValueOrDefault(name, true) ?? true,
             HorizontalAlignment = HorizontalAlignment.Stretch,

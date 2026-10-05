@@ -21,7 +21,7 @@ both empty panels stay hidden during a load.
 
 ## 2. Develop right panel — target layout (top → bottom)
 
-Crop, Spots and Locals are exclusive tool modes beneath the fixed scope box. Their active
+Crop, Spots and Locals are exclusive tool modes beneath the fixed scope band. Their active
 header stays fixed while tool settings enter the top of the scrolling stack. Global
 edits are locked and dimmed while a tool is active; WB picking is inert. Switching
 tools discards unfinished input but retains committed locals. Crop Apply commits the
@@ -120,7 +120,7 @@ grid, Loupe and Compare. Everything below is a Develop-only surface (Browse edit
 surfaces remain a non-goal, §10).
 
 ```
-Scope box              (fixed)
+Scope band             (fixed; Navigator anatomy: title + scope toggles, SurfaceLow well)
 [Crop] [Locals]         (fixed tool row)
 CROP [Cancel] [Apply] / LOCALS [Show Mask] [Close]  (fixed active-tool header)
 Scrolling stack:
@@ -278,9 +278,9 @@ CHARACTERIZATION.md §7.6.
   rerender. A monitor-scaling change recomputes the same geometry and bound.
 - Develop's bar uses fixed width tiers (full, no Zoom slider, then a view-actions menu) before sizing its assessment slot; wheel zoom remains available when the slider is hidden.
 - The Navigator shows Fit or the slider percentage for a selected photo in Develop and Loupe, including when the slider is hidden.
-## 5. Scope box + preview activity
+## 5. Scope band + preview activity
 
-- The fixed scope box selects display histogram, luminance waveform or RAW sensor
+- The fixed scope band selects display histogram, luminance waveform or RAW sensor
   histogram; the histogram plot's geometry, colors and height stay stable. Alternate
   bodies may grow only while selected. Selection is session state; unavailable RAW
   stays disabled with a reason and falls back to display without losing the preference.
@@ -290,7 +290,7 @@ CHARACTERIZATION.md §7.6.
   Display triangles indicate source saturation on the right and finalized floor on
   the left. Missing/stale statistics darken them; unsupported source highlights disable
   only that side. Cached outcomes may supply floor statistics but never RAW/high facts.
-- The scope box has no progress surface. Sustained preview preparation uses §9's status
+- The scope band has no progress surface. Sustained preview preparation uses §9's status
   segment; edits remain enabled and accumulate while the base is acquired.
 
 ## 6. Reset / undo / presets / copy-paste scope
@@ -415,4 +415,4 @@ expansion state persists. A collapsed group with saved edits shows a neutral Tex
 dot. Locals disclosures and Export options may collapse.
 There is no in-app migration/what's-new dialog or Browse editing surface.
 Export has no inclusion, rating, filter or range-selection UI.
-Exposure remains ±3 EV. The scope-box allowances and histogram-plot freeze are in §5.
+Exposure remains ±3 EV. The scope-band allowances and histogram-plot freeze are in §5.

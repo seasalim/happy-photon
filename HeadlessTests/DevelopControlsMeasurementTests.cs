@@ -1,15 +1,18 @@
 using System.Reflection;
 using System.Text.Json;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Shapes;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
@@ -59,12 +62,94 @@ public sealed class DevelopControlsMeasurementTests(ITestOutputHelper output)
             modes,
             clipping
         }));
-        Assert.Equal(20, header.Bounds.Height);
+        Assert.Equal(24, header.Bounds.Height);
         Assert.All(new[] { "HistogramScopeButton", "RawHistogramScopeButton", "WaveformScopeButton" },
             name => Assert.Equal(new Size(20, 20), selector.FindControl<ToggleButton>(name)!.Bounds.Size));
+        var toggles = ((StackPanel)header.Children[1]).Children.Cast<ToggleButton>().ToArray();
+        Assert.Equal(new[] { "HistogramScopeButton", "RawHistogramScopeButton", "WaveformScopeButton" },
+            toggles.Select(toggle => toggle.Name));
+        Assert.Equal(new[] { "Histogram scope", "RAW histogram scope", "Waveform scope" },
+            toggles.Select(AutomationProperties.GetName));
+        Assert.Equal(new object?[] { "Histogram", vm.RawHistogramHint, "Waveform" },
+            toggles.Select(ToolTip.GetTip));
         Assert.All(new[] { "DisplayFloorTriangleTarget", "SceneHighlightTriangleTarget" },
             name => Assert.Equal(new Size(20, 20), histogram.FindControl<ToggleButton>(name)!.Bounds.Size));
+        var canvas = histogram.FindControl<Canvas>("HistogramCanvas")!;
+        Assert.All(new[] { "DisplayFloorTriangle", "SceneHighlightTriangle" }, name => Assert.Equal(0,
+            histogram.FindControl<Avalonia.Controls.Shapes.Path>(name)!.TranslatePoint(default, canvas)!.Value.Y));
         panel.DataContext = null;
+    }
+
+    // FIXES-DEVELOP-WP10: the scope band takes the Navigator's anatomy; left-pane values pinned at d857c05.
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ScopeBandsMatchTheNavigatorBand(bool gray)
+    {
+        await DevelopToolsBaselineTests.WithScene("normal", 1200, 700, async (vm, scope) =>
+        {
+            vm.AppTheme = gray ? AppTheme.MidGray : AppTheme.Dark;
+            // test-teardown-policy: allow - WithScene owns the MainWindow scope.
+            scope.Show();
+            var window = scope.Window!;
+            ShellPaneLimitsTests.Settle(window);
+            var left = window.FindControl<Border>("WorkspaceLeftPanel")!;
+            var navigator = window.FindControl<Border>("NavigatorPanel")!;
+            var navigatorHeader = window.FindControl<Grid>("NavigatorHeader")!;
+            var navigatorTitle = navigatorHeader.Children[0];
+            var navigatorWell = window.FindControl<Border>("NavigatorPreviewFrame")!;
+            var presets = window.GetVisualDescendants().OfType<PresetsPanel>().Single();
+            var panel = window.FindControl<DevelopEditPanel>("DevelopEditPanel")!;
+            var band = panel.FindControl<Border>("DevelopScopeBox")!;
+            var header = (Control)panel.FindControl<ScopeSelectorRow>("ScopeSelector")!.Content!;
+            var title = panel.FindControl<ScopeSelectorRow>("ScopeSelector")!.FindControl<TextBlock>("ScopeTitle")!;
+            var toolRow = panel.FindControl<StackPanel>("DevelopToolRow")!;
+            var scroll = panel.FindControl<ScrollViewer>("DevelopControlsScrollViewer")!;
+            scroll.Offset = default;
+            ShellPaneLimitsTests.Settle(window);
+            var profile = panel.GetVisualDescendants().OfType<DevelopGroup>().First();
+
+            Assert.Equal(new Rect(0, 0, 240, 209), Box(navigator, left));
+            Assert.Equal(new Rect(10, 4, 220, 24), Box(navigatorHeader, left));
+            Assert.Equal(new Rect(10, 32, 220, 168), Box(navigatorWell, left));
+            Assert.Equal(217, Box(presets, left).Y);
+            var shell = (Grid)left.Parent!;
+            var seams = shell.Children.OfType<GridSplitter>()
+                .Select(splitter => splitter.GetVisualDescendants().OfType<Border>().First().TranslatePoint(default, shell)!.Value.X);
+            Assert.Equal(new[] { 240d, 240 + 1 + shell.ColumnDefinitions[2].ActualWidth }, seams);
+
+            foreach (var category in presets.GetVisualDescendants().OfType<Expander>())
+            {
+                var name = category.GetVisualDescendants().OfType<TextBlock>().First(text => text.Classes.Contains("preset-header"));
+                var chevron = category.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Path>().First(path => path.Name == "ExpandCollapseChevron");
+                Assert.Equal(Middle(chevron, category), Middle(name, category), 0.5);
+            }
+
+            AssertBand(window, navigator, navigatorWell, left);
+            Assert.Equal(new Rect(0, 0, panel.Bounds.Width, band.Bounds.Height), Box(band, panel));
+            Assert.Equal(Box(navigatorHeader, left).Y, Box(header, panel).Y);
+            Assert.Equal(24, header.Bounds.Height);
+            Assert.Equal(Top(navigatorTitle, window), Top(title, window));
+            AssertBand(window, band, panel.FindControl<Border>("DevelopScopeWell")!, panel);
+            Assert.Equal(new Thickness(4), panel.FindControl<Border>("DevelopScopeWell")!.Padding);
+            Assert.Equal(Box(band, panel).Bottom + 8, Box(toolRow, panel).Y);
+            Assert.Equal(Box(toolRow, panel).Bottom + 8, Box(profile, panel).Y);
+
+            vm.IsDevelopMode = false;
+            ShellPaneLimitsTests.Settle(window);
+            var review = window.FindControl<BrowseReviewPane>("BrowseReviewPane")!;
+            var browseBand = review.FindControl<Border>("BrowseHistogramBox")!;
+            var browseTitle = review.FindControl<TextBlock>("BrowseHistogramHeader")!;
+            var content = (Control)review.GetVisualDescendants().OfType<ScrollViewer>().First().Content!;
+
+            Assert.Equal(new Rect(0, 0, review.Bounds.Width, browseBand.Bounds.Height), Box(browseBand, review));
+            Assert.Equal(new Rect(10, 4, review.Bounds.Width - 20, 24), Box((Control)browseTitle.Parent!, review));
+            Assert.Equal(Top(navigatorTitle, window), Top(browseTitle, window));
+            AssertBand(window, browseBand, review.FindControl<Border>("BrowseHistogramWell")!, review);
+            Assert.Equal(new Thickness(4), review.FindControl<Border>("BrowseHistogramWell")!.Padding);
+            Assert.Equal(Box(browseBand, review).Bottom + 8, Box(content, review).Y);
+            await Task.CompletedTask;
+        });
     }
 
     [AvaloniaTheory]
@@ -203,6 +288,32 @@ public sealed class DevelopControlsMeasurementTests(ITestOutputHelper output)
         Directory.CreateDirectory(directory);
         frame.Save(System.IO.Path.Combine(directory, scene + ".png"), PngBitmapEncoderOptions.Default);
     }
+
+    private static void AssertBand(Window window, Border band, Border well, Visual host)
+    {
+        Assert.Equal(ThemeColor(window, "SurfaceHigh"), ((ISolidColorBrush)band.Background!).Color);
+        Assert.Equal(ThemeColor(window, "Divider"), ((ISolidColorBrush)band.BorderBrush!).Color);
+        Assert.Equal(new Thickness(0, 0, 0, 1), band.BorderThickness);
+        Assert.Equal(new Thickness(10, 4, 10, 8), band.Padding);
+        Assert.Equal(ThemeColor(window, "SurfaceLow"), ((ISolidColorBrush)well.Background!).Color);
+        Assert.Equal(Box(band, host).Bottom - 9, Box(well, host).Bottom);
+    }
+
+    private static Color ThemeColor(Window window, string key)
+    {
+        Assert.True(window.TryFindResource(key, window.ActualThemeVariant, out var resource));
+
+        return ((ISolidColorBrush)resource!).Color;
+    }
+
+    private static Rect Box(Control control, Visual host) =>
+        new(control.TranslatePoint(default, host)!.Value, control.Bounds.Size);
+
+    private static double Middle(Control control, Visual host) =>
+        control.TranslatePoint(new Point(0, control.Bounds.Height / 2), host)!.Value.Y;
+
+    private static double Top(Visual control, Window window) =>
+        control.TranslatePoint(default, window)!.Value.Y;
 
     private static ThemeVariant Theme(bool gray) =>
         gray ? HappyPhotonThemes.MidGray : ThemeVariant.Dark;

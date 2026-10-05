@@ -85,6 +85,9 @@ The welcome surface uses the named `FontSizeHero` token.
 ## Layout & Spacing
 
 The UI is flat and square; only semantic circles stay round.
+An instrument at the top of a side pane (Navigator, scope) is a `SurfaceHigh` band with a 24 px
+header row, 4 px padding above it and a `Divider` hairline below, holding its content in a `SurfaceLow`
+well; what follows starts one 8 px step below the band.
 
 Panes are mode-specific: Browse owns review; Develop owns editing controls
 (pipeline/UI.md §2). Export layout and behavior live in WORKFLOW.md §6.

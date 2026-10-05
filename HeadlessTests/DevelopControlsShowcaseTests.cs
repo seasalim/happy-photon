@@ -68,6 +68,43 @@ public sealed class DevelopControlsShowcaseTests
         }, sourcePath);
     }
 
+    // FIXES-DEVELOP-WP10 visual review: the top of both side panes against the scope-band mockup.
+    [AvaloniaTheory]
+    [InlineData("develop", false)]
+    [InlineData("develop", true)]
+    [InlineData("browse", false)]
+    [InlineData("browse", true)]
+    public async Task ScopeBandScenes(string mode, bool gray)
+    {
+        var size = new PixelSize(1200, 700);
+        await DevelopToolsBaselineTests.WithScene("normal", size.Width, size.Height, async (vm, scope) =>
+        {
+            vm.AppTheme = gray ? AppTheme.MidGray : AppTheme.Dark;
+            ShootingInfoNavigatorTests.SetExif(vm.SelectedImage!);
+            var histogram = vm.EffectiveHistogram;
+            vm.IsDevelopMode = mode == "develop";
+
+            ShowcaseTestHelper.Capture($"scope-band-{mode}-{(gray ? "gray" : "dark")}", scope, size,
+                gray ? HappyPhotonThemes.MidGray : ThemeVariant.Dark, window =>
+                {
+                    var scroll = window.GetVisualDescendants().OfType<ScrollViewer>()
+                        .SingleOrDefault(control => control.Name == "DevelopControlsScrollViewer");
+
+                    if (scroll is not null) scroll.Offset = default;
+
+                    // The thumbnail histogram needs a decoded thumbnail; show the preview's instead.
+                    if (mode == "browse") vm.Histogram = histogram;
+
+                    Dispatcher.UIThread.RunJobs();
+                    window.UpdateLayout();
+                    var band = mode == "develop" ? "DevelopScopeBox" : "BrowseHistogramBox";
+                    Assert.True(window.GetVisualDescendants().OfType<Border>().Single(border => border.Name == band)
+                        .IsEffectivelyVisible);
+                });
+            await Task.CompletedTask;
+        });
+    }
+
     [AvaloniaTheory]
     [InlineData(false)]
     [InlineData(true)]

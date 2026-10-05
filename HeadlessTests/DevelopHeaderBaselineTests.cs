@@ -67,7 +67,7 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
             Assert.Equal(180, curve.Bounds.Height);
             output.WriteLine($"L2 CurveCanvas: parentBounds={canvas.Bounds}; inCurve={BoundsIn(canvas, curve)}; cardHeight={curve.Bounds.Height}");
             var scroll = panel.FindControl<ScrollViewer>("DevelopControlsScrollViewer")!;
-            Assert.InRange(scroll.Extent.Height, 1538.5, 1539.5);
+            Assert.InRange(scroll.Extent.Height, 1533.5, 1534.5);
             output.WriteLine(FormattableString.Invariant(
                 $"L3 extent={scroll.Extent}; viewport={scroll.Viewport}; spacingSum={spacingSum:R}; normalizationDelta={270 - spacingSum:R}; thresholdWithoutChevronRows={scroll.Extent.Height + 270 - spacingSum:R}"));
             MeasurePresets(window, "Dark");

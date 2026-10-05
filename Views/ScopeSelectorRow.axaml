@@ -18,7 +18,7 @@
         </Style>
     </UserControl.Styles>
 
-    <Grid ColumnDefinitions="*,Auto" Margin="3,2,1,0">
+    <Grid ColumnDefinitions="*,Auto" Height="24" Margin="0,0,0,4">
         <TextBlock x:Name="ScopeTitle"
                    Classes="section-label"
                    Text="{Binding EffectiveScopeTitle}"

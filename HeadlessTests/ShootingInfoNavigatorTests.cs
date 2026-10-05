@@ -31,8 +31,8 @@ public sealed class ShootingInfoNavigatorTests
             var plot = histogram.Bounds;
             var baseHeight = box.Bounds.Height;
             Assert.False(row.IsVisible);
-            // Compact scope: 20px selector + 2px margin + 5px gap + 80px plot + 10px padding.
-            Assert.Equal(117, baseHeight);
+            // Scope band: 4px padding + 24px header + 4px gap + 80px plot in a 4px well + 8px padding + 1px divider.
+            Assert.Equal(129, baseHeight);
             SetExif(vm.SelectedImage!);
             ShellPaneLimitsTests.Settle(window);
             Assert.True(row.IsVisible);
