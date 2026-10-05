@@ -1,6 +1,10 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="using:HappyPhoton.Views">
+    <Style Selector="views|ControlBarLayout :is(Button).compact-button, views|ControlBarLayout :is(Button).icon-button, views|ControlBarLayout Button.assessment, views|ControlBarLayout Button.rating-star, views|ControlBarLayout Button#ColorLabelButton, views|ControlBarLayout Border#CompactColorLabel">
+        <Setter Property="ToolTip.Placement" Value="Top"/>
+        <Setter Property="ToolTip.VerticalOffset" Value="0"/>
+    </Style>
     <Style Selector="ListBox.segmented">
         <Setter Property="Height" Value="24"/>
         <Setter Property="Padding" Value="2"/>
