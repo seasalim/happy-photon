@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Final two tests captured from run 37335031242 attempt 1. -->
+<TestSequence>
+  <Test Name="HappyPhoton.Tests.SyncTransferParityViewModelTests.DevelopPasteConfirmationNamesOnlyPhotoSpecificEdits" DisplayName="HappyPhoton.Tests.SyncTransferParityViewModelTests.DevelopPasteConfirmationNamesOnlyPhotoSpecificEdits(pasteLocals: True, expected: &quot;Pasted settings · replaced Locals&quot;)" Source="D:\a\happy-photon\happy-photon\HeadlessTests\bin\Release\net10.0\HappyPhoton.Headless.Tests.dll" Completed="True" />
+  <Test Name="HappyPhoton.Tests.SyncTransferParityViewModelTests.G1_RawProfile" DisplayName="HappyPhoton.Tests.SyncTransferParityViewModelTests.G1_RawProfile" Source="D:\a\happy-photon\happy-photon\HeadlessTests\bin\Release\net10.0\HappyPhoton.Headless.Tests.dll" Completed="False" />
+</TestSequence>

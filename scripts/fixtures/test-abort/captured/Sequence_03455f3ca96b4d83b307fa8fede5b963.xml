@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Final two tests captured from run 37335031242 attempt 1. -->
+<TestSequence>
+  <Test Name="HappyPhoton.Tests.PreviewDisposalRaceTests.DisposeAsync_WaitsForAcceptedCachedPreviewRead" DisplayName="HappyPhoton.Tests.PreviewDisposalRaceTests.DisposeAsync_WaitsForAcceptedCachedPreviewRead" Source="D:\a\happy-photon\happy-photon\Tests\bin\Release\net10.0\HappyPhoton.Tests.dll" Completed="True" />
+  <Test Name="HappyPhoton.Tests.SyncTransferBatchBaselineTests.G1_UndoRestoresFiveHundredDocumentsAndHistories" DisplayName="HappyPhoton.Tests.SyncTransferBatchBaselineTests.G1_UndoRestoresFiveHundredDocumentsAndHistories(sync: False)" Source="D:\a\happy-photon\happy-photon\Tests\bin\Release\net10.0\HappyPhoton.Tests.dll" Completed="False" />
+</TestSequence>
