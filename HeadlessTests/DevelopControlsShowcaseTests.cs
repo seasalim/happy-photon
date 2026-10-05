@@ -142,7 +142,7 @@ public sealed class DevelopControlsShowcaseTests
 
                 Assert.All(panel.GetVisualDescendants().OfType<Button>()
                     .Where(button => button is not CheckBox && button.Name != "ExpanderHeader"), button =>
-                    Assert.True(button.Classes.Any(name => name is "compact-button" or "quiet-button" or "icon-button"),
+                    Assert.True(button.Classes.Any(name => name is "compact-button" or "quiet-button" or "icon-button" or "link-button"),
                         $"{button.Name} must use a shared button class."));
 
                 if (mode is "curve" or "lower" or "collapsed" or "optics" or "mixer")
