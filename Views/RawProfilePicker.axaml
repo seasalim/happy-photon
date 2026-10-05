@@ -36,11 +36,11 @@
         </Style>
     </UserControl.Styles>
 
-    <StackPanel>
+    <StackPanel Margin="0,0,0,8">
         <Grid Classes="raw-profile-row"
               ColumnDefinitions="*,Auto"
               IsEnabled="{Binding RawProfilePickerState.IsVisible}"
-              Margin="0,0,0,2">
+              Margin="0,0,0,5">
             <ComboBox x:Name="RawProfileComboBox"
                       Grid.Column="0"
                       Classes="edit-dropdown"
@@ -97,8 +97,11 @@
             </ComboBox>
             <Border Grid.Column="1"
                     Classes="raw-chip"
-                    Margin="6,0,0,0">
-                <TextBlock Text="RAW"/>
+                    Margin="6,0,0,0"
+                    Padding="8,0"
+                    VerticalAlignment="Stretch">
+                <TextBlock Text="RAW"
+                           VerticalAlignment="Center"/>
             </Border>
         </Grid>
         <TextBlock x:Name="RawProfileStatusText"

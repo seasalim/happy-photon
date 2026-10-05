@@ -84,8 +84,8 @@ public sealed class FirstRunCardWidthBaselineTests(ITestOutputHelper output)
                     {
                         Assert.Equal("Start browsing", button.Content);
                         Assert.Equal(new[] { "quiet-button", "accent" }, button.Classes.Where(name => !name.StartsWith(':')));
-                        Assert.Single(panel.GetLogicalDescendants().OfType<Button>()
-                            .Where(candidate => !candidate.Classes.Contains("link-button")));
+                        Assert.Single(panel.GetLogicalDescendants().OfType<Button>(),
+                            candidate => !candidate.Classes.Contains("link-button"));
                     }
 
                     if (step == FirstRunStep.Lightroom)
