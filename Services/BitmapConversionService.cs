@@ -133,7 +133,7 @@ public static class BitmapConversionService
     public static byte[] CreateEncodedSnapshot(Bitmap bitmap)
     {
         using var stream = new MemoryStream();
-        bitmap.Save(stream);
+        bitmap.Save(stream, PngBitmapEncoderOptions.Default);
         return stream.ToArray();
     }
 

@@ -1,3 +1,4 @@
+using Avalonia.Media.Imaging;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using ImageMagick;
@@ -28,7 +29,7 @@ public sealed partial class ViewportRestingPreviewTests
             _image, settings, 120, identity!, CancellationToken.None);
         Assert.NotNull(resting);
         using var stream = new MemoryStream();
-        resting.Bitmap.Save(stream);
+        resting.Bitmap.Save(stream, PngBitmapEncoderOptions.Default);
         stream.Position = 0;
         using var actual = new MagickImage(stream);
         // Same large pixels and metadata as CountingPairLoader's retained base.

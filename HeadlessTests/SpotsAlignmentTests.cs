@@ -82,7 +82,7 @@ public sealed class SpotsAlignmentTests
         {
             var bitmap = vm.PreviewImage!;
             using var stream = new MemoryStream();
-            bitmap.Save(stream);
+            bitmap.Save(stream, PngBitmapEncoderOptions.Default);
             stream.Position = 0;
             using var pixels = new MagickImage(stream);
             using var data = pixels.GetPixels();

@@ -87,7 +87,7 @@ public sealed class BatchUndoShowcaseTests
                 Directory.CreateDirectory(directory);
                 var suffix = width == 800 ? "-800x500" : "";
                 frame.Save(Path.Combine(directory,
-                    $"syncsettings-8-{(restored ? "restored" : "offered")}-{(gray ? "gray" : "dark")}{suffix}.png"));
+                    $"syncsettings-8-{(restored ? "restored" : "offered")}-{(gray ? "gray" : "dark")}{suffix}.png"), PngBitmapEncoderOptions.Default);
             }
             finally
             {

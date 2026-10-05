@@ -203,7 +203,7 @@ public sealed class DevelopControlsShowcaseTests
                 Directory.CreateDirectory(directory);
                 Assert.Equal(new PixelSize(width, 660), frame.PixelSize);
                 frame.Save(Path.Combine(directory,
-                    $"06-develop-crop-wp7-{width}-{(gray ? "gray" : "dark")}-{(locked ? "locked" : "unlocked")}.png"));
+                    $"06-develop-crop-wp7-{width}-{(gray ? "gray" : "dark")}-{(locked ? "locked" : "unlocked")}.png"), PngBitmapEncoderOptions.Default);
                 var position = toggle.TranslatePoint(new Point(12, 12), window)!.Value;
                 window.MouseMove(position);
                 window.MouseDown(position, MouseButton.Left);

@@ -135,7 +135,7 @@ public sealed class SyncSettingsShowcaseTests
                 Assert.NotNull(frame);
                 var directory = Path.Combine(GoldenTestPaths.RepositoryRoot, "artifacts", "shots");
                 Directory.CreateDirectory(directory);
-                frame.Save(Path.Combine(directory, $"syncsettings-{scene}-{(gray ? "gray" : "dark")}.png"));
+                frame.Save(Path.Combine(directory, $"syncsettings-{scene}-{(gray ? "gray" : "dark")}.png"), PngBitmapEncoderOptions.Default);
             }
             finally
             {

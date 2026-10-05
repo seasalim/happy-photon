@@ -152,7 +152,7 @@ public sealed class BrowseShellExportShowcaseTests
                 Assert.Equal(size, frame.PixelSize);
                 var directory = Path.Combine(GoldenTestPaths.RepositoryRoot, "artifacts", "shots");
                 Directory.CreateDirectory(directory);
-                frame.Save(Path.Combine(directory, $"wp8-{scene}.png"));
+                frame.Save(Path.Combine(directory, $"wp8-{scene}.png"), PngBitmapEncoderOptions.Default);
             }
             finally
             {

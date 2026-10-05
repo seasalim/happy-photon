@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
@@ -63,7 +64,7 @@ public sealed class DialogChromeStartupBaselineTests(ITestOutputHelper output)
         var shotDirectory = Path.Combine(GoldenTestPaths.RepositoryRoot, "artifacts", "shots");
         var shotPath = Path.Combine(shotDirectory, $"wp9-startup-{scene}-after-{run}.png");
         Directory.CreateDirectory(shotDirectory);
-        frame.Save(shotPath);
+        frame.Save(shotPath, PngBitmapEncoderOptions.Default);
         output.WriteLine($"StartupGate run={run}: state={vm.StartupGateState}; pixels={frame.PixelSize}; path={shotPath}; " +
             $"catalogOverride={roots.Catalog}; cacheOverride={roots.Cache}; pointer={service.PointerPath}");
         Assert.Equal(pointerRecovery, File.Exists(service.PointerPath));

@@ -87,8 +87,8 @@ public sealed class CullPerfWindowTests
             VerifyThumbnail(placeholderFrame, point);
             var shots = Path.Combine(CullPerfFiles.Root, "artifacts", "shots");
             Directory.CreateDirectory(shots);
-            placeholderFrame.Save(Path.Combine(shots, "cullperf-loupe-placeholder.png"));
-            previewFrame.Save(Path.Combine(shots, "cullperf-loupe-preview.png"));
+            placeholderFrame.Save(Path.Combine(shots, "cullperf-loupe-placeholder.png"), PngBitmapEncoderOptions.Default);
+            previewFrame.Save(Path.Combine(shots, "cullperf-loupe-preview.png"), PngBitmapEncoderOptions.Default);
             var destination = Path.Combine(CullPerfFiles.Run, "window-loupe");
             Directory.CreateDirectory(destination);
             var fixtureManifest = CullPerfFiles.Read<FixtureManifest>(Path.Combine(CullPerfFiles.Run, "fixtures.json"));
@@ -122,7 +122,7 @@ public sealed class CullPerfWindowTests
         void VerifyThumbnail(Bitmap frame, Point point)
         {
             using var encoded = new MemoryStream();
-            frame.Save(encoded);
+            frame.Save(encoded, PngBitmapEncoderOptions.Default);
             using var pixels = new ImageMagick.MagickImage(encoded.ToArray());
             using var expected = new ImageMagick.MagickImage(images[1].FilePath);
             using var actualPixels = pixels.GetPixels();

@@ -80,7 +80,7 @@ public sealed class BrowseSelectionToneShowcaseTests
                 Assert.NotNull(frame);
                 var directory = Path.Combine(GoldenTestPaths.RepositoryRoot, "artifacts", "shots");
                 Directory.CreateDirectory(directory);
-                frame.Save(Path.Combine(directory, $"wp10-{scene}.png"));
+                frame.Save(Path.Combine(directory, $"wp10-{scene}.png"), PngBitmapEncoderOptions.Default);
             }
             finally
             {

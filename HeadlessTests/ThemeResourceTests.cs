@@ -174,7 +174,7 @@ public sealed class ThemeResourceTests
         var bitmap = Assert.IsType<Bitmap>(mark.Source);
 
         using var encoded = new MemoryStream();
-        bitmap.Save(encoded);
+        bitmap.Save(encoded, PngBitmapEncoderOptions.Default);
         encoded.Position = 0;
 
         using var image = new MagickImage(encoded);

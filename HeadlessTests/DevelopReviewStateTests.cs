@@ -8,6 +8,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.LogicalTree;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -183,7 +184,7 @@ public sealed class DevelopReviewStateTests(ITestOutputHelper output)
         var shots = System.IO.Directory.CreateDirectory(
             System.IO.Path.Combine(GoldenTestPaths.RepositoryRoot, "artifacts", "shots"));
         frame.Save(System.IO.Path.Combine(shots.FullName,
-            $"wp7-review-toggle-hover-{(gray ? "gray" : "dark")}.png"));
+            $"wp7-review-toggle-hover-{(gray ? "gray" : "dark")}.png"), PngBitmapEncoderOptions.Default);
     }
 
     [AvaloniaTheory]

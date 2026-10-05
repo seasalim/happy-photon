@@ -1,3 +1,4 @@
+using Avalonia.Media.Imaging;
 using ImageMagick;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
@@ -185,7 +186,7 @@ public sealed class ThumbnailCacheServiceTests : IDisposable
         var imageFile = new ImageFile(sourcePath) { CatalogId = 1 };
         var cachePath = cache.GetCachePath(imageFile);
         Directory.CreateDirectory(Path.GetDirectoryName(cachePath)!);
-        bitmap.Save(cachePath);
+        bitmap.Save(cachePath, PngBitmapEncoderOptions.Default);
         File.SetLastWriteTimeUtc(cachePath, DateTime.UtcNow.AddMinutes(1));
         Assert.Equal(new byte[] { 0x89, 0x50, 0x4e },
             File.ReadAllBytes(cachePath).Take(3).ToArray());

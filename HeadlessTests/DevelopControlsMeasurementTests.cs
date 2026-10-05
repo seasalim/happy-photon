@@ -7,6 +7,7 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using HappyPhoton.Models;
@@ -200,7 +201,7 @@ public sealed class DevelopControlsMeasurementTests(ITestOutputHelper output)
         Assert.Equal(new PixelSize(250, 220), frame.PixelSize);
         var directory = System.IO.Path.Combine(GoldenTestPaths.RepositoryRoot, "artifacts", "shots");
         Directory.CreateDirectory(directory);
-        frame.Save(System.IO.Path.Combine(directory, scene + ".png"));
+        frame.Save(System.IO.Path.Combine(directory, scene + ".png"), PngBitmapEncoderOptions.Default);
     }
 
     private static ThemeVariant Theme(bool gray) =>

@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Styling;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.VisualTree;
 using Avalonia.Threading;
 using Xunit;
@@ -56,7 +57,7 @@ internal static class ShowcaseTestHelper
         Assert.NotNull(frame);
         Assert.Equal(pixelSize, frame.PixelSize);
         Directory.CreateDirectory(outputDirectory);
-        frame.Save(outputPath);
+        frame.Save(outputPath, PngBitmapEncoderOptions.Default);
     }
 
     /// <summary>Advances the headless render clock until a transition settles.</summary>

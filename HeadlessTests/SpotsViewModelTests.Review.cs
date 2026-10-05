@@ -143,7 +143,7 @@ public sealed partial class SpotsViewModelTests
             using var target = new RenderTargetBitmap(new PixelSize(600, 400), new Vector(96, 96));
             target.Render(overlay);
             using var stream = new MemoryStream();
-            target.Save(stream);
+            target.Save(stream, PngBitmapEncoderOptions.Default);
             return stream.ToArray();
         }
     }

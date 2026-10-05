@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using HappyPhoton.Views;
 using Xunit;
@@ -101,7 +102,7 @@ public sealed class ControlBarLayoutGateTests(ITestOutputHelper output)
                 // Generated capture output requested by WP12; no source or run artifacts are edited.
                 var directory = Path.Combine(GoldenTestPaths.RepositoryRoot, "artifacts", "shots");
                 Directory.CreateDirectory(directory);
-                frame.Save(Path.Combine(directory, $"wp12-{view}-{width}-after.png"));
+                frame.Save(Path.Combine(directory, $"wp12-{view}-{width}-after.png"), PngBitmapEncoderOptions.Default);
                 output.WriteLine($"WP12 capture {view} viewer={bar.Bounds.Width:F3} window={window.Bounds.Width:F3}x{window.Bounds.Height:F3}");
             }
 
