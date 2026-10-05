@@ -60,13 +60,18 @@ internal static class ShowcaseTestHelper
         frame.Save(outputPath, PngBitmapEncoderOptions.Default);
     }
 
-    /// <summary>Advances the headless render clock until a transition settles.</summary>
+    /// <summary>Pumps rendering and dispatcher timers until the observed state settles.</summary>
     public static void Settle(Func<bool> settled, string what)
     {
         var deadline = DateTime.UtcNow + TestWaits.Condition;
+
         while (DateTime.UtcNow < deadline)
         {
             AvaloniaHeadlessPlatform.ForceRenderTimerTick();
+            // RunJobs promotes due timers only after executing a job. A render tick
+            // with no visual changes can leave no active jobs, starving MediaContext's
+            // animation timer. Always give the dispatcher a job to promote timers from.
+            Dispatcher.UIThread.Post(static () => { }, DispatcherPriority.Background);
             Dispatcher.UIThread.RunJobs();
             if (settled()) return;
             Thread.Sleep(10);
