@@ -8,6 +8,19 @@ namespace HappyPhoton.Tests;
 public sealed class DcpAdobeProfileIndexRootsTests
 {
     [Theory]
+    [InlineData("LINUX", 2)]
+    [InlineData("WINDOWS", 1)]
+    [InlineData("OSX", 2)]
+    public void RootDeduplicationUsesPlatformPathCasing(string platform, int expected)
+    {
+        var roots = DcpAdobeProfileIndex.GetDefaultRoots(
+            OSPlatform.Create(platform), _ => null, string.Empty,
+            folder => folder == Environment.SpecialFolder.ApplicationData ? "Canon" : "canon");
+
+        Assert.Equal(expected, roots.Count);
+    }
+
+    [Theory]
     [InlineData(null, "home")]
     [InlineData("", "home")]
     [InlineData("custom-prefix", "home")]

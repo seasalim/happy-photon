@@ -6,7 +6,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed class RawProfileViewModelTests : IDisposable
+public sealed partial class RawProfileViewModelTests : IDisposable
 {
     private readonly CatalogVmFixture _fx = new("profile-vm");
 

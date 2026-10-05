@@ -4,7 +4,14 @@ using System.Runtime.InteropServices;
 namespace HappyPhoton.Services;
 
 internal sealed record DcpAdobeScanResult(IReadOnlyList<string> Matches,
-    int ProfilesScanned, int IdentityMatchCount);
+    int ProfilesScanned, int IdentityMatchCount, int Candidates, bool EnumerationComplete);
+
+internal enum DcpAdobeProfilePresence
+{
+    Found,
+    None,
+    Unknown
+}
 
 internal sealed class DcpAdobeProfileIndex
 {
@@ -14,6 +21,8 @@ internal sealed class DcpAdobeProfileIndex
     private readonly IReadOnlyList<string> _roots;
     private readonly ConcurrentDictionary<string, CachedCameraModel> _cache =
         new(StringComparer.Ordinal);
+
+    internal Func<string, IEnumerable<FileSystemInfo>>? EnumerateDirectory { get; set; }
 
     internal DcpAdobeProfileIndex(
         ISourceAvailabilityService availability,
@@ -31,8 +40,11 @@ internal sealed class DcpAdobeProfileIndex
     {
         var matches = new ConcurrentBag<string>();
         var profilesScanned = 0;
+        var enumeration = new DcpProfileEnumeration(EnumerateDirectory);
+        var candidates = 0;
+        var files = EnumerateProfiles(enumeration, _roots, cancellationToken, ref candidates);
         Parallel.ForEach(
-            EnumerateProfiles(cancellationToken),
+            files,
             new ParallelOptions
             {
                 CancellationToken = cancellationToken,
@@ -56,10 +68,13 @@ internal sealed class DcpAdobeProfileIndex
         var orderedMatches = matches
             .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
             .ToList();
+
         return new DcpAdobeScanResult(
             orderedMatches,
             profilesScanned,
-            orderedMatches.Count);
+            orderedMatches.Count,
+            candidates,
+            enumeration.IsComplete);
     }
 
     internal void Invalidate() => _cache.Clear();
@@ -93,67 +108,71 @@ internal sealed class DcpAdobeProfileIndex
         }
     }
 
-    private IReadOnlyList<ExternalProfileFile> EnumerateProfiles(
-        CancellationToken cancellationToken)
+    internal static async Task<DcpAdobeProfilePresence> ProbeAsync(
+        IReadOnlyList<string>? roots = null,
+        CancellationToken cancellationToken = default,
+        TimeSpan? budget = null,
+        Func<string, IEnumerable<FileSystemInfo>>? enumerateDirectory = null)
+    {
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        deadline.CancelAfter(budget ?? TimeSpan.FromSeconds(1));
+        var token = deadline.Token;
+
+        try
+        {
+            return await Task.Run(() =>
+            {
+                var enumeration = new DcpProfileEnumeration(enumerateDirectory);
+                var found = enumeration.Enumerate(roots ?? GetDefaultRoots(), token).Any();
+                token.ThrowIfCancellationRequested();
+
+                return found ? DcpAdobeProfilePresence.Found :
+                    enumeration.IsComplete ? DcpAdobeProfilePresence.None : DcpAdobeProfilePresence.Unknown;
+            }, token).WaitAsync(token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            return DcpAdobeProfilePresence.Unknown;
+        }
+        finally
+        {
+            // A blocked filesystem call may outlive the budget; stop walking when it returns.
+            deadline.Cancel();
+        }
+    }
+
+    private static IReadOnlyList<ExternalProfileFile> EnumerateProfiles(
+        DcpProfileEnumeration enumeration,
+        IEnumerable<string> roots,
+        CancellationToken cancellationToken,
+        ref int candidates)
     {
         var result = new List<ExternalProfileFile>();
-        var options = new EnumerationOptions
-        {
-            RecurseSubdirectories = true,
-            IgnoreInaccessible = true,
-            AttributesToSkip = 0,
-            MatchCasing = MatchCasing.CaseInsensitive
-        };
 
-        foreach (var root in _roots.SelectMany(ExpandRoot)
-            .Distinct(StringComparer.OrdinalIgnoreCase))
+        foreach (var file in enumeration.Enumerate(roots, cancellationToken))
         {
+            candidates++;
+
             try
             {
-                foreach (var file in new DirectoryInfo(root).EnumerateFiles(
-                    "*.dcp",
-                    options))
+                if (SourceAvailabilityService.GetEnumerationHint(file) ==
+                    SourceAvailability.AvailableLocally || !OperatingSystem.IsWindows())
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    if (SourceAvailabilityService.GetEnumerationHint(file) ==
-                        SourceAvailability.AvailableLocally || !OperatingSystem.IsWindows())
-                    {
-                        result.Add(new ExternalProfileFile(
-                            file.FullName,
-                            file.Length,
-                            file.LastWriteTimeUtc.Ticks));
-                    }
+                    result.Add(new ExternalProfileFile(
+                        file.FullName, file.Length, file.LastWriteTimeUtc.Ticks));
                 }
             }
-            catch (Exception exception) when (exception is IOException or
-                UnauthorizedAccessException)
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
             {
+                // The candidate was enumerated, but its metadata is not readable.
             }
         }
+
         return result;
     }
 
     private static string CacheKey(ExternalProfileFile file) =>
         $"{file.Path}|{file.Length}|{file.LastWriteTicks}";
-
-    private static IReadOnlyList<string> ExpandRoot(string root)
-    {
-        var wildcard = root.IndexOf($"{Path.DirectorySeparatorChar}*{Path.DirectorySeparatorChar}",
-            StringComparison.Ordinal);
-        if (wildcard < 0) return [root];
-
-        try
-        {
-            return Directory.GetDirectories(root[..wildcard], "*",
-                new EnumerationOptions { IgnoreInaccessible = true, AttributesToSkip = 0 })
-                .Select(directory => Path.Combine(directory, root[(wildcard + 3)..]))
-                .ToList();
-        }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-        {
-            return [];
-        }
-    }
 
     internal static IReadOnlyList<string> GetDefaultRoots() => GetDefaultRoots(
         OperatingSystem.IsWindows() ? OSPlatform.Windows :
@@ -205,7 +224,7 @@ internal sealed class DcpAdobeProfileIndex
             }
         }
 
-        return roots.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        return roots.Distinct(DcpProfileEnumeration.PathComparer(platform)).ToList();
     }
 
     private sealed record ExternalProfileFile(

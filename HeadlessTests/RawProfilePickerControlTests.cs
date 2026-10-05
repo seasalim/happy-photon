@@ -172,5 +172,46 @@ public sealed class RawProfilePickerControlTests : IDisposable
         }
     }
 
+    [AvaloniaFact]
+    public async Task HintLinkBindsVisibilityCommandAndCollapsesItsRow()
+    {
+        using var catalog = await _fx.CreateCatalogAsync("link");
+        await using var vm = _fx.CreateViewModel(catalog, new NullBaseLoader(), _ => Task.CompletedTask);
+        var calls = new List<Uri>();
+        vm.LaunchUriAsync = uri =>
+        {
+            calls.Add(uri);
+
+            return Task.FromResult(false);
+        };
+        var picker = new RawProfilePicker { DataContext = vm };
+        var window = new Window { Width = 320, Height = 200, Content = picker };
+        window.Styles.Add(new Avalonia.Markup.Xaml.Styling.StyleInclude(new Uri("avares://HappyPhoton/"))
+        {
+            Source = new Uri("avares://HappyPhoton/Views/MainWindowStyles.axaml")
+        });
+        using var scope = new TestUiScope(window);
+        vm.RawProfilePickerState = RawProfilePickerProjector.Project(true, null, [],
+            new CameraIdentity("Canon", "EOS 6D"), null, new RawProfileDiscoveryState(true, 0, 0), false, null);
+        Dispatcher.UIThread.RunJobs();
+        window.UpdateLayout();
+        var link = picker.FindControl<Button>("GetAdobeProfilesLink")!;
+        var shownHeight = picker.DesiredSize.Height;
+        Assert.True(link.IsEffectivelyVisible);
+        Assert.True(link.Focusable);
+        Assert.Equal("After installing, open this picker again.", ToolTip.GetTip(link));
+        Assert.Equal("Get Adobe camera profiles", Avalonia.Automation.AutomationProperties.GetName(link));
+        Assert.Equal("Get Adobe camera profiles…", link.Content);
+        Assert.Contains(link.GetLogicalDescendants().OfType<TextBlock>(),
+            text => text.TextDecorations?.Contains(Avalonia.Media.TextDecorations.Underline[0]) == true);
+        TipsTestScene.Click(link);
+        Assert.Equal("https://helpx.adobe.com/camera-raw/using/adobe-dng-converter.html", Assert.Single(calls).AbsoluteUri);
+        vm.RawProfilePickerState = vm.RawProfilePickerState with { ShowGetAdobeProfilesLink = false };
+        Dispatcher.UIThread.RunJobs();
+        window.UpdateLayout();
+        Assert.False(link.IsEffectivelyVisible);
+        Assert.True(picker.DesiredSize.Height < shownHeight);
+    }
+
     public void Dispose() => _fx.Dispose();
 }

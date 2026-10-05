@@ -22,7 +22,9 @@ internal sealed record DcpDiscoveryResult(
     bool HasProfiles,
     bool AdobeScanAttempted,
     int AdobeProfilesScanned,
-    int AdobeIdentityMatchCount);
+    int AdobeIdentityMatchCount,
+    int AdobeCandidates,
+    bool AdobeEnumerationComplete);
 
 internal sealed class DcpProfileDiscovery
 {
@@ -32,6 +34,12 @@ internal sealed class DcpProfileDiscovery
     private readonly ConcurrentDictionary<string, CachedProfile> _externalCache =
         new(StringComparer.Ordinal);
     internal Func<Task>? DiscoveryGateAsync { get; set; }
+
+    internal Func<string, IEnumerable<FileSystemInfo>>? EnumerateAdobeDirectory
+    {
+        get => _adobeIndex.EnumerateDirectory;
+        set => _adobeIndex.EnumerateDirectory = value;
+    }
 
     internal DcpProfileDiscovery(
         ISourceAvailabilityService availability,
@@ -238,7 +246,9 @@ internal sealed class DcpProfileDiscovery
             hasProfiles,
             adobeScan != null,
             adobeScan?.ProfilesScanned ?? 0,
-            adobeScan?.IdentityMatchCount ?? 0);
+            adobeScan?.IdentityMatchCount ?? 0,
+            adobeScan?.Candidates ?? 0,
+            adobeScan?.EnumerationComplete ?? false);
     }
 
     private DcpProfileOption InspectPersisted(RawProfileSelection selection)

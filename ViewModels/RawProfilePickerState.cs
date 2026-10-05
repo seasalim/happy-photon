@@ -9,7 +9,8 @@ public sealed record RawProfilePickerState(
     bool IsLoading,
     ImmutableArray<RawProfileOptionViewModel> Options,
     RawProfileOptionViewModel? SelectedOption,
-    string StatusMessage)
+    string StatusMessage,
+    bool ShowGetAdobeProfilesLink = false)
 {
     public static RawProfilePickerState Empty { get; } = new(
         false,
@@ -37,7 +38,9 @@ internal sealed record RawProfileDiscoveryState(
     bool AdobeScanCompleted,
     int AdobeProfilesScanned,
     int AdobeIdentityMatchCount,
-    string? ChosenFileRejection = null)
+    string? ChosenFileRejection = null,
+    int AdobeCandidates = 0,
+    bool AdobeEnumerationComplete = true)
 {
     internal static RawProfileDiscoveryState Empty { get; } =
         new(false, 0, 0);
@@ -93,7 +96,11 @@ internal static class RawProfilePickerProjector
             isRawCapable && isLoading,
             options,
             selected,
-            status);
+            status,
+            isRawCapable && discoveryState.AdobeScanCompleted &&
+                discoveryState.AdobeIdentityMatchCount == 0 &&
+                !profiles.Any(option => !option.IsBuiltIn && option.CanSelect) &&
+                !isLoading && string.IsNullOrWhiteSpace(transientError));
     }
 
     internal static ImmutableArray<RawProfileOptionViewModel> InstallOptions(
@@ -261,6 +268,16 @@ internal static class RawProfilePickerProjector
                         ? AwaitingIdentityMessage
                         : IdentityUnavailableMessage
                     : OpenToScanMessage;
+            }
+
+            if (!discoveryState.AdobeEnumerationComplete)
+            {
+                return "ADOBE PROFILE FOLDERS COULD NOT BE READ";
+            }
+
+            if (discoveryState.AdobeCandidates > 0 && discoveryState.AdobeProfilesScanned == 0)
+            {
+                return $"{discoveryState.AdobeCandidates} ADOBE PROFILE FILES FOUND · NONE READABLE";
             }
 
             if (discoveryState.AdobeIdentityMatchCount == 0 &&

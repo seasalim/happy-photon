@@ -5,7 +5,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed class DcpProfileDiscoveryTests
+public sealed partial class DcpProfileDiscoveryTests
 {
     [Fact]
     public async Task Discover_OrdersSourcesAndDeduplicatesByProfilePayload()

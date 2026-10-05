@@ -220,6 +220,48 @@ public sealed class RawProfilePickerProjectorTests
                 discoveryState: discovery).StatusMessage);
     }
 
+    [Theory]
+    [InlineData(false, 2, 1, "ADOBE PROFILE FOLDERS COULD NOT BE READ")]
+    [InlineData(true, 0, 0, "NO ADOBE CAMERA PROFILES ON THIS COMPUTER")]
+    [InlineData(true, 2, 0, "2 ADOBE PROFILE FILES FOUND · NONE READABLE")]
+    [InlineData(true, 2, 2, "2 LOCAL CAMERA PROFILES SCANNED · NONE DECLARE CANON EOS R5")]
+    public void EmptyScanMessagesAndLinkFollowEvidence(bool complete, int candidates, int readable, string message)
+    {
+        var discovery = Completed(readable) with
+        {
+            AdobeCandidates = candidates,
+            AdobeEnumerationComplete = complete
+        };
+        var state = Project(null, [], null, discoveryState: discovery);
+
+        Assert.Equal(message, state.StatusMessage);
+        Assert.True(state.ShowGetAdobeProfilesLink);
+    }
+
+    [Fact]
+    public void LinkRequiresCompletedEmptyScanAndSurvivesChosenFileRejection()
+    {
+        Assert.False(Project(null, [], null,
+            discoveryState: RawProfileDiscoveryState.Empty).ShowGetAdobeProfilesLink);
+        Assert.False(Project(null, [], null, loading: true).ShowGetAdobeProfilesLink);
+        Assert.False(Project(null, [], null, error: "error").ShowGetAdobeProfilesLink);
+        Assert.False(Project(null, [], null,
+            discoveryState: Completed(1, 1)).ShowGetAdobeProfilesLink);
+        Assert.False(RawProfilePickerProjector.Project(false, null, [], null, null,
+            Completed(), false, null).ShowGetAdobeProfilesLink);
+        Assert.True(Project(null, [], null, discoveryState: Completed() with
+        {
+            ChosenFileRejection = "Chosen file rejection"
+        }).ShowGetAdobeProfilesLink);
+
+        foreach (var source in new[] { RawProfileSource.Adobe, RawProfileSource.UserFile, RawProfileSource.Embedded })
+        {
+            var selection = Selection("valid.dcp", 'a');
+            selection.Source = source;
+            Assert.False(Project(null, [Option(selection)], null).ShowGetAdobeProfilesLink);
+        }
+    }
+
     private static RawProfilePickerState Project(
         RawProfileSelection? selection,
         ImmutableArray<RawProfileOptionViewModel> discovered,

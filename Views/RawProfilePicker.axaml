@@ -106,5 +106,13 @@
                    Text="{Binding RawProfilePickerState.StatusMessage}"
                    TextWrapping="Wrap"
                    Margin="0"/>
+        <Button x:Name="GetAdobeProfilesLink"
+                Classes="link-button"
+                Content="Get Adobe camera profiles…"
+                FontSize="{StaticResource FontSizeSmall}"
+                IsVisible="{Binding RawProfilePickerState.ShowGetAdobeProfilesLink}"
+                Command="{Binding GetAdobeProfilesCommand}"
+                ToolTip.Tip="After installing, open this picker again."
+                AutomationProperties.Name="Get Adobe camera profiles"/>
     </StackPanel>
 </UserControl>

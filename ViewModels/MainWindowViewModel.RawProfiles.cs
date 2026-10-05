@@ -73,7 +73,9 @@ public partial class MainWindowViewModel
                 {
                     AdobeScanCompleted = false,
                     AdobeProfilesScanned = 0,
-                    AdobeIdentityMatchCount = 0
+                    AdobeIdentityMatchCount = 0,
+                    AdobeCandidates = 0,
+                    AdobeEnumerationComplete = false
                 };
             }
             _renderDerivedRawProfileState = new RawProfileRenderState(
@@ -92,6 +94,22 @@ public partial class MainWindowViewModel
             _ = RefreshRawProfilesCoreAsync(
                 confirmSelection: false,
                 includeImageProfiles: false);
+        }
+    }
+
+    [RelayCommand]
+    private async Task GetAdobeProfilesAsync()
+    {
+        if (LaunchUriAsync == null) return;
+
+        try
+        {
+            await LaunchUriAsync(new Uri(
+                "https://helpx.adobe.com/camera-raw/using/adobe-dng-converter.html"));
+        }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine($"Adobe profiles page launch failed: {exception.Message}");
         }
     }
 
@@ -160,7 +178,13 @@ public partial class MainWindowViewModel
                 result.AdobeScanAttempted
                     ? result.AdobeIdentityMatchCount
                     : _rawProfileDiscoveryState.AdobeIdentityMatchCount,
-                _rawProfileDiscoveryState.ChosenFileRejection);
+                _rawProfileDiscoveryState.ChosenFileRejection,
+                result.AdobeScanAttempted
+                    ? result.AdobeCandidates
+                    : _rawProfileDiscoveryState.AdobeCandidates,
+                result.AdobeScanAttempted
+                    ? result.AdobeEnumerationComplete
+                    : _rawProfileDiscoveryState.AdobeEnumerationComplete);
             _isRawProfileDiscoveryActive = false;
             PublishRawProfilePickerState();
 

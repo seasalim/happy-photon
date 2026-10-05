@@ -15,18 +15,8 @@
                        FontSize="{StaticResource FontSizeLabel}" FontWeight="SemiBold"
                        Foreground="{DynamicResource TextPrimary}"/>
             <StackPanel x:Name="CopyLines" Spacing="6"/>
-            <Button Content="Keyboard shortcuts"
-                    Background="Transparent" BorderThickness="0" Cursor="Hand"
-                    FontFamily="{StaticResource FontBody}" FontSize="{StaticResource FontSizeBody}" FontWeight="Normal"
-                    Foreground="{DynamicResource TextPrimary}"
-                    HorizontalAlignment="Left" Padding="0" MinHeight="20"
-                    Focusable="False" Command="{Binding OpenKeyboardShortcutsCommand}">
-                <Button.ContentTemplate>
-                    <DataTemplate x:DataType="x:String">
-                        <TextBlock Text="{Binding}" TextDecorations="Underline"/>
-                    </DataTemplate>
-                </Button.ContentTemplate>
-            </Button>
+            <Button Content="Keyboard shortcuts" Classes="link-button"
+                    Focusable="False" Command="{Binding OpenKeyboardShortcutsCommand}"/>
             <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
                 <Button Content="Don't show tips" Classes="quiet-button" Focusable="False"
                         Command="{Binding DisableTipsCommand}"/>
