@@ -48,6 +48,9 @@ internal static class FinishingGateSupport
             .Where(candidate => ids.Length == 0 || ids.Contains(candidate.Id)).ToArray();
         Assert.NotEmpty(candidates);
 
+        // A new intake candidate must show up as a count change the run explains.
+        if (ids.Length == 0) Assert.Equal(26, candidates.Length);
+
         return candidates;
     }
 

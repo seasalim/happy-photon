@@ -792,6 +792,12 @@ LibRaw single-file smoke: `./scripts/verify-libraw-single-file.ps1 -RuntimeIdent
 scripts/evaluate-wide-working-space.cs -- <baseline> artifacts/wide-working-space`;
 record look approval outside the numeric gate.
 
+**FINISHING candidates.** Opt-in finishing gates evaluate the 26 shipped looks in `Assets/Looks/` plus any intake
+candidate in `Tests/assets/finishing-looks/`; a look dropped at a gate moves to `finishing-looks/dropped/`, is listed in
+its `dropped.json`, and keeps its frozen manifest rows. Two opt-in tests fail without their setup:
+`HealGateTests.G1PerSpotDiagnostic` needs `HAPPY_PHOTON_HEAL_FIXTURE=standard` (run alone by `Tests/RunHealGates.ps1`),
+and `FinishingGateTests.ReviewSheets` needs current G1–G4 receipts.
+
 **FINISHING G4 frozen clipping controls.** Production Preview, maximum dimension 1600,
 final encoded Q16; each count is pixels with any channel at 0 or 65535. Controls
 must match exactly; `fujifilm-x30.raf` allows ±0.1 percentage point per side.

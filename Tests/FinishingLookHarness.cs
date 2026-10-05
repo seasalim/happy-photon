@@ -33,6 +33,15 @@ internal static class FinishingLookHarness
         .Select(Load)
         .OrderBy(candidate => candidate.Group).ThenBy(candidate => candidate.Order).ToArray();
 
+    internal static string DroppedFolder => Path.Combine(Folder, "dropped");
+
+    internal static IEnumerable<string> DroppedPaths => Directory.GetFiles(DroppedFolder, "*.preset.json");
+
+    // Looks dropped at a gate stay authored and frozen, but no gate evaluates them.
+    internal static FinishingCandidate[] AuthoredCandidates() => CandidatePaths.Concat(DroppedPaths)
+        .Select(Load)
+        .OrderBy(candidate => candidate.Group).ThenBy(candidate => candidate.Order).ToArray();
+
     internal static FinishingCandidate Load(string path)
     {
         var json = File.ReadAllBytes(path);

@@ -9,6 +9,10 @@ using static HappyPhoton.Tests.FinishingGateSupport;
 
 namespace HappyPhoton.Tests;
 
+[CollectionDefinition(nameof(FinishingGateSupportCollection), DisableParallelization = true)]
+public sealed class FinishingGateSupportCollection;
+
+[Collection(nameof(FinishingGateSupportCollection))]
 public sealed class FinishingGateSupportTests
 {
     [Fact]
@@ -191,6 +195,41 @@ public sealed class FinishingGateSupportTests
             Assert.Equal(RenderPipelineTestSupport.ReadPixels(monoControl), RenderPipelineTestSupport.ReadPixels(mono));
         }
     }
+
+    [Fact]
+    public void DroppedLooksStayOutOfTheGates()
+    {
+        Assert.Empty(Directory.GetFiles(FinishingLookHarness.Folder, "*.preset.json"));
+
+        var dropped = JsonSerializer.Deserialize<DroppedLook[]>(
+            File.ReadAllText(Path.Combine(FinishingLookHarness.DroppedFolder, "dropped.json")),
+            new JsonSerializerOptions(JsonSerializerDefaults.Web))!;
+        Assert.Equal(dropped.Select(look => look.Id + ".preset.json").Order(),
+            FinishingLookHarness.DroppedPaths.Select(Path.GetFileName).Order());
+        Assert.All(dropped, look =>
+        {
+            Assert.False(string.IsNullOrWhiteSpace(look.Gate));
+            Assert.False(string.IsNullOrWhiteSpace(look.Date));
+            Assert.False(string.IsNullOrWhiteSpace(look.Spec));
+        });
+
+        var approved = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(
+            Path.Combine(FinishingLookHarness.Folder, "approved-sha256.json")))!;
+        var priorCandidate = Environment.GetEnvironmentVariable("HAPPY_PHOTON_FINISHING_CANDIDATE");
+
+        try
+        {
+            Environment.SetEnvironmentVariable("HAPPY_PHOTON_FINISHING_CANDIDATE", null);
+            Assert.Equal(approved.Keys.Where(key => key.EndsWith(".preset.json", StringComparison.Ordinal)).Order(),
+                FinishingGateSupport.Candidates().Select(candidate => candidate.Id + ".preset.json").Order());
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("HAPPY_PHOTON_FINISHING_CANDIDATE", priorCandidate);
+        }
+    }
+
+    private sealed record DroppedLook(string Id, string Gate, string Date, string Spec);
 
     [Fact]
     public void ReviewPairWritesNativeDimensionsAndEscapesLabels()

@@ -26,7 +26,7 @@ public sealed class FinishingLookTests
     [Fact]
     public void CandidateFilesContainOnlyLookSettings()
     {
-        var candidates = FinishingLookHarness.Candidates();
+        var candidates = FinishingLookHarness.AuthoredCandidates();
         Assert.InRange(candidates.Length, 25, 30);
         Assert.Equal(candidates.Length, candidates.Select(candidate => candidate.Id).Distinct().Count());
         Assert.Equal(candidates.Length, candidates.Select(candidate => candidate.Name).Distinct().Count());
@@ -39,7 +39,7 @@ public sealed class FinishingLookTests
             Assert.Equal(Enumerable.Range(1, group.Count()), group.Select(candidate => candidate.Order).Order());
         }
 
-        foreach (var path in FinishingLookHarness.CandidatePaths)
+        foreach (var path in FinishingLookHarness.CandidatePaths.Concat(FinishingLookHarness.DroppedPaths))
         {
             using var document = JsonDocument.Parse(File.ReadAllText(path));
             var candidate = JsonSerializer.Deserialize<FinishingCandidate>(document)!;
@@ -124,7 +124,7 @@ public sealed class FinishingLookTests
     {
         var path = Path.Combine(FinishingLookHarness.Folder, "exempt-components.json");
         var frozen = JsonSerializer.Deserialize<Dictionary<string, string[]>>(File.ReadAllText(path))!;
-        var candidates = FinishingLookHarness.Candidates();
+        var candidates = FinishingLookHarness.AuthoredCandidates();
         Assert.Equal(candidates.Select(candidate => candidate.Id).Order(), frozen.Keys.Order());
 
         foreach (var candidate in candidates)
