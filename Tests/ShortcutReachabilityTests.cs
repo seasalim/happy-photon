@@ -199,7 +199,7 @@ public sealed class ShortcutReachabilityTests
             vm.EnterLoupeCommand.Execute(null);
         }
         vm.IsFullScreenMode = claim.Workspace == ShortcutWorkspace.FullScreen;
-        if (claim.ControlName is "ApplyCropButton" or "CancelCropButton")
+        if (claim.ControlName is "ApplyCropButton" or "CancelCropButton" or "CropRatioPicker")
         {
             vm.IsCropMode = true;
         }

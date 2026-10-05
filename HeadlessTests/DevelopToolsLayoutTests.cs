@@ -80,8 +80,30 @@ public sealed class DevelopToolsLayoutTests
                     mode == "crop" ? c is CropEditSection : c is LocalsEditSection);
                 Assert.Equal(0, scroll.Offset.Y);
                 var first = section.GetVisualDescendants().OfType<Control>().First(c =>
-                    mode == "crop" ? c is CompactSlider : c is ListBox);
+                    mode == "crop" ? c.Name == "CropRatioPicker" : c is ListBox);
                 Inside(first, scroll);
+
+                if (mode == "crop")
+                {
+                    var picker = Assert.IsType<ComboBox>(first);
+                    var aspectLock = section.GetVisualDescendants().OfType<ToggleButton>().Single(b => b.Name == "CropAspectLockButton");
+                    Inside(aspectLock, scroll);
+                    Assert.DoesNotContain(section.GetVisualDescendants().OfType<Button>(), b => b.Command == vm.SwapCropRatioCommand);
+                    var horizon = section.GetVisualDescendants().OfType<CompactSlider>().Single(c => c.Label == "Horizon");
+                    var track = horizon.FindControl<Border>("TrackArea")!;
+                    var value = horizon.FindControl<TextBlock>("ValueText")!;
+                    Assert.Equal(track.TranslatePoint(default, section)!.Value.X,
+                        picker.TranslatePoint(default, section)!.Value.X);
+                    Assert.Equal(track.TranslatePoint(new Point(track.Bounds.Width, 0), section)!.Value.X,
+                        picker.TranslatePoint(new Point(picker.Bounds.Width, 0), section)!.Value.X);
+                    Assert.Equal(value.TranslatePoint(new Point(value.Bounds.Width, 0), section)!.Value.X,
+                        aspectLock.TranslatePoint(new Point(aspectLock.Bounds.Width, 0), section)!.Value.X);
+                    Assert.Same(picker.Parent, aspectLock.Parent);
+                    Assert.True(picker.Bounds.Right <= aspectLock.Bounds.Left);
+                    Assert.Equal("Lock aspect ratio", ToolTip.GetTip(aspectLock));
+                    Assert.Equal("Aspect ratio (X swaps orientation)", ToolTip.GetTip(picker));
+                }
+
                 var header = mode == "crop" ? cropHeader : localsHeader;
                 Inside(header, panel);
                 scroll.Offset = new Vector(0, scroll.Extent.Height);
@@ -96,6 +118,50 @@ public sealed class DevelopToolsLayoutTests
                     Assert.True(button.IsFocused);
                 }
             }
+            await Task.CompletedTask;
+        });
+    }
+
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task CropRatioRemainsReadableWhenPaneResizes(bool gray)
+    {
+        await DevelopToolsBaselineTests.WithScene("crop", 1200, 700, async (vm, _) =>
+        {
+            var panel = new DevelopEditPanel { DataContext = vm };
+            var window = new Window { Width = 250, Height = 660, Content = panel };
+            using var scope = new TestUiScope(window, gray ? HappyPhotonThemes.MidGray : ThemeVariant.Dark);
+            var section = panel.GetVisualDescendants().OfType<CropEditSection>().Single();
+            var picker = section.FindControl<ComboBox>("CropRatioPicker")!;
+            var aspectLock = section.FindControl<ToggleButton>("CropAspectLockButton")!;
+            var horizon = section.GetVisualDescendants().OfType<CompactSlider>().Single(c => c.Label == "Horizon");
+            var track = horizon.FindControl<Border>("TrackArea")!;
+            Assert.Equal("Original", picker.SelectedItem);
+
+            foreach (var width in new[] { 250, 200, 320, 200, 250 })
+            {
+                window.Width = width;
+                Dispatcher.UIThread.RunJobs();
+                window.UpdateLayout();
+                var text = picker.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Text == "Original");
+                Assert.True(text.Bounds.Width > 0, $"Original is hidden at pane width {width}");
+                Assert.True(text.Bounds.Width >= text.TextLayout.WidthIncludingTrailingWhitespace);
+                Inside(text, picker);
+                Inside(picker, section);
+                Inside(aspectLock, section);
+                Assert.True(picker.Bounds.Right <= aspectLock.Bounds.Left);
+                Assert.Equal(track.TranslatePoint(new Point(track.Bounds.Width, 0), section)!.Value.X,
+                    picker.TranslatePoint(new Point(picker.Bounds.Width, 0), section)!.Value.X);
+
+                if (width >= 250)
+                {
+                    Assert.Equal(track.TranslatePoint(default, section)!.Value.X,
+                        picker.TranslatePoint(default, section)!.Value.X);
+                }
+            }
+
+            panel.DataContext = null;
             await Task.CompletedTask;
         });
     }

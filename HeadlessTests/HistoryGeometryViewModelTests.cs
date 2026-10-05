@@ -11,7 +11,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed class HistoryGeometryViewModelTests : IDisposable
+public sealed partial class HistoryGeometryViewModelTests : IDisposable
 {
     private readonly CatalogVmFixture _fixture = new("history-geometry-vm");
 

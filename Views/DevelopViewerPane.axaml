@@ -56,6 +56,8 @@
                                   IsClippingOverlayLatched="{Binding IsClippingOverlayLatched}"
                                   ShowAlignmentGrid="{Binding IsAlignmentGridVisible}"
                                   IsCropAspectLocked="{Binding IsCropAspectLocked}"
+                                  CropFrameSize="{Binding CropFrameSize}"
+                                  CropRatio="{Binding CropRatio}"
                                   Crop="{Binding CurrentCrop, Mode=TwoWay}"
                                   ScrollBarVisibility="Hidden" ContentInset="10"/>
                 <TextBlock Classes="section-label" Text="After" Margin="16,12" Foreground="{DynamicResource TextMuted}"

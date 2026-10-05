@@ -33,6 +33,24 @@ public partial class ZoomPanControl : UserControl
     public static readonly StyledProperty<bool> IsCropAspectLockedProperty =
         AvaloniaProperty.Register<ZoomPanControl, bool>(nameof(IsCropAspectLocked));
 
+    public static readonly StyledProperty<PixelSize> CropFrameSizeProperty =
+        AvaloniaProperty.Register<ZoomPanControl, PixelSize>(nameof(CropFrameSize));
+
+    public static readonly StyledProperty<string> CropRatioProperty =
+        AvaloniaProperty.Register<ZoomPanControl, string>(nameof(CropRatio), "Custom");
+
+    public PixelSize CropFrameSize
+    {
+        get => GetValue(CropFrameSizeProperty);
+        set => SetValue(CropFrameSizeProperty, value);
+    }
+
+    public string CropRatio
+    {
+        get => GetValue(CropRatioProperty);
+        set => SetValue(CropRatioProperty, value);
+    }
+
     public static readonly StyledProperty<ScrollBarVisibility> ScrollBarVisibilityProperty =
         AvaloniaProperty.Register<ZoomPanControl, ScrollBarVisibility>(
             nameof(ScrollBarVisibility),
@@ -157,6 +175,12 @@ public partial class ZoomPanControl : UserControl
         _imageControl = this.FindControl<DisplayImage>("ImageControl");
         _scrollViewer = this.FindControl<ScrollViewer>("ScrollViewer");
         _cropOverlay = this.FindControl<CropOverlayControl>("CropOverlay");
+
+        if (_cropOverlay != null)
+        {
+            _cropOverlay.CropChanged += (_, _) => SetCurrentValue(CropProperty, _cropOverlay.Crop?.Clone());
+        }
+
         _surroundLayer = this.FindControl<Panel>("SurroundLayer");
         _assessmentMat = this.FindControl<Border>("AssessmentMat");
         InitializeVisibleRegionTracking();
@@ -236,7 +260,8 @@ public partial class ZoomPanControl : UserControl
         {
             UpdateCropOverlay();
         }
-        else if (change.Property == IsCropAspectLockedProperty)
+        else if (change.Property == IsCropAspectLockedProperty ||
+            change.Property == CropFrameSizeProperty || change.Property == CropRatioProperty)
         {
             UpdateCropOverlay();
         }
@@ -333,6 +358,8 @@ public partial class ZoomPanControl : UserControl
         if (_cropOverlay == null) return;
         _cropOverlay.Crop = Crop;
         _cropOverlay.IsAspectRatioLocked = IsCropAspectLocked;
+        _cropOverlay.Ratio = CropRatio;
+        _cropOverlay.ImageSize = new Size(CropFrameSize.Width, CropFrameSize.Height);
         UpdateCropOverlaySize();
         _cropOverlay.InvalidateOverlay();
     }
@@ -344,7 +371,6 @@ public partial class ZoomPanControl : UserControl
         // Match overlay size to image display size
         _cropOverlay.Width = _imageControl.Width;
         _cropOverlay.Height = _imageControl.Height;
-        _cropOverlay.ImageSize = new Size(Source.PixelSize.Width, Source.PixelSize.Height);
     }
 
     protected override void OnSizeChanged(SizeChangedEventArgs e)

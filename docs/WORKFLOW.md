@@ -202,7 +202,7 @@ with the **Crop** toggle beneath the histogram or with `R`; its settings then si
 at the top of the adjustment stack:
 
 - straighten the horizon with the slider, or **Auto** for a best estimate from lines, skyline or near-level orientation;
-- lock the current crop aspect ratio when needed;
+- choose a ratio (Original, 1:1, 5:4, 4:3, 3:2, 16:9) or lock the current one; `X` turns it;
 - reset the crop.
 
 Apply the crop with **Apply** in the crop header or `Enter`. Use **Cancel** or
@@ -476,6 +476,7 @@ Help & About lists every shortcut and gesture; these are the essentials.
 | `Ctrl+'` | Create a version from the current interpretation in Browse or Develop |
 | `C` | Compare 2–4 selected photos |
 | `R` | Toggle crop mode in Develop |
+| `X` in Crop | Swap crop orientation (outside Crop, reject) |
 | `Q` | Toggle Spot Removal in Develop |
 | `A` | Toggle Visualize Spots; Threshold controls sensitivity |
 | `H` | Hide or show spot circles without deselecting |

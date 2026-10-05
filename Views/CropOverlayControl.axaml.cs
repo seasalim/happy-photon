@@ -38,6 +38,8 @@ public partial class CropOverlayControl : UserControl
 
     public event EventHandler? CropChanged;
 
+    public string Ratio { get; set; } = "Custom";
+
     private Canvas? _canvas;
     private DragHandle _activeDragHandle = DragHandle.None;
     private Point _dragStartPoint;
@@ -46,7 +48,7 @@ public partial class CropOverlayControl : UserControl
     // Handle size and hit area
     private const double HandleSize = 10;
     private const double HandleHitArea = 16;
-    private const double MinCropSize = 0.05; // 5% minimum
+    private const double MinCropSize = CropGeometry.MinCropSize;
 
     // Cached brushes
     private static readonly IBrush MaskBrush = HappyPhotonColors.CropMask;
@@ -297,6 +299,7 @@ public partial class CropOverlayControl : UserControl
             var deltaY = (point.Y - _dragStartPoint.Y) / height;
 
             ApplyDrag(_activeDragHandle, deltaX, deltaY);
+            CropChanged?.Invoke(this, EventArgs.Empty);
             DrawOverlay();
             e.Handled = true;
         }
@@ -360,7 +363,8 @@ public partial class CropOverlayControl : UserControl
 
         if (IsAspectRatioLocked && handle != DragHandle.Center)
         {
-            ApplyLockedAspectDrag(handle, deltaX, deltaY);
+            ApplyLockedAspectDrag(handle, deltaX, deltaY,
+                CropGeometry.TargetRatio(_dragStartCrop, Ratio, ImageSize.Width / ImageSize.Height));
             return;
         }
 

@@ -3,7 +3,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public class CropGeometryTests
+public partial class CropGeometryTests
 {
     [Theory]
     [InlineData(0, 300, 400, 300)]

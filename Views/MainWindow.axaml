@@ -43,7 +43,7 @@
         <KeyBinding Gesture="J" Command="{Binding ToggleClippingOverlayCommand}"/>
         <KeyBinding Gesture="L" Command="{Binding ToggleColorAssessmentModeCommand}"/>
         <KeyBinding Gesture="P" Command="{Binding TogglePickedImageCommand}"/>
-        <KeyBinding Gesture="X" Command="{Binding ToggleRejectedImageCommand}"/>
+        <KeyBinding Gesture="X" Command="{Binding HandleXCommand}"/>
         <KeyBinding Gesture="U" Command="{Binding UnpickImageCommand}"/>
         <KeyBinding Gesture="OemTilde" Command="{Binding ToggleFlagCommand}"/>
         <KeyBinding Gesture="D0" Command="{Binding SetRatingCommand}"><KeyBinding.CommandParameter><x:Int32>0</x:Int32></KeyBinding.CommandParameter></KeyBinding>

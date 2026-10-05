@@ -19,16 +19,30 @@
         </Style>
     </UserControl.Styles>
     <StackPanel Spacing="8" Margin="0,0,0,12" IsEnabled="{Binding CanEditSelectedImage}">
-        <views:CompactSlider Label="Horizon" Value="{Binding HorizonRotation}"
-                             Minimum="-5" Maximum="5" SmallChange="0.1"
-                             StringFormat="{}{0:+0.0;-0.0;0.0}°" EnableDoubleClickReset="True"/>
-        <Grid ColumnDefinitions="*,Auto,Auto">
-            <ToggleButton x:Name="CropAspectLockButton" Classes="icon-button" HorizontalAlignment="Left" IsChecked="{Binding IsCropAspectLocked}" MinWidth="0"
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MaxWidth="70"/>
+                <ColumnDefinition Width="*" MinWidth="106"/>
+                <ColumnDefinition Width="40"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Ratio" VerticalAlignment="Center" Foreground="{DynamicResource TextMuted}"
+                       FontFamily="{StaticResource FontBody}" FontSize="{StaticResource FontSizeBody}"/>
+            <ComboBox x:Name="CropRatioPicker" Grid.Column="1" Classes="edit-dropdown" MinWidth="0" Margin="8,0"
+                      HorizontalAlignment="Stretch" IsEnabled="{Binding CanChooseCropRatio}"
+                      ItemsSource="{Binding CropRatios}" SelectedItem="{Binding CropRatio, Mode=OneWay}"
+                      SelectionChanged="OnRatioSelectionChanged" AutomationProperties.Name="Crop ratio"
+                      ToolTip.Tip="Aspect ratio (X swaps orientation)"/>
+            <ToggleButton x:Name="CropAspectLockButton" Grid.Column="2" Classes="icon-button" HorizontalAlignment="Right" IsChecked="{Binding IsCropAspectLocked}" MinWidth="0"
                           ToolTip.Tip="Lock aspect ratio">
                 <Viewbox Width="14" Height="14"><Canvas Width="16" Height="16">
                     <Path Fill="Transparent" StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round"/>
                 </Canvas></Viewbox>
             </ToggleButton>
+        </Grid>
+        <views:CompactSlider Label="Horizon" Value="{Binding HorizonRotation}"
+                             Minimum="-5" Maximum="5" SmallChange="0.1"
+                             StringFormat="{}{0:+0.0;-0.0;0.0}°" EnableDoubleClickReset="True"/>
+        <Grid ColumnDefinitions="*,Auto,Auto">
             <Button x:Name="AutoStraightenButton" Grid.Column="1" Classes="compact-button" MinWidth="50"
                     Command="{Binding AutoStraightenCommand}" Content="Auto" Click="OnAutoClick"
                     ToolTip.Tip="Straighten from the photo's lines (sets Horizon)"/>

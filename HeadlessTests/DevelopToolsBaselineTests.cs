@@ -94,6 +94,7 @@ public sealed class DevelopToolsBaselineTests(ITestOutputHelper output)
     private static string? ToolIdentity(Control control, MainWindowViewModel vm)
     {
         if (control is CompactSlider { Label: "Horizon" }) return Describe(control);
+        if (control.Name == "CropRatioPicker") return Describe(control);
         if (control is ToggleButton && control.Name == "CropAspectLockButton")
             return "aspect lock (unnamed ToggleButton)";
         if (control is not Button button) return null;
@@ -113,11 +114,11 @@ public sealed class DevelopToolsBaselineTests(ITestOutputHelper output)
     };
 
     internal static async Task WithScene(string mode, int width, int height,
-        Func<MainWindowViewModel, TestUiScope, Task> measure)
+        Func<MainWindowViewModel, TestUiScope, Task> measure, string? sourcePath = null)
     {
         using var fixture = new CatalogVmFixture("develop-tools-baseline");
         using var catalog = await fixture.CreateCatalogAsync();
-        var path = GoldenTestPaths.Asset("srgb-reference.jpg");
+        var path = sourcePath ?? GoldenTestPaths.Asset("srgb-reference.jpg");
         Assert.Equal(0, (int)File.GetAttributes(path) & (0x1000 | 0x40000 | 0x400000));
         await using var vm = fixture.CreateViewModel(catalog, new StandardBaseLoader(), _ => Task.CompletedTask);
         vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);

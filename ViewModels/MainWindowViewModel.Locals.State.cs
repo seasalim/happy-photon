@@ -27,7 +27,18 @@ public partial class MainWindowViewModel
             else InvalidateLocalMask();
         }
 
+        if (e.PropertyName is nameof(PreviewImage) or nameof(SelectedImage) or nameof(HorizonRotation) or nameof(Rotation) or
+            nameof(GeometryVertical) or nameof(GeometryHorizontal) or nameof(GeometryAspect) or nameof(GeometryDistortion))
+        {
+            RefreshCropFrameSize();
+        }
+
         base.OnPropertyChanged(e);
+
+        if (e.PropertyName is nameof(CurrentCrop) or nameof(CropFrameSize) or nameof(IsCropMode) or nameof(CanEditSelectedImage))
+        {
+            NotifyCropRatio();
+        }
 
         // Selection and history rebinds refresh both committed-content indicators.
         if (e.PropertyName == nameof(HasLocals))

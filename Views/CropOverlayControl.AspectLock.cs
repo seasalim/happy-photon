@@ -2,7 +2,7 @@ namespace HappyPhoton.Views;
 
 public partial class CropOverlayControl
 {
-    private void ApplyLockedAspectDrag(DragHandle handle, double deltaX, double deltaY)
+    private void ApplyLockedAspectDrag(DragHandle handle, double deltaX, double deltaY, double ratio)
     {
         if (Crop == null || _dragStartCrop == null) return;
 
@@ -10,35 +10,40 @@ public partial class CropOverlayControl
         var startHeight = _dragStartCrop.Bottom - _dragStartCrop.Top;
         if (startWidth <= 0 || startHeight <= 0) return;
 
-        var ratio = startWidth / startHeight;
-
         switch (handle)
         {
             case DragHandle.TopLeft:
                 ResizeLockedCorner(_dragStartCrop.Right, _dragStartCrop.Bottom, -1, -1,
                     startWidth - deltaX, startHeight - deltaY, ratio, deltaX, deltaY);
                 break;
+
             case DragHandle.TopRight:
                 ResizeLockedCorner(_dragStartCrop.Left, _dragStartCrop.Bottom, 1, -1,
                     startWidth + deltaX, startHeight - deltaY, ratio, deltaX, deltaY);
                 break;
+
             case DragHandle.BottomLeft:
                 ResizeLockedCorner(_dragStartCrop.Right, _dragStartCrop.Top, -1, 1,
                     startWidth - deltaX, startHeight + deltaY, ratio, deltaX, deltaY);
                 break;
+
             case DragHandle.BottomRight:
                 ResizeLockedCorner(_dragStartCrop.Left, _dragStartCrop.Top, 1, 1,
                     startWidth + deltaX, startHeight + deltaY, ratio, deltaX, deltaY);
                 break;
+
             case DragHandle.TopCenter:
                 ResizeLockedVerticalEdge(_dragStartCrop.Bottom, -1, startHeight - deltaY, ratio);
                 break;
+
             case DragHandle.BottomCenter:
                 ResizeLockedVerticalEdge(_dragStartCrop.Top, 1, startHeight + deltaY, ratio);
                 break;
+
             case DragHandle.MiddleLeft:
                 ResizeLockedHorizontalEdge(_dragStartCrop.Right, -1, startWidth - deltaX, ratio);
                 break;
+
             case DragHandle.MiddleRight:
                 ResizeLockedHorizontalEdge(_dragStartCrop.Left, 1, startWidth + deltaX, ratio);
                 break;
@@ -76,18 +81,7 @@ public partial class CropOverlayControl
         var maxHeight = directionY > 0 ? 1 - anchorY : anchorY;
         var (width, height) = SizeFromHeight(pointerHeight, ratio, maxWidth, maxHeight);
 
-        Crop!.Left = centerX - width / 2;
-        Crop.Right = centerX + width / 2;
-        if (directionY > 0)
-        {
-            Crop.Top = anchorY;
-            Crop.Bottom = anchorY + height;
-        }
-        else
-        {
-            Crop.Top = anchorY - height;
-            Crop.Bottom = anchorY;
-        }
+        SetCropFromAnchor(centerX - width / 2, anchorY, 1, directionY, width, height);
     }
 
     private void ResizeLockedHorizontalEdge(double anchorX, int directionX, double pointerWidth, double ratio)
@@ -99,18 +93,7 @@ public partial class CropOverlayControl
         var maxHeight = 2 * Math.Min(centerY, 1 - centerY);
         var (width, height) = SizeFromWidth(pointerWidth, ratio, maxWidth, maxHeight);
 
-        if (directionX > 0)
-        {
-            Crop!.Left = anchorX;
-            Crop.Right = anchorX + width;
-        }
-        else
-        {
-            Crop!.Left = anchorX - width;
-            Crop.Right = anchorX;
-        }
-        Crop.Top = centerY - height / 2;
-        Crop.Bottom = centerY + height / 2;
+        SetCropFromAnchor(anchorX, centerY - height / 2, directionX, 1, width, height);
     }
 
     private static (double Width, double Height) SizeFromWidth(
@@ -120,6 +103,7 @@ public partial class CropOverlayControl
         double maxHeight)
     {
         width = Clamp(width, Math.Max(MinCropSize, MinCropSize * ratio), Math.Min(maxWidth, maxHeight * ratio));
+
         return (width, width / ratio);
     }
 
@@ -130,6 +114,7 @@ public partial class CropOverlayControl
         double maxHeight)
     {
         height = Clamp(height, Math.Max(MinCropSize, MinCropSize / ratio), Math.Min(maxHeight, maxWidth / ratio));
+
         return (height * ratio, height);
     }
 
@@ -141,26 +126,10 @@ public partial class CropOverlayControl
         double width,
         double height)
     {
-        if (directionX > 0)
-        {
-            Crop!.Left = anchorX;
-            Crop.Right = anchorX + width;
-        }
-        else
-        {
-            Crop!.Left = anchorX - width;
-            Crop.Right = anchorX;
-        }
-
-        if (directionY > 0)
-        {
-            Crop.Top = anchorY;
-            Crop.Bottom = anchorY + height;
-        }
-        else
-        {
-            Crop.Top = anchorY - height;
-            Crop.Bottom = anchorY;
-        }
+        // Keep the exact size; move inward only when the anchored minimum has no room.
+        Crop!.Left = Clamp(directionX > 0 ? anchorX : anchorX - width, 0, 1 - width);
+        Crop.Top = Clamp(directionY > 0 ? anchorY : anchorY - height, 0, 1 - height);
+        Crop.Right = Crop.Left + width;
+        Crop.Bottom = Crop.Top + height;
     }
 }

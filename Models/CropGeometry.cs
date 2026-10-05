@@ -2,6 +2,64 @@ namespace HappyPhoton.Models;
 
 internal static class CropGeometry
 {
+    public const double MinCropSize = .05;
+
+    public static IReadOnlyList<string> RatioNames { get; } = ["Original", "1:1", "5:4", "4:3", "3:2", "16:9", "Custom"];
+
+    public static double PixelRatio(string name, double frameRatio) => name switch
+    {
+        "Original" => Math.Max(frameRatio, 1 / frameRatio),
+        "1:1" => 1,
+        "5:4" => 5d / 4,
+        "4:3" => 4d / 3,
+        "3:2" => 3d / 2,
+        "16:9" => 16d / 9,
+        _ => 0
+    };
+
+    public static double NormalizedRatio(double pixelRatio, double frameRatio) => pixelRatio / frameRatio;
+
+    public static double DraftPixelRatio(CropRegion crop, double frameRatio) =>
+        (crop.Right - crop.Left) / (crop.Bottom - crop.Top) * frameRatio;
+
+    public static string DeriveRatio(CropRegion crop, double frameRatio)
+    {
+        var ratio = DraftPixelRatio(crop, frameRatio);
+        ratio = Math.Max(ratio, 1 / ratio);
+
+        return RatioNames.FirstOrDefault(name => name != "Custom" &&
+            Math.Abs(ratio / PixelRatio(name, frameRatio) - 1) <= .005) ?? "Custom";
+    }
+
+    public static double TargetRatio(CropRegion crop, string name, double frameRatio)
+    {
+        if (name == "Custom") return (crop.Right - crop.Left) / (crop.Bottom - crop.Top);
+
+        var ratio = PixelRatio(name, frameRatio);
+
+        return NormalizedRatio(DraftPixelRatio(crop, frameRatio) >= 1 ? ratio : 1 / ratio, frameRatio);
+    }
+
+    public static bool CanFit(double ratio) => ratio >= MinCropSize && ratio <= 1 / MinCropSize;
+
+    public static double SwappedRatio(CropRegion crop, double frameRatio) =>
+        NormalizedRatio(1 / DraftPixelRatio(crop, frameRatio), frameRatio);
+
+    public static CropRegion Swap(CropRegion crop, double frameRatio) => Fit(crop, SwappedRatio(crop, frameRatio));
+
+    public static CropRegion Fit(CropRegion crop, double ratio)
+    {
+        if (!CanFit(ratio)) return crop;
+
+        var width = Math.Min(crop.Right - crop.Left, (crop.Bottom - crop.Top) * ratio);
+        width = Math.Min(Math.Max(width, Math.Max(MinCropSize, MinCropSize * ratio)), Math.Min(1, ratio));
+        var height = width / ratio;
+        var left = Math.Clamp((crop.Left + crop.Right - width) / 2, 0, 1 - width);
+        var top = Math.Clamp((crop.Top + crop.Bottom - height) / 2, 0, 1 - height);
+
+        return new CropRegion { Left = left, Top = top, Right = left + width, Bottom = top + height };
+    }
+
     /// <summary>
     /// Returns the orientation-independent long-edge/short-edge aspect ratio.
     /// Invalid dimensions return <see langword="null"/> so callers can choose

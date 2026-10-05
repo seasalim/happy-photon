@@ -125,8 +125,9 @@ Scope box              (fixed)
 CROP [Cancel] [Apply] / LOCALS [Show Mask] [Close]  (fixed active-tool header)
 Scrolling stack:
 Crop                   (only in Crop mode)
+  [Ratio] [Lock]
   [Horizon]
-  [Lock aspect ratio] [Auto] [Reset crop] [instruction]
+  [Auto] [Reset crop] [instruction]
 Locals                 (only in Locals mode)
   [+ Linear] [+ Radial] [+ Brush]
   Empty: [stable-height instruction / armed creation placeholder]

@@ -11,12 +11,63 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using HappyPhoton.Models;
 using HappyPhoton.Views;
+using ImageMagick;
 using Xunit;
 
 namespace HappyPhoton.Tests;
 
 public sealed class DevelopControlsShowcaseTests
 {
+    [AvaloniaTheory]
+    [InlineData("crop-ratio-closed", false)]
+    [InlineData("crop-ratio-closed", true)]
+    [InlineData("crop-ratio-3x2", false)]
+    [InlineData("crop-ratio-3x2", true)]
+    public async Task CropRatioScenes(string scene, bool gray)
+    {
+        var size = new PixelSize(1200, 700);
+        using var directory = new TemporaryDirectory();
+        var sourcePath = Path.Combine(directory.Path, "crop-scene.jpg");
+
+        using (var source = new MagickImage(GoldenTestPaths.Asset("srgb-reference.jpg")))
+        {
+            source.Crop(new MagickGeometry(68, 0, 1064, 798));
+            source.ResetPage();
+            source.Write(sourcePath);
+        }
+
+        await DevelopToolsBaselineTests.WithScene("crop", size.Width, size.Height, async (vm, scope) =>
+        {
+            vm.AppTheme = gray ? AppTheme.MidGray : AppTheme.Dark;
+            vm.CurrentCrop = new CropRegion { Left = .1, Right = .71, Top = .2, Bottom = .9 };
+
+            if (scene == "crop-ratio-3x2") vm.ChooseCropRatio("3:2");
+
+            ShowcaseTestHelper.Capture(scene + (gray ? "-gray" : "-dark"), scope, size,
+                gray ? HappyPhotonThemes.MidGray : ThemeVariant.Dark, window =>
+                {
+                    window.Focus();
+                    var scroll = window.GetVisualDescendants().OfType<ScrollViewer>()
+                        .Single(control => control.Name == "DevelopControlsScrollViewer");
+                    scroll.Offset = default;
+                    Dispatcher.UIThread.RunJobs();
+                    window.UpdateLayout();
+                    var section = window.GetVisualDescendants().OfType<CropEditSection>().Single();
+                    var picker = section.FindControl<ComboBox>("CropRatioPicker")!;
+                    var aspectLock = section.FindControl<ToggleButton>("CropAspectLockButton")!;
+                    Assert.False(picker.IsDropDownOpen);
+                    Assert.Equal(scene == "crop-ratio-3x2" ? "3:2" : "Custom", picker.SelectedItem);
+                    Assert.Equal(scene == "crop-ratio-3x2", vm.SwapCropRatioCommand.CanExecute(null));
+                    Assert.Equal(vm.IsCropAspectLocked, aspectLock.IsChecked);
+                    Assert.True(picker.IsEffectivelyVisible);
+                    Assert.True(aspectLock.IsEffectivelyVisible);
+                    var origin = picker.TranslatePoint(default, scroll)!.Value;
+                    Assert.InRange(origin.Y, 0, scroll.Bounds.Height - picker.Bounds.Height);
+                });
+            await Task.CompletedTask;
+        }, sourcePath);
+    }
+
     [AvaloniaTheory]
     [InlineData(false)]
     [InlineData(true)]
@@ -168,14 +219,20 @@ public sealed class DevelopControlsShowcaseTests
             var crop = panel.GetVisualDescendants().OfType<CropEditSection>().Single();
             var toggle = crop.FindControl<ToggleButton>("CropAspectLockButton")!;
             var row = toggle.GetVisualAncestors().OfType<Grid>().First();
-            var buttons = row.Children.OfType<Button>().ToArray();
-            Assert.Equal(3, buttons.Length);
+            var picker = crop.FindControl<ComboBox>("CropRatioPicker")!;
+            Assert.Same(row, picker.Parent);
+            Assert.Equal(24, toggle.Bounds.Height);
+            Assert.True(picker.Bounds.Right <= toggle.Bounds.Left);
+            Assert.True(toggle.Bounds.Right <= row.Bounds.Width);
+            var auto = crop.FindControl<Button>("AutoStraightenButton")!;
+            var actions = auto.GetVisualAncestors().OfType<Grid>().First();
+            var buttons = actions.Children.OfType<Button>().ToArray();
+            Assert.Equal(2, buttons.Length);
             Assert.All(buttons, button => Assert.Equal(24, button.Bounds.Height));
             Assert.True(buttons[0].Bounds.Right <= buttons[1].Bounds.Left);
-            Assert.True(buttons[1].Bounds.Right <= buttons[2].Bounds.Left);
-            Assert.True(buttons[2].Bounds.Right <= row.Bounds.Width);
+            Assert.True(buttons[1].Bounds.Right <= actions.Bounds.Width);
 
-            foreach (var button in buttons.Skip(1))
+            foreach (var button in buttons)
             {
                 var text = button.GetVisualDescendants().OfType<TextBlock>().Single();
                 Assert.True(text.Bounds.Width >= text.TextLayout.WidthIncludingTrailingWhitespace);

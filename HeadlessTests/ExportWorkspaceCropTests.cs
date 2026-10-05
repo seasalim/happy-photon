@@ -6,7 +6,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed class ExportWorkspaceCropTests : IDisposable
+public sealed partial class ExportWorkspaceCropTests : IDisposable
 {
     private readonly CatalogVmFixture _fixture = new("export-workspace-crop");
 
