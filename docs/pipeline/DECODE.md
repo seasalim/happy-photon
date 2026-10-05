@@ -246,7 +246,7 @@ be redone by hand.
 
 ## 3. `StandardBaseLoader` (Magick.NET)
 
-Windows/Linux x64 use Magick.NET Q16 OpenMP 14.15.0; macOS keeps Q16 AnyCPU. Process
+Windows/Linux x64 use Magick.NET Q16 OpenMP 14.17.2; macOS keeps Q16 AnyCPU. Process
 entry defaults `OMP_NUM_THREADS` and `MAGICK_THREAD_LIMIT` to at most sixteen workers to
 bound X-Trans scratch space without changing decode precision or pixel math; explicit
 nonblank values win. Native operations share that budget; the resting two-worker cap

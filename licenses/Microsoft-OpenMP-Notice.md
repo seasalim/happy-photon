@@ -2,7 +2,7 @@
 
 `vcomp140.dll` is copyright Microsoft Corporation. All rights reserved.
 Happy Photon ships the unmodified x64 file (14.51.36247.0) supplied by
-`Magick.NET-Q16-OpenMP-x64` 14.15.0 under `runtimes/win-x64/native/`.
+`Magick.NET-Q16-OpenMP-x64` 14.17.2 under `runtimes/win-x64/native/`.
 It is app-local (embedded in the Windows single-file publish) and shared by
 ImageMagick and LibRaw. It is not covered by Magick.NET's Apache-2.0 license.
 

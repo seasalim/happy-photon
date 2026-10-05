@@ -8,14 +8,14 @@ pinned by the committed package lock files.
 
 | Component | Locked version | License |
 | --- | ---: | --- |
-| Avalonia, Avalonia.Desktop, Avalonia.Themes.Fluent | 12.0.4 | MIT |
+| Avalonia, Avalonia.Desktop, Avalonia.Themes.Fluent | 12.1.3 | MIT |
 | Avalonia.Controls.ItemsRepeater | 12.0.0 | MIT |
 | CommunityToolkit.Mvvm | 8.4.2 | MIT |
-| Magick.NET-Q16-OpenMP-x64 (Windows/Linux), Magick.NET-Q16-AnyCPU (macOS) | 14.15.0 | Apache-2.0 |
+| Magick.NET-Q16-OpenMP-x64 (Windows/Linux), Magick.NET-Q16-AnyCPU (macOS) | 14.17.2 | Apache-2.0 |
 | MetadataExtractor | 2.9.3 | Apache-2.0 |
-| Microsoft.Data.Sqlite | 10.0.9 | MIT |
-| Microsoft.NET.ILLink.Tasks | 10.0.8 | MIT |
-| SQLitePCLRaw.bundle_e_sqlite3 | 3.0.3 | Apache-2.0 |
+| Microsoft.Data.Sqlite | 10.0.12 | MIT |
+| Microsoft.NET.ILLink.Tasks | 10.0.12 | MIT |
+| SQLitePCLRaw.bundle_e_sqlite3 | 3.0.5 | Apache-2.0 |
 | HappyPhoton.LibRaw.Native | 0.22.2.12 | GPL-3.0-or-later; bundled components retain their own terms |
 
 The canonical Apache-2.0 text is distributed in
@@ -44,7 +44,7 @@ No ExifTool source code or executable code is included or used.
 
 ## Magick.NET and ImageMagick
 
-Happy Photon uses Magick.NET 14.15.0, copyright Dirk Lemstra, under
+Happy Photon uses Magick.NET 14.17.2, copyright Dirk Lemstra, under
 Apache-2.0. Windows/Linux x64 use `Magick.NET-Q16-OpenMP-x64`; macOS uses
 `Magick.NET-Q16-AnyCPU`. Both packages embed ImageMagick and supporting codecs.
 Windows also ships the OpenMP package's Microsoft `vcomp140.dll` app-local,
