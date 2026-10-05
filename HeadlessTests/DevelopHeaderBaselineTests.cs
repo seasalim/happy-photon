@@ -36,7 +36,8 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
             // Below: title bottom to first content top. Content excludes outer margins.
             // L1 uses the curve card edge; L2 retains the baseline canvas/footer span.
             // WP2 moves two 24px slider rows to Presence; Recovery now ends Adjustments.
-            double[] expectedHeight = [44, 84, 192, 92, 128, 104, 68, 104, 92, 114];
+            // The Profile picker adds 5px above its status line and 8px below it.
+            double[] expectedHeight = [47, 84, 192, 92, 128, 104, 68, 104, 92, 114];
             var previousBottom = 0d;
             var spacingSum = 0d;
 
@@ -66,7 +67,7 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
             Assert.Equal(180, curve.Bounds.Height);
             output.WriteLine($"L2 CurveCanvas: parentBounds={canvas.Bounds}; inCurve={BoundsIn(canvas, curve)}; cardHeight={curve.Bounds.Height}");
             var scroll = panel.FindControl<ScrollViewer>("DevelopControlsScrollViewer")!;
-            Assert.InRange(scroll.Extent.Height, 1527.5, 1528.5);
+            Assert.InRange(scroll.Extent.Height, 1538.5, 1539.5);
             output.WriteLine(FormattableString.Invariant(
                 $"L3 extent={scroll.Extent}; viewport={scroll.Viewport}; spacingSum={spacingSum:R}; normalizationDelta={270 - spacingSum:R}; thresholdWithoutChevronRows={scroll.Extent.Height + 270 - spacingSum:R}"));
             MeasurePresets(window, "Dark");

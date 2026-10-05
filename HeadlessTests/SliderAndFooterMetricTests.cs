@@ -93,7 +93,9 @@ public sealed class SliderAndFooterMetricTests
             Assert.Equal(
                 ThemeResourceTests.Resource<FontFamily>("FontBody", ThemeVariant.Dark),
                 text.FontFamily);
-            Assert.Equal(new Thickness(5, 1), chip.Padding);
+            // The Profile chip spans the profile dropdown's height; the Recovery chip stays compact.
+            var profile = chip.FindAncestorOfType<RawProfilePicker>() is not null;
+            Assert.Equal(profile ? new Thickness(8, 0) : new Thickness(5, 1), chip.Padding);
             Assert.Equal(new Thickness(1), chip.BorderThickness);
         });
         Assert.Equal(
