@@ -23,9 +23,10 @@ public enum ColorLabelFilter
 
 public sealed record ColorLabelChoice(ColorLabel Value, string Name)
 {
-    public string ToolTip =>
-        $"Set {Name.ToLowerInvariant()} label on the Browse selection when non-empty, " +
-        "otherwise the active photo; active photo only in Develop, Loupe, or Compare; click again to clear";
+    // Keys 6–9 match the KeyBindings in MainWindow.axaml; Purple has no shortcut.
+    public string ToolTip => Value is >= ColorLabel.Red and <= ColorLabel.Blue
+        ? $"{Name} label ({(int)Value + 5})"
+        : $"{Name} label";
     public string AutomationName => $"Set {Name.ToLowerInvariant()} color label";
 }
 

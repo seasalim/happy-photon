@@ -280,7 +280,7 @@ public sealed partial class AssessmentTargetingTests : IDisposable
     }
 
     [Fact]
-    public void ShortcutCatalogAndTooltips_DescribeSharedSelectionRule()
+    public void ShortcutCatalog_DescribesSharedSelectionRule_AndTooltipsStayShort()
     {
         var organize = ShortcutCatalog.Groups.Single(group => group.Title == "Organize");
         foreach (var keys in new[] { "P", "U", "X", "1–5", "0", "6–9" })
@@ -301,13 +301,13 @@ public sealed partial class AssessmentTargetingTests : IDisposable
 
         var xaml = File.ReadAllText(Path.Combine(
             GoldenTestPaths.RepositoryRoot, "Views", "ImageAssessmentControl.axaml"));
-        Assert.Contains("selection when non-empty", xaml, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("otherwise the active photo", xaml, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("active photo only in Develop", xaml, StringComparison.OrdinalIgnoreCase);
-        var labelTip = new ColorLabelChoice(ColorLabel.Red, "Red").ToolTip;
-        Assert.Contains("selection when non-empty", labelTip, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("otherwise the active photo", labelTip, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Develop", labelTip, StringComparison.OrdinalIgnoreCase);
+        foreach (var tip in new[] { "Pick (P)", "Reject (X)", "Unflag (U)", "Rate 1 star (1)", "Rate 5 stars (5)", "Clear rating (0)" })
+        {
+            Assert.Contains($"ToolTip.Tip=\"{tip}\"", xaml, StringComparison.Ordinal);
+        }
+        Assert.Equal("Red label (6)", new ColorLabelChoice(ColorLabel.Red, "Red").ToolTip);
+        Assert.Equal("Blue label (9)", new ColorLabelChoice(ColorLabel.Blue, "Blue").ToolTip);
+        Assert.Equal("Purple label", new ColorLabelChoice(ColorLabel.Purple, "Purple").ToolTip);
     }
 
     private Task<CatalogService> CreateCatalogAsync() =>

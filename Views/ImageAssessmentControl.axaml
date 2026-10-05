@@ -78,7 +78,7 @@
                             Classes="assessment flag"
                             Classes.active="{Binding SelectedImage.IsPicked, FallbackValue=False}"
                             Command="{Binding TogglePickedImageCommand}"
-                            ToolTip.Tip="Pick the Browse selection when non-empty, otherwise the active photo; active photo only in Develop, Loupe, or Compare (P)"
+                            ToolTip.Tip="Pick (P)"
                             AutomationProperties.Name="Pick images">
                         <Path Width="14" Height="14"
                               Data="M 2,13 L 2,2 M 2,3 L 11,3 L 9,6 L 11,9 L 2,9"
@@ -90,7 +90,7 @@
                             Classes="assessment flag reject"
                             Classes.active="{Binding SelectedImage.IsRejected, FallbackValue=False}"
                             Command="{Binding ToggleRejectedImageCommand}"
-                            ToolTip.Tip="Reject the Browse selection when non-empty, otherwise the active photo; active photo only in Develop, Loupe, or Compare (X)"
+                            ToolTip.Tip="Reject (X)"
                             AutomationProperties.Name="Reject images">
                         <Path Width="14" Height="14"
                               Data="M 7,1 A 6,6 0 1 1 6.99,1 M 3,3 L 11,11"
@@ -100,7 +100,7 @@
                     <Button x:Name="UnflagImageButton"
                             Classes="assessment flag"
                             Command="{Binding UnpickImageCommand}"
-                            ToolTip.Tip="Unflag the Browse selection when non-empty, otherwise the active photo; active photo only in Develop, Loupe, or Compare (U)"
+                            ToolTip.Tip="Unflag (U)"
                             AutomationProperties.Name="Unflag images">
                         <Path Width="14" Height="14"
                               Data="M 2,13 L 2,2 M 2,3 L 11,3 L 9,6 L 11,9 L 2,9 M 13.2,2.6 L 2.6,13.2"
@@ -117,7 +117,7 @@
                 <Button x:Name="Rating1Button"
                         Classes="rating-star"
                         Command="{Binding SetRatingCommand}"
-                        ToolTip.Tip="Set or clear 1 star for the Browse selection when non-empty, otherwise the active photo; active photo only in Develop, Loupe, or Compare (1)"
+                        ToolTip.Tip="Rate 1 star (1)"
                         AutomationProperties.Name="Set 1-star rating">
                     <Button.CommandParameter>
                         <x:Int32>1</x:Int32>
@@ -131,7 +131,7 @@
                 <Button x:Name="Rating2Button"
                         Classes="rating-star"
                         Command="{Binding SetRatingCommand}"
-                        ToolTip.Tip="Set or clear 2 stars for the Browse selection when non-empty, otherwise the active photo; active photo only in Develop, Loupe, or Compare (2)"
+                        ToolTip.Tip="Rate 2 stars (2)"
                         AutomationProperties.Name="Set 2-star rating">
                     <Button.CommandParameter>
                         <x:Int32>2</x:Int32>
@@ -145,7 +145,7 @@
                 <Button x:Name="Rating3Button"
                         Classes="rating-star"
                         Command="{Binding SetRatingCommand}"
-                        ToolTip.Tip="Set or clear 3 stars for the Browse selection when non-empty, otherwise the active photo; active photo only in Develop, Loupe, or Compare (3)"
+                        ToolTip.Tip="Rate 3 stars (3)"
                         AutomationProperties.Name="Set 3-star rating">
                     <Button.CommandParameter>
                         <x:Int32>3</x:Int32>
@@ -159,7 +159,7 @@
                 <Button x:Name="Rating4Button"
                         Classes="rating-star"
                         Command="{Binding SetRatingCommand}"
-                        ToolTip.Tip="Set or clear 4 stars for the Browse selection when non-empty, otherwise the active photo; active photo only in Develop, Loupe, or Compare (4)"
+                        ToolTip.Tip="Rate 4 stars (4)"
                         AutomationProperties.Name="Set 4-star rating">
                     <Button.CommandParameter>
                         <x:Int32>4</x:Int32>
@@ -173,7 +173,7 @@
                 <Button x:Name="Rating5Button"
                         Classes="rating-star"
                         Command="{Binding SetRatingCommand}"
-                        ToolTip.Tip="Set or clear 5 stars for the Browse selection when non-empty, otherwise the active photo; active photo only in Develop, Loupe, or Compare (5)"
+                        ToolTip.Tip="Rate 5 stars (5)"
                         AutomationProperties.Name="Set 5-star rating">
                     <Button.CommandParameter>
                         <x:Int32>5</x:Int32>
@@ -189,7 +189,7 @@
             <Button x:Name="ClearRatingButton"
                     Classes="assessment clear"
                     Command="{Binding SetRatingCommand}"
-                    ToolTip.Tip="Clear ratings on the Browse selection when non-empty, otherwise the active photo; active photo only in Develop, Loupe, or Compare (0)"
+                    ToolTip.Tip="Clear rating (0)"
                     AutomationProperties.Name="Clear rating">
                 <Button.CommandParameter>
                     <x:Int32>0</x:Int32>
