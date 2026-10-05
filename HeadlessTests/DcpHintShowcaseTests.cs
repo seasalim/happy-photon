@@ -15,6 +15,54 @@ namespace HappyPhoton.Tests;
 public sealed class DcpHintShowcaseTests
 {
     [AvaloniaTheory]
+    [InlineData("first-run-all-set-note", false)]
+    [InlineData("first-run-all-set-note-gray", true)]
+    public async Task AllSetNote(string scene, bool gray)
+    {
+        using var files = new CatalogVmFixture();
+        using var catalog = await files.CreateCatalogAsync();
+        await using var vm = DcpHintTestScene.Create(catalog);
+        vm.ProbeDcpProfilesAsync = _ => Task.FromResult(DcpAdobeProfilePresence.None);
+        vm.ShowFirstRunWelcome(files.Root);
+        vm.FirstRunStep = FirstRunStep.AllSet;
+        await vm.DcpHintProbe;
+        var window = new MainWindow();
+        using var scope = TestUiScope.ForMainWindow(window, vm, show: false);
+        ShowcaseTestHelper.Capture(scene, scope, new PixelSize(1200, 700),
+            gray ? HappyPhotonThemes.MidGray : ThemeVariant.Dark, shown =>
+            {
+                Assert.True(vm.IsDcpHintNoteVisible);
+                Assert.True(shown.GetVisualDescendants().OfType<Border>()
+                    .Single(control => control.Name == "DcpHintNote").IsEffectivelyVisible);
+            });
+    }
+
+    [AvaloniaTheory]
+    [InlineData("status-bar-hint-notice", false)]
+    [InlineData("status-bar-hint-notice-gray", true)]
+    public async Task StatusNotice(string scene, bool gray)
+    {
+        using var files = new CatalogVmFixture();
+        using var catalog = await files.CreateCatalogAsync();
+        await using var vm = DcpHintTestScene.Create(catalog);
+        vm.ShowWorkspaceReady(1);
+        await vm.BackupNoticeLoad;
+        vm.ImageService.DcpDiscovery.EnumerateAdobeDirectory = _ => [];
+        await DcpHintTestScene.StageUndoAsync(vm, files);
+        await DcpHintTestScene.ScanAsync(vm, vm.SelectedImage!.FilePath);
+        var window = new MainWindow();
+        using var scope = TestUiScope.ForMainWindow(window, vm, show: false);
+        ShowcaseTestHelper.Capture(scene, scope, new PixelSize(1200, 700),
+            gray ? HappyPhotonThemes.MidGray : ThemeVariant.Dark, shown =>
+            {
+                Assert.True(vm.IsBatchUndoOffered);
+                Assert.Equal(MainWindowViewModel.DcpHintNotice, vm.StatusMessage);
+                Assert.True(shown.GetVisualDescendants().OfType<Button>()
+                    .Single(control => control.Name == "UndoSyncButton").IsEffectivelyVisible);
+            });
+    }
+
+    [AvaloniaTheory]
     [InlineData("develop-profile-empty", false)]
     [InlineData("develop-profile-empty-gray", true)]
     public async Task EmptyAdobeProfileHint(string scene, bool gray)

@@ -194,6 +194,19 @@
                     <TextBlock Text="Happy Photon is ready for your photographs."
                                Classes="dialog-body" Foreground="{DynamicResource TextSecondary}"
                                TextAlignment="Center" TextWrapping="Wrap"/>
+                    <Border x:Name="DcpHintNote" Classes="storage-row"
+                            IsVisible="{Binding IsDcpHintNoteVisible}">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="No Adobe camera profiles were found on this computer. Adobe's free DNG Converter installs profiles for most cameras, and Happy Photon picks them up on its own."
+                                       Classes="dialog-body" Foreground="{DynamicResource TextSecondary}"
+                                       TextWrapping="Wrap"/>
+                            <Button Classes="link-button" Content="Get Adobe camera profiles…"
+                                    FontSize="{StaticResource FontSizeSmall}"
+                                    Command="{Binding GetAdobeProfilesCommand}"
+                                    ToolTip.Tip="Opens Adobe's DNG Converter page."
+                                    AutomationProperties.Name="Get Adobe camera profiles"/>
+                        </StackPanel>
+                    </Border>
                     <Button x:Name="StartBrowsingButton" Content="Start browsing"
                             Classes="quiet-button accent" HorizontalAlignment="Center"
                             Command="{Binding FinishFirstRunCommand}"/>

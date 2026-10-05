@@ -22,6 +22,7 @@
                            Foreground="{DynamicResource TextSecondary}" FontFamily="{StaticResource FontBody}"
                            TextTrimming="CharacterEllipsis" MaxWidth="480" Margin="8,0"/>
                 <TextBlock x:Name="StatusText" Grid.Column="2" Text="{Binding StatusMessage}"
+                           ToolTip.Tip="{Binding StatusMessage}"
                            Foreground="{DynamicResource TextSecondary}" FontFamily="{StaticResource FontBody}"
                            TextTrimming="CharacterEllipsis" Margin="8,0"/>
             </Grid>

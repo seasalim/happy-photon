@@ -135,10 +135,12 @@ public partial class MainWindowViewModel
         CanPersistFolderSession = false;
         FirstRunStep = FirstRunStep.Welcome;
         StartupGateState = StartupGateState.Welcome;
+        StartDcpHintProbe();
     }
 
     public void ResumeFirstRunAfterStorage(string? defaultPath)
     {
+        _ranFirstRun = true;
         SetFirstRunDefaultLocation(defaultPath);
         FirstRunErrorMessage = null;
         CanPersistFolderSession = false;
@@ -355,6 +357,7 @@ public partial class MainWindowViewModel
 
         try
         {
+            await FinishDcpHintAsync();
             await OpenFirstWorkspaceAsync();
         }
         catch (Exception exception)
@@ -457,6 +460,7 @@ public partial class MainWindowViewModel
 
     private void NotifyFirstRunPresentationChanged()
     {
+        RefreshDcpHintNote();
         OnPropertyChanged(nameof(IsFirstRunWelcomeStep));
         OnPropertyChanged(nameof(IsFirstRunStorageStep));
         OnPropertyChanged(nameof(IsFirstRunPicturesStep));

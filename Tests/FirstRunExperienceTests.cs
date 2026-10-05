@@ -33,7 +33,10 @@ public sealed partial class FirstRunExperienceTests : IDisposable
     public async Task Completion_PersistsBeforeOpeningWorkspace()
     {
         using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
-        var vm = new MainWindowViewModel(catalog);
+        var vm = new MainWindowViewModel(catalog)
+        {
+            ProbeDcpProfilesAsync = _ => Task.FromResult(DcpAdobeProfilePresence.Unknown)
+        };
         string? persistedPath = null;
         var focusRequested = false;
         vm.PersistFirstRunCompletionAsync = path =>
@@ -63,7 +66,10 @@ public sealed partial class FirstRunExperienceTests : IDisposable
     public async Task CompletionFailure_KeepsWelcomeVisible()
     {
         using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
-        var vm = new MainWindowViewModel(catalog);
+        var vm = new MainWindowViewModel(catalog)
+        {
+            ProbeDcpProfilesAsync = _ => Task.FromResult(DcpAdobeProfilePresence.Unknown)
+        };
         vm.PersistFirstRunCompletionAsync =
             _ => Task.FromException(new IOException("write failed"));
         vm.ShowFirstRunWelcome(_testRoot.Path);
@@ -84,7 +90,10 @@ public sealed partial class FirstRunExperienceTests : IDisposable
         var catalogPath = Directory.CreateDirectory(
             Path.Combine(_testRoot.Path, "catalog")).FullName;
         using var catalog = new CatalogService(catalogPath);
-        var vm = new MainWindowViewModel(catalog);
+        var vm = new MainWindowViewModel(catalog)
+        {
+            ProbeDcpProfilesAsync = _ => Task.FromResult(DcpAdobeProfilePresence.Unknown)
+        };
         var persistenceRequested = false;
         vm.PersistFirstRunCompletionAsync = _ =>
         {
@@ -106,7 +115,10 @@ public sealed partial class FirstRunExperienceTests : IDisposable
     public void BrowseRequest_DoesNotCompleteFirstRun()
     {
         using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
-        var vm = new MainWindowViewModel(catalog);
+        var vm = new MainWindowViewModel(catalog)
+        {
+            ProbeDcpProfilesAsync = _ => Task.FromResult(DcpAdobeProfilePresence.Unknown)
+        };
         var browseRequested = false;
         vm.BrowseLocationRequested = () => browseRequested = true;
         vm.ShowFirstRunWelcome(_testRoot.Path);
@@ -122,7 +134,10 @@ public sealed partial class FirstRunExperienceTests : IDisposable
     public async Task PreparedTree_DoesNotSelectOrLoadDefaultFolder()
     {
         using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
-        var vm = new MainWindowViewModel(catalog);
+        var vm = new MainWindowViewModel(catalog)
+        {
+            ProbeDcpProfilesAsync = _ => Task.FromResult(DcpAdobeProfilePresence.Unknown)
+        };
 
         await vm.InitializeFolderTreeWithRootAsync(
             _testRoot.Path,
@@ -138,7 +153,10 @@ public sealed partial class FirstRunExperienceTests : IDisposable
     public void MissingPictures_UsesPickerLedPicturesStep()
     {
         using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
-        var vm = new MainWindowViewModel(catalog);
+        var vm = new MainWindowViewModel(catalog)
+        {
+            ProbeDcpProfilesAsync = _ => Task.FromResult(DcpAdobeProfilePresence.Unknown)
+        };
 
         vm.ShowFirstRunWelcome(null);
         vm.ResumeFirstRunAfterStorage(null);
@@ -151,7 +169,10 @@ public sealed partial class FirstRunExperienceTests : IDisposable
     public async Task Wizard_VisitsWelcomeStorageAndPicturesInOrder()
     {
         using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
-        var vm = new MainWindowViewModel(catalog);
+        var vm = new MainWindowViewModel(catalog)
+        {
+            ProbeDcpProfilesAsync = _ => Task.FromResult(DcpAdobeProfilePresence.Unknown)
+        };
         var storageCommits = 0;
         vm.CompleteDataLocationSetupAsync = () =>
         {
@@ -186,7 +207,10 @@ public sealed partial class FirstRunExperienceTests : IDisposable
         var locations = new AppDataLocationService(new AppDataPlatformPaths(
             pictures, pointer, data, cache));
         using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "vm-catalog"));
-        var vm = new MainWindowViewModel(catalog);
+        var vm = new MainWindowViewModel(catalog)
+        {
+            ProbeDcpProfilesAsync = _ => Task.FromResult(DcpAdobeProfilePresence.Unknown)
+        };
         var storageCommits = 0;
         vm.PrepareFirstRunStorage(locations, null);
         vm.CompleteDataLocationSetupAsync = async () =>
@@ -219,7 +243,10 @@ public sealed partial class FirstRunExperienceTests : IDisposable
     public async Task PicturesDetection_DefersCompletionUntilImportApplies()
     {
         using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
-        var vm = new MainWindowViewModel(catalog);
+        var vm = new MainWindowViewModel(catalog)
+        {
+            ProbeDcpProfilesAsync = _ => Task.FromResult(DcpAdobeProfilePresence.Unknown)
+        };
         var lightroomCatalog = Path.Combine(_testRoot.Path, "photos.lrcat");
         var persisted = false;
         var applied = false;
@@ -267,7 +294,10 @@ public sealed partial class FirstRunExperienceTests : IDisposable
     public async Task LightroomSkip_UsesTheSameWizardFinishPath()
     {
         using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
-        var vm = new MainWindowViewModel(catalog);
+        var vm = new MainWindowViewModel(catalog)
+        {
+            ProbeDcpProfilesAsync = _ => Task.FromResult(DcpAdobeProfilePresence.Unknown)
+        };
         string? persistedPath = null;
         vm.DetectLightroomAsync = (_, _) => Task.FromResult(
             new LightroomDetectionResult(true, (string?)null));
@@ -301,7 +331,10 @@ public sealed partial class FirstRunExperienceTests : IDisposable
             Path.Combine(_testRoot.Path, "data"),
             Path.Combine(_testRoot.Path, "cache")));
         using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
-        var vm = new MainWindowViewModel(catalog);
+        var vm = new MainWindowViewModel(catalog)
+        {
+            ProbeDcpProfilesAsync = _ => Task.FromResult(DcpAdobeProfilePresence.Unknown)
+        };
         vm.PrepareFirstRunStorage(service, null);
         var requested = new List<bool>();
         vm.ChangeSetupLocationAsync = catalogLocation =>
@@ -323,7 +356,10 @@ public sealed partial class FirstRunExperienceTests : IDisposable
     public async Task LightroomCandidates_AreSelectableAndImportUsesSelection()
     {
         using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
-        var vm = new MainWindowViewModel(catalog);
+        var vm = new MainWindowViewModel(catalog)
+        {
+            ProbeDcpProfilesAsync = _ => Task.FromResult(DcpAdobeProfilePresence.Unknown)
+        };
         var first = Path.Combine(_testRoot.Path, "first.lrcat");
         var second = Path.Combine(_testRoot.Path, "second.lrcat");
         var third = Path.Combine(_testRoot.Path, "third.lrcat");
@@ -357,7 +393,10 @@ public sealed partial class FirstRunExperienceTests : IDisposable
     public void StartupFailure_PreservesActionableMessage()
     {
         using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
-        var vm = new MainWindowViewModel(catalog);
+        var vm = new MainWindowViewModel(catalog)
+        {
+            ProbeDcpProfilesAsync = _ => Task.FromResult(DcpAdobeProfilePresence.Unknown)
+        };
 
         vm.ShowStartupFailure("Move the incompatible catalog aside, then retry.");
 

@@ -12,7 +12,10 @@ public sealed partial class FirstRunExperienceTests
     public async Task Back_PreservesCommittedStorageAndDoesNotCommitAgain(bool resume)
     {
         using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
-        await using var vm = new MainWindowViewModel(catalog);
+        await using var vm = new MainWindowViewModel(catalog)
+        {
+            ProbeDcpProfilesAsync = _ => Task.FromResult(DcpAdobeProfilePresence.Unknown)
+        };
         var commits = 0;
         vm.CompleteDataLocationSetupAsync = () =>
         {
@@ -62,7 +65,10 @@ public sealed partial class FirstRunExperienceTests
     public async Task PicturesRoundTrip_ReplacesOfferAndCatalogs(bool changeFolder, bool apply)
     {
         using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
-        await using var vm = new MainWindowViewModel(catalog);
+        await using var vm = new MainWindowViewModel(catalog)
+        {
+            ProbeDcpProfilesAsync = _ => Task.FromResult(DcpAdobeProfilePresence.Unknown)
+        };
         var pictures = Directory.CreateDirectory(Path.Combine(_testRoot.Path, "Pictures")).FullName;
         var next = changeFolder
             ? Directory.CreateDirectory(Path.Combine(_testRoot.Path, "Other")).FullName
@@ -130,7 +136,10 @@ public sealed partial class FirstRunExperienceTests
     public async Task Back_IsDisabledDuringWorkAndOutsideFirstRun()
     {
         using var catalog = new CatalogService(Path.Combine(_testRoot.Path, "catalog"));
-        await using var vm = new MainWindowViewModel(catalog);
+        await using var vm = new MainWindowViewModel(catalog)
+        {
+            ProbeDcpProfilesAsync = _ => Task.FromResult(DcpAdobeProfilePresence.Unknown)
+        };
         Assert.False(vm.BackFirstRunCommand.CanExecute(null));
         vm.ShowFirstRunWelcome(_testRoot.Path);
         vm.ResumeFirstRunAfterStorage(_testRoot.Path);

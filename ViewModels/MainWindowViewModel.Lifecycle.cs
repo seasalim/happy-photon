@@ -4,6 +4,7 @@ public partial class MainWindowViewModel
 {
     public async ValueTask DisposeAsync()
     {
+        CancelDcpHintProbe();
         ClearBatchOffer();
         _developLoadingMessage.Dispose();
         _startupProgress.Dispose();

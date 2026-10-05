@@ -5,11 +5,9 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
-    private string? _backupNotice;
+    private readonly OneTimeNotice _oneTimeNotice = new();
 
-    private string? _backupNoticeOutcome;
-
-    private bool _backupNoticePresented;
+    internal bool IsNoticePending => _oneTimeNotice.IsPending && StatusMessage == _oneTimeNotice.Text;
 
     internal Task BackupNoticeLoad { get; private set; } = Task.CompletedTask;
 
@@ -30,24 +28,24 @@ public partial class MainWindowViewModel
             }
 
             var attempt = JsonSerializer.Deserialize<BackupOutcome>(outcome);
-            _backupNotice = attempt?.Status switch
+            var text = attempt?.Status switch
             {
                 "failed" => "The last catalog backup failed; it will retry when you quit.",
                 "catalog-damaged" => "The last backup found a damaged catalog. Restore a backup in Settings → Storage.",
                 _ => null
             };
-            _backupNoticeOutcome = outcome;
+            _oneTimeNotice.Offer(text, CatalogBackupService.PresentedOutcomeKey, outcome);
             OnPropertyChanged(nameof(StatusMessage));
         }
         catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Backup notice: {ex.Message}"); }
     }
 
-    internal async Task AcknowledgeBackupNoticeAsync(string? displayed)
+    internal async Task AcknowledgeNoticeAsync(string? displayed)
     {
-        if (_backupNoticePresented || _backupNotice == null || displayed != _backupNotice ||
-            StatusMessage != _backupNotice || StartupGateState != StartupGateState.Ready) return;
-        _backupNoticePresented = true;
-        try { await _catalogService.SetAppSettingAsync(CatalogBackupService.PresentedOutcomeKey, _backupNoticeOutcome!); }
-        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Backup notice acknowledgement: {ex.Message}"); }
+        if (StatusMessage != displayed || StartupGateState != StartupGateState.Ready) return;
+
+        if (_oneTimeNotice.IsPending && displayed == DcpHintNotice) _dcpHintPresented = true;
+
+        await _oneTimeNotice.AcknowledgeAsync(_catalogService, displayed);
     }
 }

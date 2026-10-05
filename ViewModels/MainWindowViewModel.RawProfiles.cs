@@ -187,6 +187,7 @@ public partial class MainWindowViewModel
                     : _rawProfileDiscoveryState.AdobeEnumerationComplete);
             _isRawProfileDiscoveryActive = false;
             PublishRawProfilePickerState();
+            _ = OfferDcpHintAsync(result);
 
             if (confirmSelection && image.EditSettings.RawProfile != null)
             {

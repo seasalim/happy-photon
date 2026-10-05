@@ -29,7 +29,7 @@ public partial class MainWindowViewModel
         PreviewSourceFailureStatus ??
         SelectedRawDecodeFailureStatus ??
         GlobalRawRuntimeFailureStatus ??
-        TransientStatus ?? _backupNotice;
+        TransientStatus ?? _oneTimeNotice.Text;
 
     private bool CanCopyEditSettings =>
         CanEditSelectedImage && !IsFullScreenMode;
@@ -353,7 +353,8 @@ public partial class MainWindowViewModel
 
     partial void OnTransientStatusChanged(string? value)
     {
-        if (value != null && _backupNoticePresented) _backupNotice = null;
+        if (value != null) _oneTimeNotice.ClearPresented();
+
         OnPropertyChanged(nameof(StatusMessage));
     }
 

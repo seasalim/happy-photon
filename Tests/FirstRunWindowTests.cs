@@ -19,7 +19,10 @@ public sealed class FirstRunWindowTests
         using var catalog = new CatalogService(Path.Combine(
             Path.GetTempPath(),
             $"happy-photon-window-{Guid.NewGuid():N}"));
-        var vm = new MainWindowViewModel(catalog);
+        var vm = new MainWindowViewModel(catalog)
+        {
+            ProbeDcpProfilesAsync = _ => Task.FromResult(DcpAdobeProfilePresence.Unknown)
+        };
         var window = new MainWindow();
         using var windowScope = TestUiScope.ForMainWindow(window, vm, show: false);
 
@@ -45,7 +48,10 @@ public sealed class FirstRunWindowTests
         using var catalog = new CatalogService(Path.Combine(
             Path.GetTempPath(),
             $"happy-photon-window-{Guid.NewGuid():N}"));
-        var vm = new MainWindowViewModel(catalog);
+        var vm = new MainWindowViewModel(catalog)
+        {
+            ProbeDcpProfilesAsync = _ => Task.FromResult(DcpAdobeProfilePresence.Unknown)
+        };
         vm.ShowFirstRunWelcome(Path.GetTempPath());
         var view = new FirstRunView { DataContext = vm };
         var window = new Window { Content = view };
@@ -100,7 +106,10 @@ public sealed class FirstRunWindowTests
             Path.Combine(root.FullName, "cache")));
         var migrator = new CatalogLocationMigrator(locationService);
         using var catalog = new CatalogService();
-        var vm = new MainWindowViewModel(catalog);
+        var vm = new MainWindowViewModel(catalog)
+        {
+            ProbeDcpProfilesAsync = _ => Task.FromResult(DcpAdobeProfilePresence.Unknown)
+        };
         var window = new MainWindow();
         using var windowScope = TestUiScope.ForMainWindow(window, vm, show: false);
 
@@ -143,7 +152,10 @@ public sealed class FirstRunWindowTests
         var configured = await locationService.CreateFreshAsync();
         var migrator = new CatalogLocationMigrator(locationService);
         using var catalog = new CatalogService();
-        var vm = new MainWindowViewModel(catalog);
+        var vm = new MainWindowViewModel(catalog)
+        {
+            ProbeDcpProfilesAsync = _ => Task.FromResult(DcpAdobeProfilePresence.Unknown)
+        };
         var window = new MainWindow();
         using var windowScope = TestUiScope.ForMainWindow(window, vm, show: false);
 
@@ -180,7 +192,10 @@ public sealed class FirstRunWindowTests
         Directory.Delete(missing.CatalogRoot, recursive: true);
         var migrator = new CatalogLocationMigrator(locationService);
         using var catalog = new CatalogService();
-        var vm = new MainWindowViewModel(catalog);
+        var vm = new MainWindowViewModel(catalog)
+        {
+            ProbeDcpProfilesAsync = _ => Task.FromResult(DcpAdobeProfilePresence.Unknown)
+        };
         var window = new MainWindow();
         using var windowScope = TestUiScope.ForMainWindow(window, vm, show: false);
 
@@ -225,7 +240,10 @@ public sealed class FirstRunWindowTests
                 : null);
         var migrator = new CatalogLocationMigrator(locationService);
         using var catalog = new CatalogService();
-        var vm = new MainWindowViewModel(catalog);
+        var vm = new MainWindowViewModel(catalog)
+        {
+            ProbeDcpProfilesAsync = _ => Task.FromResult(DcpAdobeProfilePresence.Unknown)
+        };
         var window = new MainWindow();
         using var windowScope = TestUiScope.ForMainWindow(window, vm, show: false);
 
