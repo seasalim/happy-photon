@@ -1,0 +1,12 @@
+# Excerpt: run 37335031242, attempt 1, Windows x64 / Verify repository; GitHub timestamps removed.
+The active test run was aborted. Reason: Test host process crashed
+Data collector 'Blame' message: The specified inactivity time of 90 seconds has elapsed. Collecting hang dumps from testhost and its child processes.
+Results File: D:\a\happy-photon\happy-photon\artifacts\test-results\win-x64\verify-20261005-154520-ca13a0c1308e4bab83ba3a9d7a5ab089\happy-photon-win-x64_net10.0_20261005161339.trx
+The test running when the crash occurred: 
+HappyPhoton.Tests.SyncTransferBatchBaselineTests.G1_UndoRestoresFiveHundredDocumentsAndHistories
+The active test run was aborted. Reason: Test host process crashed : Local mask render failed for 'photo.jpg': Injected mask failure
+Local mask render failed for 'photo.jpg': Injected mask failure
+Data collector 'Blame' message: The specified inactivity time of 90 seconds has elapsed. Collecting hang dumps from testhost and its child processes.
+Results File: D:\a\happy-photon\happy-photon\artifacts\test-results\win-x64\verify-20261005-154520-ca13a0c1308e4bab83ba3a9d7a5ab089\happy-photon-win-x64_net10.0_20261005161411.trx
+The test running when the crash occurred: 
+HappyPhoton.Tests.SyncTransferParityViewModelTests.G1_RawProfile

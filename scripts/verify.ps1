@@ -8,6 +8,7 @@ param(
     [switch] $SkipPolicy,
     [switch] $SkipQuarantine,
     [switch] $BlameHang,
+    [switch] $SerialProjects,
     [string] $BlameHangTimeout = "90s",
     [string] $LogFilePrefix = "",
     [string] $ResultsDirectory = "",
@@ -47,6 +48,7 @@ try {
         & (Join-Path $PSScriptRoot "check-test-teardown-fixtures.ps1")
         & (Join-Path $PSScriptRoot "check-test-sqlite-pools.ps1")
         & (Join-Path $PSScriptRoot "check-test-quarantine-fixtures.ps1")
+        & (Join-Path $PSScriptRoot "check-test-abort-fixtures.ps1")
     }
     if ($PolicyOnly) { return }
 
@@ -64,20 +66,39 @@ try {
     $phase = "tests"
     $prefix = if ($LogFilePrefix) { $LogFilePrefix } else { "verify" }
     $testArguments = @(
-        "test", (Join-Path $repoRoot "HappyPhoton.sln"),
         "--configuration", $Configuration, "--no-build", "--no-restore",
         "--logger", "trx;LogFilePrefix=$prefix", "--results-directory", $runDirectory)
+
     if ($BlameHang) {
         $testArguments += @("--blame-hang", "--blame-hang-timeout", $BlameHangTimeout)
     }
+
     if ($Filter) {
         $testArguments += @("--filter", $Filter)
     }
-    & dotnet @testArguments
-    $testExitCode = $LASTEXITCODE
+
+    $targets = if ($SerialProjects) {
+        @("Tests/HappyPhoton.Tests.csproj", "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+            "Interop/HappyPhoton.LibRaw.Interop.Tests/HappyPhoton.LibRaw.Interop.Tests.csproj")
+    } else {
+        @("HappyPhoton.sln")
+    }
+    $testExitCode = 0
+    $testLog = Join-Path $runDirectory "dotnet-test.log"
+
+    foreach ($target in $targets) {
+        Write-Host "Running tests: $target"
+        & dotnet test (Join-Path $repoRoot $target) @testArguments 2>&1 | Tee-Object -FilePath $testLog -Append
+
+        if ($LASTEXITCODE -ne 0) { $testExitCode = $LASTEXITCODE }
+    }
+
+    & (Join-Path $PSScriptRoot "report-test-abort.ps1") -OutputPath $testLog -ResultsDirectory $runDirectory
+
     if (-not $SkipQuarantine -and -not $Filter) {
         & $checker -Mode StableResults -ResultsDirectory $runDirectory
     }
+
     if ($testExitCode -ne 0) { throw "Solution tests failed with exit code $testExitCode." }
 } finally {
     switch ($phase) {
