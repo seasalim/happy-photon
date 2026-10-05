@@ -139,7 +139,7 @@ public static class ShortcutCatalog
                 [Browse("Pick images", "PickImageButton")]),
             new("U", "Unflag the Browse selection, else active photo; active-only in Develop, Loupe, or Compare",
                 [Browse("Unflag images", "UnflagImageButton")]),
-            new("X", "Swap orientation in Crop; otherwise set Rejected on the assessment target",
+            new("X", "Set Rejected on the Browse selection, else active photo; active-only in Develop, Loupe, or Compare; in Crop, swaps the ratio's orientation",
                 [Browse("Reject images", "RejectImageButton"), Develop("Swap orientation", "CropRatioPicker")]),
             new("`", "Toggle Picked on the assessment target",
                 [Browse("Toggle Picked", "PickImageButton")]),
