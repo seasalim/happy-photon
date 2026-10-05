@@ -105,6 +105,8 @@ jobs:
             BlameHangTimeout = "90s"
             LogFilePrefix = "happy-photon-${{ matrix.rid }}"
             ResultsDirectory = "artifacts/test-results/${{ matrix.rid }}"
+            # The 16 GB Windows runner stalls when both test hosts run at once (FIXES-WP8).
+            SerialProjects = "${{ matrix.rid }}" -eq "win-x64"
           }
           ./scripts/verify.ps1 @verifyArguments
 
