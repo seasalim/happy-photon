@@ -224,7 +224,7 @@
                                     </ToggleButton>
                                 </Grid>
 
-                                <views:CompactSlider Label="Kelvin"
+                                <views:CompactSlider Label="Temperature"
                                                      Value="{Binding WhiteBalanceKelvinPosition}"
                                                      ValueToDisplay="{Binding KelvinValueToEntry}"
                                                      DisplayToValue="{Binding KelvinEntryToValue}"

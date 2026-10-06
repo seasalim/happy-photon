@@ -146,7 +146,7 @@ public sealed partial class CompactSliderEntryTests
     public async Task UnchangedKelvinKeepsAsShotAndClickingTrackCommits()
     {
         await using var s = await Session.Create();
-        s.Open(s.Slider("Kelvin"));
+        s.Open(s.Slider("Temperature"));
         s.Key(Key.Enter);
         await s.Drain();
         Assert.Equal("As Shot", s.Vm.SelectedWhiteBalanceMode);

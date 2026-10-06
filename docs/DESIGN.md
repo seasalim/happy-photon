@@ -51,7 +51,7 @@ Store or GitHub action. There are no automatic update requests.
 - Semantic color identifies bursts, color labels, mixer bands, white-balance tracks,
   clipping/scope channels, and errors/destructive actions.
 - Reject uses an invariant near-black surface, light glyph and hairline.
-- Kelvin and tint tracks use functional cyan→green→yellow and green→magenta gradients.
+- Temperature and tint tracks use functional cyan→green→yellow and green→magenta gradients.
 
 ### Application themes
 

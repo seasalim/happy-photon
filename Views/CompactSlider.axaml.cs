@@ -305,7 +305,7 @@ public partial class CompactSlider : UserControl
 
         if (_thumbMark != null)
         {
-            _thumbMark.Margin = new Thickness(valueX - 3.5, 11, 0, 0);
+            _thumbMark.Margin = new Thickness(valueX - _thumbMark.Width / 2, 6, 0, 0);
         }
     }
 }

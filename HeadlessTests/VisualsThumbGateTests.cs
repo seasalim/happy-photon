@@ -27,7 +27,7 @@ public sealed class VisualsThumbGateTests(ITestOutputHelper output)
             var global = panel.GetVisualDescendants().OfType<StackPanel>()
                 .Single(control => control.Classes.Contains("global-edits"));
 
-            foreach (var label in new[] { "Exposure", "Kelvin", "Sharpen" })
+            foreach (var label in new[] { "Exposure", "Temperature", "Sharpen" })
             {
                 var slider = global.GetVisualDescendants().OfType<CompactSlider>()
                     .Single(control => control.Label == label);

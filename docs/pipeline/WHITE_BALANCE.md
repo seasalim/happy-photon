@@ -6,7 +6,7 @@ Tests pin reference values and round trips (§9).
 
 ## 1. Semantics (Lightroom convention)
 
-The Kelvin slider states *what the scene illuminant was*. The base is already balanced
+The Temperature slider (in Kelvin) states *what the scene illuminant was*. The base is already balanced
 for the as-shot illuminant (decode applied camera WB; as-shot neutral = (1,1,1)).
 Rendering neutralizes the *claimed* illuminant instead:
 
@@ -15,7 +15,7 @@ Rendering neutralizes the *claimed* illuminant instead:
   shared display-Rec.2020 result to the selected target.
 - Raising Kelvin above as-shot → image gets **warmer**; lowering → cooler.
 
-UI: Kelvin slider 2000–12000, logarithmic; Tint slider −100 (green) … +100 (magenta).
+UI: Temperature slider 2000–12000 K, logarithmic; Tint slider −100 (green) … +100 (magenta).
 
 True monochrome RAW bases always supply the identity WB matrix to rendering. Their
 stored WB setting remains persisted but dormant, and the mode, preset, Auto,

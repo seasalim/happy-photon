@@ -77,8 +77,11 @@
                         HorizontalAlignment="Center"
                         VerticalAlignment="Top"/>
 
-                <!-- The tip marks the value; the track remains unobstructed. -->
+                <!-- The arrowhead sits on the track, its tip marking the value. -->
                 <Path x:Name="ThumbMark" Theme="{StaticResource SliderThumbTheme}"
+                      Data="M 0,7 L 4.5,0 L 9,7 Z" Width="9" Height="7"
+                      Stroke="{DynamicResource SliderThumbOutline}" StrokeThickness="1"
+                      Classes.colorTrack="{Binding TrackBrush, ElementName=SliderRoot, Converter={x:Static ObjectConverters.IsNotNull}}"
                       Classes.rowHover="{Binding IsPointerOver, ElementName=SliderRoot}"
                       HorizontalAlignment="Left" VerticalAlignment="Top"/>
             </Grid>

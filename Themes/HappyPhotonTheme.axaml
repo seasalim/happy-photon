@@ -13,6 +13,8 @@
     <Color x:Key="AssessmentWhiteColor">#FFFFFF</Color>
     <SolidColorBrush x:Key="AssessmentWhite" Color="{StaticResource AssessmentWhiteColor}"/>
 
+    <!-- A black edge keeps an on-track arrowhead legible over colour gradients. -->
+    <SolidColorBrush x:Key="SliderThumbOutline" Color="#000000"/>
     <StreamGeometry x:Key="SliderThumbGeometry">M 0,5 L 3.5,0 L 7,5 Z</StreamGeometry>
     <ControlTheme x:Key="SliderThumbTheme" TargetType="Path">
         <Setter Property="Data" Value="{StaticResource SliderThumbGeometry}"/>
@@ -22,8 +24,11 @@
         <Setter Property="IsHitTestVisible" Value="False"/>
         <Setter Property="FocusAdorner" Value="{x:Null}"/>
         <Setter Property="Fill" Value="{DynamicResource TextMuted}"/>
-        <Style Selector="^.rowHover">
+        <Style Selector="^.rowHover, ^.colorTrack">
             <Setter Property="Fill" Value="{DynamicResource TextSecondary}"/>
+        </Style>
+        <Style Selector="^.colorTrack.rowHover">
+            <Setter Property="Fill" Value="{DynamicResource ControlActive}"/>
         </Style>
         <Style Selector="^.pointer-captured, ^.keyboardFocused, ^:focus-visible">
             <Setter Property="Fill" Value="{DynamicResource ControlActive}"/>

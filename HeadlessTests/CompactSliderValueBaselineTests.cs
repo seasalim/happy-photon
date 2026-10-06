@@ -21,7 +21,7 @@ public sealed class CompactSliderValueBaselineTests(ITestOutputHelper output)
     [AvaloniaTheory]
     [InlineData("Contrast")]
     [InlineData("Exposure")]
-    [InlineData("Kelvin")]
+    [InlineData("Temperature")]
     public async Task MeasureReadoutAndStationaryClick(string label)
     {
         using var fixture = new CatalogVmFixture("slider-value-baseline");

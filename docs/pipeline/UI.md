@@ -141,9 +141,9 @@ Profile                (always shown; disabled for non-RAW)
   [profile ComboBox, including Choose file…]  status / loading
 White Balance
   [mode/preset ComboBox]  [Auto button]  [eyedropper button]
-  Kelvin   ────────●────────   5500K
-  Tint     ──────●──────────   −12
-Adjustments            (no Temperature slider)
+  Temperature ─────●────────   5500K
+  Tint        ───●──────────   −12
+Adjustments            (Temperature lives in White Balance)
   Exposure / Brightness / Contrast / Highlights / Shadows
   Whites / Blacks                                         (−100..100)
   Recovery                                                [Clip | Blend]  (RAW only)
@@ -221,7 +221,7 @@ CHARACTERIZATION.md §7.6.
 | Control | Spec |
 |---------|------|
 | Mode/preset ComboBox | Stable items: As Shot, Daylight, Cloudy, Shade, Tungsten, Fluorescent, Flash, Custom, and Picked. Selecting a preset writes `mode: preset` + resolved kelvin/tint (WHITE_BALANCE.md §6); As Shot writes `mode: asShot`; Custom seeds a custom setting from the displayed sliders. Picked reflects an Auto/eyedropper result and is otherwise non-actionable. The item source must not change while Avalonia processes a selection. |
-| Kelvin slider | `CompactSlider`, UI position is **log-scaled**: VM exposes a linear 0–1 position mapped through `K = 2000·6^p` (2000–12000); value label shows the rounded Kelvin ("5500K", nearest 50). Shows the resolved value in every mode (as-shot estimate when `asShot`). |
+| Temperature slider | `CompactSlider`, UI position is **log-scaled**: VM exposes a linear 0–1 position mapped through `K = 2000·6^p` (2000–12000); value label shows the rounded Kelvin ("5500K", nearest 50). Shows the resolved value in every mode (as-shot estimate when `asShot`). |
 | Tint slider | −100…+100, label shows signed integer. |
 | Drag behavior | Dragging either slider from any mode switches to `mode: custom`, seeded from the currently displayed kelvin/tint. From gain-backed settings this **discards gains** — acceptable and deliberate; the previous state lands on the undo stack like any edit. |
 | Auto button | Runs WHITE_BALANCE.md §8 once, stores as `picked`. Disabled until the base is loaded (§5). |

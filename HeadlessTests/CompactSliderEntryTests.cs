@@ -29,10 +29,10 @@ public sealed partial class CompactSliderEntryTests
     [InlineData("Contrast", "−20", -20)]
     [InlineData("Contrast", "-20%", -20)]
     [InlineData("Exposure", "+0.37 EV", .35)]
-    [InlineData("Kelvin", "5600", 5600)]
-    [InlineData("Kelvin", "5600K", 5600)]
-    [InlineData("Kelvin", "5314", 5300)]
-    [InlineData("Kelvin", "11950", 11950)]
+    [InlineData("Temperature", "5600", 5600)]
+    [InlineData("Temperature", "5600K", 5600)]
+    [InlineData("Temperature", "5314", 5300)]
+    [InlineData("Temperature", "11950", 11950)]
     public async Task TypedValueCommitsOnceInDisplayedUnits(string label, string text, double expected)
     {
         await using var s = await Session.Create();
@@ -59,7 +59,7 @@ public sealed partial class CompactSliderEntryTests
         Assert.Equal(1, ends);
         Assert.Null(s.Window.FocusManager!.GetFocusedElement());
         if (label == "Contrast") Assert.Contains("Contrast", s.Vm.HistoryEntries[0].Label);
-        if (label == "Kelvin") Assert.Equal($"{expected:0}K", slider.DisplayText);
+        if (label == "Temperature") Assert.Equal($"{expected:0}K", slider.DisplayText);
 
         var displayed = slider.FindControl<TextBlock>("ValueText")!.Text!;
         entry = s.Open(slider);
@@ -96,7 +96,7 @@ public sealed partial class CompactSliderEntryTests
     {
         await using var s = await Session.Create();
         var count = s.Steps;
-        s.Open(s.Slider("Kelvin"));
+        s.Open(s.Slider("Temperature"));
         s.Window.KeyTextInput("5600");
         s.Key(Key.Escape);
         Assert.Equal("As Shot", s.Vm.SelectedWhiteBalanceMode);
@@ -164,7 +164,7 @@ public sealed partial class CompactSliderEntryTests
     [AvaloniaTheory]
     [InlineData("Contrast")]
     [InlineData("Exposure")]
-    [InlineData("Kelvin")]
+    [InlineData("Temperature")]
     public async Task EditorAndHoverPreserveRowAndDigitPositions(string label)
     {
         await using var s = await Session.Create();

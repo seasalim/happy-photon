@@ -36,8 +36,10 @@ public sealed class VisualsThumbAppearanceTests
         Assert.All(marks, thumb => AssertColor(thumb, "TextMuted"));
         Assert.False(mark.IsHitTestVisible);
         Assert.All(marks, thumb => Assert.False(thumb.IsHitTestVisible));
-        Assert.Same(mark.Data, marks[0].Data);
-        Assert.Same(mark.Data, marks[1].Data);
+        Assert.Same(marks[0].Data, marks[1].Data);
+        Assert.Equal(new Rect(0, 0, 9, 7), mark.Data!.Bounds);
+        Assert.Same(mark.FindResource("SliderThumbOutline"), mark.Stroke);
+        Assert.All(marks, thumb => Assert.Null(thumb.Stroke));
 
         window.MouseMove(slider.TranslatePoint(new Point(5, 10), window)!.Value);
         AssertColor(mark, "TextSecondary");
@@ -85,7 +87,7 @@ public sealed class VisualsThumbAppearanceTests
     [AvaloniaTheory]
     [InlineData(false)]
     [InlineData(true)]
-    public void KelvinGradientAtValueIsUncoveredAndCenterMarkIsAboveTrack(bool gray)
+    public void TemperatureMarkSitsOnGradientTrackAndCenterMarkIsAboveTrack(bool gray)
     {
         var panel = new DevelopEditPanel();
         var window = new Window { Width = 200, Height = 2400, Content = panel };
@@ -93,7 +95,7 @@ public sealed class VisualsThumbAppearanceTests
         var global = panel.GetVisualDescendants().OfType<StackPanel>()
             .Single(control => control.Classes.Contains("global-edits"));
         var slider = global.GetVisualDescendants().OfType<CompactSlider>()
-            .Single(control => control.Label == "Kelvin");
+            .Single(control => control.Label == "Temperature");
         slider.Minimum = -100;
         slider.Maximum = 100;
         slider.Value = 0;
@@ -105,14 +107,17 @@ public sealed class VisualsThumbAppearanceTests
         var visible = Pixel(window, point);
         mark.IsVisible = false;
         var hidden = Pixel(window, point);
-        Assert.Equal(hidden, visible);
-        Assert.NotEqual(Pixel(window, new Point(0, 0)), visible);
+        Assert.NotEqual(hidden, visible);
+        Assert.NotEqual(Pixel(window, new Point(0, 0)), hidden);
         mark.IsVisible = true;
+        AssertColor(mark, "TextSecondary");
+
         slider.ShowValueFill = true;
         window.UpdateLayout();
         var center = slider.FindControl<Border>("CenterMark")!;
         Assert.True(center.Bounds.Bottom <= track.Bounds.Top);
-        Assert.Equal(track.Bounds.Bottom, mark.Bounds.Top);
+        Assert.True(mark.Bounds.Top < track.Bounds.Top);
+        Assert.True(mark.Bounds.Bottom > track.Bounds.Bottom);
     }
 
     private static void AssertColor(ThumbMark mark, string resource)

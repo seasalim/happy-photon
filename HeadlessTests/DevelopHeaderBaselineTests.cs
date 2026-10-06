@@ -263,7 +263,7 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
         var expected = mode == "normal" ? new[]
         {
             "Header[Profile]", "Header[White Balance]", "WhiteBalanceModeBox", "WhiteBalanceAutoButton", "WhiteBalancePickerButton",
-            "SliderRoot[Kelvin]", "SliderRoot[Tint]", "Header[Adjustments]", "SliderRoot[Exposure]", "BrightnessSlider[Brightness]",
+            "SliderRoot[Temperature]", "SliderRoot[Tint]", "Header[Adjustments]", "SliderRoot[Exposure]", "BrightnessSlider[Brightness]",
             "SliderRoot[Contrast]", "SliderRoot[Highlights]", "SliderRoot[Shadows]", "SliderRoot[Whites]", "SliderRoot[Blacks]",
             "Header[Presence]", "TextureSlider[Texture]", "ClaritySlider[Clarity]", "VibranceSlider[Vibrance]",
             "SaturationSlider[Saturation]", "Header[Tone Curve]", "CompositeChannelButton", "RedChannelButton",
