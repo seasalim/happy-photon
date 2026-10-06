@@ -39,9 +39,7 @@ public sealed class ExportBatchLayoutTests(ITestOutputHelper output)
         window.UpdateLayout();
         Assert.False(pane.FindControl<Expander>("ExportMoreOptions")!.IsExpanded);
         output.WriteLine($"shell={width}x{height} settings extent={scroll.Extent.Height} viewport={scroll.Viewport.Height} overflow={scroll.Extent.Height - scroll.Viewport.Height}");
-        // Two headers now use Develop padding (6,19,6,8), formerly (8,4).
-        var sharedHeaderPaddingDelta = 2 * ((19 + 8) - (4 + 4));
-        if (width == 1200) Assert.True(scroll.Extent.Height <= scroll.Viewport.Height + sharedHeaderPaddingDelta);
+        if (width == 1200) Assert.True(scroll.Extent.Height <= scroll.Viewport.Height);
         vm.ExportReport = Report(vm);
         vm.IsExportJobRunning = true;
         vm.ExportProgressText = "Exporting 4 of 12 files";

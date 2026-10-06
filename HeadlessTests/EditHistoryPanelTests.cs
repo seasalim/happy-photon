@@ -70,6 +70,9 @@ public sealed class EditHistoryPanelTests
             Assert.True(clear.IsVisible);
             var header = history.FindControl<Grid>("HistoryHeader")!;
             var label = history.FindControl<TextBlock>("HistoryLabel")!;
+            var headerBand = Assert.IsType<Border>(header.Parent);
+            Assert.Equal(new Thickness(0), headerBand.BorderThickness);
+            Assert.Equal(32, headerBand.Bounds.Height);
             // The header grid must span the toggle; the label and Clear share
             // a row without overlapping and Clear sits at the right edge.
             Assert.True(header.Bounds.Width >= history.Bounds.Width * .8);

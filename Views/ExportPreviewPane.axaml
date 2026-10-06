@@ -9,9 +9,10 @@
         <Grid RowDefinitions="Auto,Auto" Margin="14,8,14,0">
             <WrapPanel HorizontalAlignment="Right" Orientation="Horizontal" ItemSpacing="6" LineSpacing="6">
                 <ToggleButton x:Name="ExportProofToggle"
-                              Classes="compact-button"
+                              Classes="compact-button filled"
                               Content="Preview output"
                               Width="112"
+                              HorizontalContentAlignment="Center"
                               VerticalAlignment="Center"
                               IsChecked="{Binding ExportSettings.ShowProof, Mode=TwoWay}"
                               ToolTip.Tip="Preview size, color space and output sharpening; JPEG/WebP compression quality is not previewed."

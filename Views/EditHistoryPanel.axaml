@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:HappyPhoton.ViewModels"
+             xmlns:views="using:HappyPhoton.Views"
              x:Class="HappyPhoton.Views.EditHistoryPanel"
              x:DataType="vm:MainWindowViewModel"
              x:Name="Root"
@@ -36,7 +37,13 @@
         </Style>
     </UserControl.Styles>
     <Grid RowDefinitions="Auto,*">
-        <Border Grid.Row="0" Background="{DynamicResource SurfaceLow}" Padding="10,4,10,4">
+        <Border Grid.Row="0" Classes="pane-bottom-band">
+            <Border.BorderThickness>
+                <MultiBinding Converter="{x:Static views:EditHistoryLayoutConverters.BottomBandBorder}">
+                    <Binding Path="#HistoryScrollViewer.Bounds.Height"/>
+                    <Binding Path="#HistoryScrollViewer.IsVisible"/>
+                </MultiBinding>
+            </Border.BorderThickness>
             <Grid x:Name="HistoryHeader" ColumnDefinitions="*,Auto" MinHeight="24">
                 <TextBlock x:Name="HistoryLabel" Classes="section-label" Text="History"
                            VerticalAlignment="Center"/>

@@ -21,6 +21,8 @@ both empty panels stay hidden during a load.
 
 ## 2. Develop right panel — target layout (top → bottom)
 
+Global groups use full-width 32 px `SurfaceHigh` header blocks, with 8 px before expanded content and 4 px after it; collapsed blocks sit flush.
+
 Crop, Spots and Locals are exclusive tool modes beneath the fixed scope band. Their active
 header stays fixed while tool settings enter the top of the scrolling stack. Global
 edits are locked and dimmed while a tool is active; WB picking is inert. Switching

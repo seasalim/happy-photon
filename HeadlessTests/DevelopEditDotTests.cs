@@ -177,14 +177,13 @@ public sealed class DevelopEditDotTests(ITestOutputHelper output)
                         .Single(control => control.Name == "DevelopControlsScrollViewer");
                     var presence = shown.GetVisualDescendants().OfType<DevelopGroup>()
                         .Single(group => Equals(group.Header, "Presence"));
-                    var divider = presence.GetVisualDescendants().OfType<Border>()
-                        .Single(border => border.Name == "GroupDivider");
+                    var header = DevelopCollapseBaselineTests.Header(presence);
 
-                    scroll.Offset = new Vector(0, scroll.Offset.Y + divider.TranslatePoint(default, scroll)!.Value.Y);
+                    scroll.Offset = new Vector(0, scroll.Offset.Y + header.TranslatePoint(default, scroll)!.Value.Y);
                     shown.UpdateLayout();
                     ShowcaseTestHelper.SettleExpanderChevrons(shown);
 
-                    Assert.InRange(divider.TranslatePoint(default, scroll)!.Value.Y, -.5, .5);
+                    Assert.InRange(header.TranslatePoint(default, scroll)!.Value.Y, -.5, .5);
                     Assert.Equal(new[] { "Presence", "Detail" },
                         vm.DevelopGroupList.Where(group => group.ShowsEditDot).Select(group => group.Name));
                 });

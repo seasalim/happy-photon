@@ -73,7 +73,8 @@ public sealed class ControlBarLayoutGateTests(ITestOutputHelper output)
                     ControlBarGateScene.ViewerWidth(window, bar, width);
                     output.WriteLine(FormattableString.Invariant(
                         $"WP12 G3 {(develop ? "Develop" : "Browse")} {width} {(gray ? "MiddleGray" : "Dark")} height={bar.Bounds.Height:F3}"));
-                    Assert.Equal(develop ? 33 : 29, bar.Bounds.Height);
+                    // FIXES-DEVELOP-WP11 G5: the Browse footer joins the 33 px pane-bottom band (was 29).
+                    Assert.Equal(33, bar.Bounds.Height);
                     output.WriteLine($"WP12 G3 run={run}");
                 }
             }

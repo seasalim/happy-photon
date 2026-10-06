@@ -51,6 +51,15 @@ public partial class EditHistoryPanel : UserControl
 
 public static class EditHistoryLayoutConverters
 {
+    public static IMultiValueConverter BottomBandBorder { get; } =
+        new FuncMultiValueConverter<object, Avalonia.Thickness>(values =>
+        {
+            var inputs = values.ToArray();
+            var hasList = inputs is [double height, true] && height > 0;
+
+            return new Avalonia.Thickness(0, hasList ? 0 : 1, 0, 0);
+        });
+
     public static IValueConverter FortyPercent { get; } =
         new FuncValueConverter<double, double>(value => value * 0.4);
 }

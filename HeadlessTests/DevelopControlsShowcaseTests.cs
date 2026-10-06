@@ -19,6 +19,64 @@ namespace HappyPhoton.Tests;
 public sealed class DevelopControlsShowcaseTests
 {
     [AvaloniaTheory]
+    [InlineData("group-blocks-develop", false)]
+    [InlineData("group-blocks-develop", true)]
+    [InlineData("group-blocks-hover-collapsed", false)]
+    [InlineData("group-blocks-hover-collapsed", true)]
+    [InlineData("group-blocks-export", false)]
+    [InlineData("group-blocks-export", true)]
+    [InlineData("bottom-band-develop", false)]
+    [InlineData("bottom-band-develop", true)]
+    [InlineData("bottom-band-browse", false)]
+    [InlineData("bottom-band-browse", true)]
+    public async Task GroupBlocksAndBottomBands(string scene, bool gray)
+    {
+        await DevelopToolsBaselineTests.WithScene("normal", 1200, 700, (vm, scope) =>
+        {
+            vm.AppTheme = gray ? AppTheme.MidGray : AppTheme.Dark;
+
+            if (scene == "bottom-band-browse") vm.IsDevelopMode = false;
+            if (scene == "group-blocks-export")
+            {
+                vm.Browse.SelectAllVisible();
+                vm.RefreshSelectedCount();
+                vm.SwitchToExportCommand.Execute(null);
+                Assert.Single(vm.ExportCaptures);
+            }
+
+            ShowcaseTestHelper.Capture(scene + (gray ? "-gray" : "-dark"), scope,
+                new PixelSize(1200, 700), gray ? HappyPhotonThemes.MidGray : ThemeVariant.Dark, window =>
+                {
+                    var editPanel = window.GetVisualDescendants().OfType<DevelopEditPanel>().Single();
+                    editPanel.FindControl<ScrollViewer>("DevelopControlsScrollViewer")!.Offset = default;
+
+                    if (scene == "group-blocks-hover-collapsed")
+                    {
+                        vm.ProfileGroup.IsExpanded = false;
+                        vm.WhiteBalanceGroup.IsExpanded = false;
+                        window.UpdateLayout();
+                        var header = window.GetVisualDescendants().OfType<DevelopGroup>()
+                            .First(group => group.Header is "Adjustments");
+                        var toggle = DevelopCollapseBaselineTests.Header(header);
+                        window.MouseMove(toggle.TranslatePoint(new Point(20, 16), window)!.Value);
+                    }
+
+                    if (scene == "group-blocks-export")
+                    {
+                        var pane = window.GetVisualDescendants().OfType<ExportSettingsPane>().Single();
+                        pane.FindControl<Expander>("ExportMoreOptions")!.IsExpanded = false;
+                        pane.FindControl<Expander>("ExportWatermarkExpander")!.IsExpanded = false;
+                    }
+
+                    window.UpdateLayout();
+                    if (scene != "bottom-band-browse") ShowcaseTestHelper.SettleExpanderChevrons(window);
+                });
+
+            return Task.CompletedTask;
+        });
+    }
+
+    [AvaloniaTheory]
     [InlineData("crop-ratio-closed", false)]
     [InlineData("crop-ratio-closed", true)]
     [InlineData("crop-ratio-3x2", false)]

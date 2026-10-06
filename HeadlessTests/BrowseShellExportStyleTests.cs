@@ -103,6 +103,10 @@ public sealed class BrowseShellExportStyleTests
             .Single(control => control.Name == "PART_ContentPresenter");
         Assert.Equal(24, proof.Bounds.Height);
         proof.IsChecked = false;
+        Dispatcher.UIThread.RunJobs();
+        // Filled at rest so the clickable toggle reads as a button, like the viewer bar's text buttons.
+        Assert.Contains("filled", proof.Classes);
+        AssertBrush("ControlHover", proofPresenter.Background, theme);
         window.MouseMove(proof.TranslatePoint(new Point(12, 12), window)!.Value);
         Dispatcher.UIThread.RunJobs();
         AssertBrush("SurfaceHigh", proofPresenter.Background, theme);

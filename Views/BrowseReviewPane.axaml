@@ -175,17 +175,17 @@
                 </StackPanel>
             </ScrollViewer>
 
-            <Button x:Name="SyncSettingsButton"
-                    Grid.Row="2"
-                    Classes="compact-button filled"
-                    Content="Sync settings…"
-                    AutomationProperties.Name="Sync settings"
-                    HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Center"
-                    Margin="15,8,15,15"
-                    Command="{Binding SyncSettingsCommand}"
-                    ToolTip.Tip="{Binding SyncSettingsToolTip}"
-                    ToolTip.ShowOnDisabled="True"/>
+            <Border Grid.Row="2" Classes="pane-bottom-band hairless">
+                <Button x:Name="SyncSettingsButton"
+                        Classes="compact-button filled"
+                        Content="Sync settings…"
+                        AutomationProperties.Name="Sync settings"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        Command="{Binding SyncSettingsCommand}"
+                        ToolTip.Tip="{Binding SyncSettingsToolTip}"
+                        ToolTip.ShowOnDisabled="True"/>
+            </Border>
         </Grid>
     </Border>
 </UserControl>

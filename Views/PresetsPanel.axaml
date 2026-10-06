@@ -6,6 +6,9 @@
              x:Class="HappyPhoton.Views.PresetsPanel">
 
     <UserControl.Styles>
+        <Style Selector="Expander.preset-category /template/ ToggleButton#ExpanderHeader">
+            <Setter Property="Background" Value="{DynamicResource SurfaceMid}"/>
+        </Style>
         <Style Selector="TextBlock.preset-header">
             <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
             <Setter Property="FontWeight" Value="Medium"/>

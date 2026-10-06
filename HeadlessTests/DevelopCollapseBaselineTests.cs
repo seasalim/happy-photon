@@ -255,7 +255,7 @@ public sealed class DevelopCollapseBaselineTests(ITestOutputHelper output)
             window.CanResize = false;
             var points = new[]
             {
-                new Point(20, 4), new Point(20, 40),
+                new Point(20, 4), new Point(20, 28),
                 new Point(3, 25), new Point(header.Bounds.Width - 3, 25)
             };
 
@@ -282,7 +282,7 @@ public sealed class DevelopCollapseBaselineTests(ITestOutputHelper output)
                 window.MouseUp(location, MouseButton.Left);
                 Settle(window);
                 Assert.Equal(!before, group.IsExpanded);
-                Assert.Equal(new Size(232, 43), fill.Bounds.Size);
+                Assert.Equal(new Size(250, 32), fill.Bounds.Size);
                 Assert.Equal(new CornerRadius(0), header.CornerRadius);
             }
 

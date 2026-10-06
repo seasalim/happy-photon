@@ -8,11 +8,7 @@
              x:Class="HappyPhoton.Views.BrowseGridFooter"
              x:DataType="vm:MainWindowViewModel">
 
-<Border x:Name="BrowseFooterSurface"
-        Background="{DynamicResource SurfaceLow}"
-        BorderBrush="{DynamicResource Divider}"
-        BorderThickness="0,1,0,0"
-        Padding="10,2">
+<Border x:Name="BrowseFooterSurface" Classes="pane-bottom-band hairless">
     <views:ControlBarLayout>
         <Grid x:Name="BrowseImageActionsPanel" ColumnDefinitions="Auto,*" MinWidth="56">
             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">

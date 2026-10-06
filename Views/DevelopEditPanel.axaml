@@ -38,6 +38,9 @@
         <Style Selector="StackPanel.global-edits.locked">
             <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
         </Style>
+        <Style Selector="StackPanel.global-edits.locked Expander.develop-group /template/ ToggleButton#ExpanderHeader:disabled">
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
         <Style Selector="views|CompactSlider.crossing-dependent:disabled">
             <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
         </Style>
@@ -177,7 +180,7 @@
                     <views:SpotsEditSection/>
                     <StackPanel Classes="global-edits" Classes.locked="{Binding IsToolActive}" Spacing="0" IsEnabled="{Binding !IsToolActive}">
                         <views:DevelopGroup Header="Profile" IsExpanded="{Binding ProfileGroup.IsExpanded, Mode=TwoWay}"
-                                            SoloCommand="{Binding SoloDevelopGroupCommand}" Tag="{Binding ProfileGroup}" Classes="first">
+                                            SoloCommand="{Binding SoloDevelopGroupCommand}" Tag="{Binding ProfileGroup}">
                             <views:RawProfilePicker x:Name="RawProfilePicker"
                                 IsEnabled="{Binding IsColorEditingEnabled}"/>
                         </views:DevelopGroup>
@@ -391,9 +394,9 @@
                 </StackPanel>
             </ScrollViewer>
 
-            <views:DevelopActionBar x:Name="DevelopActionBar"
-                                    Grid.Row="2"
-                                    Margin="15,8,15,15"/>
+            <Border Grid.Row="2" Classes="pane-bottom-band">
+                <views:DevelopActionBar x:Name="DevelopActionBar"/>
+            </Border>
         </Grid>
     </Border>
 </UserControl>

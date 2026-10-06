@@ -79,10 +79,7 @@
                             IsVisible="{Binding IsDevelopTipsVisible}"/>
             </Grid>
         </Grid>
-        <Border x:Name="DevelopControlBar" Grid.Row="1" Padding="10,4" ClipToBounds="True"
-                Background="{DynamicResource SurfaceLow}"
-                BorderBrush="{DynamicResource Divider}"
-                BorderThickness="0,1,0,0"
+        <Border x:Name="DevelopControlBar" Grid.Row="1" Classes="pane-bottom-band" ClipToBounds="True"
                 IsEnabled="{Binding HasSelectedImage}"
                 HorizontalAlignment="Stretch">
             <views:ControlBarLayout x:Name="DevelopBarLayout">

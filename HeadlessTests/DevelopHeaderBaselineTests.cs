@@ -49,8 +49,8 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
                 var layoutContent = BoundsIn((Control)((DevelopGroup)group.Owner).Content!, global);
                 var above = title.Top - previousBottom;
                 var below = layoutContent.Top - title.Bottom;
-                Assert.InRange(above, 18.5, 19.5);
-                Assert.InRange(below, 7.5, 8.5);
+                Assert.InRange(above, previousBottom == 0 ? 7.5 : 11.5, previousBottom == 0 ? 8.5 : 12.5);
+                Assert.InRange(below, 15.5, 16.5);
                 var index = Array.IndexOf(groups, group);
                 Assert.InRange(last.Bottom - first.Top, expectedHeight[index] - .5, expectedHeight[index] + .5);
                 spacingSum += above + below;
@@ -67,7 +67,8 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
             Assert.Equal(180, curve.Bounds.Height);
             output.WriteLine($"L2 CurveCanvas: parentBounds={canvas.Bounds}; inCurve={BoundsIn(canvas, curve)}; cardHeight={curve.Bounds.Height}");
             var scroll = panel.FindControl<ScrollViewer>("DevelopControlsScrollViewer")!;
-            Assert.InRange(scroll.Extent.Height, 1533.5, 1534.5);
+            var normalExtent = scroll.Extent.Height;
+            output.WriteLine($"WP11 extent delta from 1534: {scroll.Extent.Height - 1534}");
             output.WriteLine(FormattableString.Invariant(
                 $"L3 extent={scroll.Extent}; viewport={scroll.Viewport}; spacingSum={spacingSum:R}; normalizationDelta={270 - spacingSum:R}; thresholdWithoutChevronRows={scroll.Extent.Height + 270 - spacingSum:R}"));
             MeasurePresets(window, "Dark");
@@ -94,6 +95,8 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
             using var gray = new TestUiScope(theme: HappyPhotonThemes.MidGray);
             Settle(window);
             MeasurePresets(window, "MidGray");
+            // FIXES-DEVELOP-WP11 G7: owner-accepted at 1544 (+10 from 1534: 32 px blocks with 8/4 content spacing replace 43 px headers).
+            Assert.InRange(normalExtent, 1543.5, 1544.5);
         });
     }
 
@@ -117,8 +120,7 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
                     .Children.Where(c => c.IsEffectivelyVisible).ToArray();
             Assert.DoesNotContain(content.GetVisualDescendants().OfType<TextBlock>(),
                 text => text.Classes.Contains("section-label"));
-            var divider = group.GetVisualDescendants().OfType<Border>().Single(c => c.Name == "GroupDivider");
-            Assert.Equal(group != groups[0], divider.IsVisible);
+            Assert.DoesNotContain(group.GetVisualDescendants().OfType<Border>(), c => c.Name == "GroupDivider");
 
             return new Group((string)group.Header!, group, title, controls);
         }).ToArray();
@@ -127,7 +129,7 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
     private void MeasureVisibleGaps(StackPanel global, Group[] groups)
     {
         // Observe visible control bounds, excluding empty text and unpainted layout rows.
-        // Optics is last, so report its trailing content edge instead of a nonexistent divider.
+        // Optics is last, so report its trailing content edge instead of a nonexistent next header.
         foreach (var group in groups)
         {
             var content = (Control)((DevelopGroup)group.Owner).Content!;
@@ -138,14 +140,13 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
                     c is TextBlock text && !string.IsNullOrWhiteSpace(text.Text))
                 .OrderBy(c => BoundsIn(c, global).Bottom).Last();
             var index = Array.IndexOf(groups, group);
-            var nextDivider = index + 1 < groups.Length
-                ? groups[index + 1].Owner.GetVisualDescendants().OfType<Border>()
-                    .Single(c => c.Name == "GroupDivider")
+            var nextHeader = index + 1 < groups.Length
+                ? groups[index + 1].Owner
                 : null;
-            var end = nextDivider is null ? BoundsIn(content, global).Bottom : BoundsIn(nextDivider, global).Top;
+            var end = nextHeader is null ? BoundsIn(content, global).Bottom : BoundsIn(nextHeader, global).Top;
             var gap = end - BoundsIn(visible, global).Bottom;
             output.WriteLine(FormattableString.Invariant(
-                $"L1 {group.Name}: visibleGap={gap:R}; lastVisible={Identity(visible)}; end={(nextDivider is null ? "content end (no following divider)" : "next divider")}"));
+                $"L1 {group.Name}: visibleGap={gap:R}; lastVisible={Identity(visible)}; end={(nextHeader is null ? "content end (no following header)" : "next header")}"));
         }
 
     }
@@ -193,7 +194,7 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
             var fill = header.GetVisualDescendants().OfType<Border>()
                 .Single(c => c.Name == "ToggleButtonBackground");
             output.WriteLine($"HEADER-FILL {group.Name}: bounds={BoundsIn(fill, expander)}; contentWidth={((Control)expander.Content!).Bounds.Width}; radius={fill.CornerRadius}");
-            Assert.Equal(new Rect(-6, 0, ((Control)expander.Content!).Bounds.Width + 12, 43),
+            Assert.Equal(new Rect(-15, 0, ((Control)expander.Content!).Bounds.Width + 30, 32),
                 BoundsIn(fill, expander));
             Assert.Equal(new CornerRadius(0), fill.CornerRadius);
             Assert.Equal(fill.Bounds.Size, header.Bounds.Size);

@@ -85,6 +85,7 @@ The welcome surface uses the named `FontSizeHero` token.
 ## Layout & Spacing
 
 The UI is flat and square; only semantic circles stay round.
+Side-pane group headers are 32 px blocks one surface step above the pane; pane-bottom bars share a 32 px `SurfaceLow` band below a `Divider` hairline.
 An instrument at the top of a side pane (Navigator, scope) is a `SurfaceHigh` band with a 24 px
 header row, 4 px padding above it and a `Divider` hairline below, holding its content in a `SurfaceLow`
 well; what follows starts one 8 px step below the band.

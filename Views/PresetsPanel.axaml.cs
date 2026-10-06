@@ -205,7 +205,7 @@ public partial class PresetsPanel : UserControl
     {
         var expander = new Expander
         {
-            Classes = { "compact-chevron" },
+            Classes = { "compact-chevron", "preset-category" },
             Header = new TextBlock
             {
                 Text = name,

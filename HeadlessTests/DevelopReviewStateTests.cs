@@ -203,7 +203,8 @@ public sealed class DevelopReviewStateTests(ITestOutputHelper output)
         var requiredReset = Math.Ceiling(text.TextLayout.WidthIncludingTrailingWhitespace) + reset.Padding.Left + reset.Padding.Right;
         output.WriteLine($"Pane {width}: footer available={bar.Bounds.Width}, icon group={icons.Bounds.Width}, Reset required={requiredReset}, Reset arranged={reset.Bounds.Width}, total required={icons.Bounds.Width + requiredReset}, text available={text.Bounds.Width}");
         Assert.Equal(155, icons.Bounds.Width);
-        Assert.Equal(width - 30, bar.Bounds.Width);
+        // FIXES-DEVELOP-WP11 G5: the action bar sits in the pane-bottom band at a 10 px inset (was 15).
+        Assert.Equal(width - 20, bar.Bounds.Width);
         Assert.InRange(requiredReset, 16, 65);
     }
 

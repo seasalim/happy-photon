@@ -18,10 +18,9 @@
         <Setter Property="Template">
             <ControlTemplate>
                 <Grid RowDefinitions="Auto,Auto">
-                    <Border Name="GroupDivider" Height="1" VerticalAlignment="Top" ZIndex="1" IsHitTestVisible="False"
-                            Background="{DynamicResource Divider}"/>
-                    <ToggleButton Name="ExpanderHeader" Margin="-6,0" Padding="6,19,6,8"
-                                  MinHeight="0" Background="Transparent" BorderThickness="0"
+                    <ToggleButton Name="ExpanderHeader" Margin="-15,0" Padding="10,0" Height="32"
+                                  VerticalContentAlignment="Center"
+                                  MinHeight="0" Background="{DynamicResource SurfaceHigh}" BorderThickness="0"
                                   Theme="{DynamicResource FluentExpanderToggleButtonDownTheme}"
                                   Content="{TemplateBinding Header}"
                                   ContentTemplate="{TemplateBinding HeaderTemplate}"
@@ -29,7 +28,7 @@
                                   AutomationProperties.HelpText="{ReflectionBinding $parent[Expander].Tag.EditDotHelpText}"
                                   IsChecked="{TemplateBinding IsExpanded, Mode=TwoWay}"
                                   ToolTip.Tip="Alt+click to show only this group"/>
-                    <ContentPresenter Name="PART_ContentPresenter" Grid.Row="1"
+                    <ContentPresenter Name="PART_ContentPresenter" Grid.Row="1" Margin="0,8,0,4"
                                       Content="{TemplateBinding Content}"
                                       ContentTemplate="{TemplateBinding ContentTemplate}"
                                       HorizontalContentAlignment="Stretch"
@@ -41,13 +40,10 @@
     <Style Selector="Expander.develop-group:expanded /template/ ToggleButton#ExpanderHeader, Expander.develop-group:not(:expanded) /template/ ToggleButton#ExpanderHeader">
         <Setter Property="CornerRadius" Value="0"/>
     </Style>
-    <Style Selector="Expander.develop-group.first /template/ Border#GroupDivider">
-        <Setter Property="IsVisible" Value="False"/>
-    </Style>
     <Style Selector="Expander.develop-group /template/ ToggleButton#ExpanderHeader /template/ Border#ExpandCollapseChevronBorder">
         <Setter Property="Width" Value="16"/>
         <Setter Property="Height" Value="16"/>
-        <Setter Property="Margin" Value="0,19,6,8"/>
+        <Setter Property="Margin" Value="0,8,16,8"/>
         <Setter Property="Background" Value="Transparent"/>
     </Style>
     <Style Selector="Expander.develop-group /template/ ToggleButton#ExpanderHeader:pointerover /template/ Border#ToggleButtonBackground">
@@ -57,6 +53,12 @@
         <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
     </Style>
     <Style Selector="Expander.develop-group /template/ ToggleButton#ExpanderHeader:disabled /template/ Border#ToggleButtonBackground">
-        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+    </Style>
+    <Style Selector="Expander.develop-group /template/ ToggleButton#ExpanderHeader:disabled">
+        <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
+    </Style>
+    <Style Selector="Expander.develop-group /template/ ToggleButton#ExpanderHeader:disabled TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
     </Style>
 </Styles>
