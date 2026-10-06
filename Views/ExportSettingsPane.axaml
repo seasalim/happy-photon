@@ -97,6 +97,11 @@
                                          Text="{Binding ExportSettings.NamingPattern, Mode=TwoWay}"
                                          PlaceholderText="{}{name}, {date}" AutomationProperties.Name="Export naming pattern"/>
                                 <TextBlock Text="{}{name} = original name · {date} = export date" IsVisible="{Binding IsCustomExportFilename}" FontSize="{StaticResource FontSizeSmall}" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
+                                <StackPanel x:Name="ExportPathExampleSection" Spacing="4" IsVisible="{Binding HasExportPathExample}">
+                                    <TextBlock Text="Example for this photo" FontSize="{StaticResource FontSizeSmall}" Foreground="{DynamicResource TextMuted}"/>
+                                    <TextBlock Text="{Binding ExportPathExample}" FontSize="{StaticResource FontSizeSmall}" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding ExportSubfolderHelp}" IsVisible="{Binding HasExportSubfolderHelp}" FontSize="{StaticResource FontSizeSmall}" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
+                                </StackPanel>
                             </StackPanel>
                         </Expander>
                         <Expander Classes="develop-group compact-chevron" HeaderTemplate="{x:Null}" x:Name="ExportWatermarkExpander" IsExpanded="{Binding IsWatermarkExpanded, Mode=TwoWay}">
@@ -112,9 +117,6 @@
                             </StackPanel>
                         </Expander>
                     </StackPanel>
-                    <TextBlock Text="Example for this photo" FontSize="{StaticResource FontSizeSmall}" Foreground="{DynamicResource TextMuted}" Margin="0,4,0,0"/>
-                    <TextBlock Text="{Binding ExportPathExample}" FontSize="{StaticResource FontSizeSmall}" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"/>
-                    <TextBlock Text="{Binding ExportSubfolderHelp}" FontSize="{StaticResource FontSizeSmall}" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
                 </StackPanel>
             </ScrollViewer>
             <StackPanel x:Name="ExportFooter" Grid.Row="1" Margin="15,8,15,15" Spacing="8">

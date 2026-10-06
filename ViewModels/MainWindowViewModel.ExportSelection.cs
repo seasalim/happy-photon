@@ -19,9 +19,11 @@ public partial class MainWindowViewModel
         get => _activeExportCapture;
         set
         {
-            if (!SetProperty(ref _activeExportCapture, value) || value == null) return;
-            SelectedImage = value.Image;
+            if (!SetProperty(ref _activeExportCapture, value)) return;
+
+            if (value != null) SelectedImage = value.Image;
             OnPropertyChanged(nameof(ExportPathExample));
+            OnPropertyChanged(nameof(HasExportPathExample));
         }
     }
 

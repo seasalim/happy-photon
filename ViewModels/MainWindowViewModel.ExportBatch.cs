@@ -35,14 +35,21 @@ public partial class MainWindowViewModel
     public string ExportOptionsSummary =>
         $"{(ExportSettings.OutputColorSpace == OutputColorSpace.Srgb ? "sRGB" : "Display P3")} · " +
         $"{ExportSettings.OutputSharpening} · {(IsCustomExportFilename ? "Custom filenames" : "Original filenames")}";
-    public string ExportSubfolderHelp => ArmedExportSizeCount > 1
-        ? "Each size gets its own subfolder." : "Files go directly into the destination.";
-    public string ExportPathExample
+
+    public string? ExportSubfolderHelp => ArmedExportSizeCount > 1
+        ? "Each size gets its own subfolder." : null;
+
+    public bool HasExportSubfolderHelp => ExportSubfolderHelp is not null;
+
+    public bool HasExportPathExample => ExportPathExample is not null;
+
+    public string? ExportPathExample
     {
         get
         {
             if (ActiveExportCapture is not { } capture || ExportSettings.ValidationReason.Length > 0)
-                return "Choose photos, a destination and valid sizes.";
+                return null;
+
             var variants = ExportSettings.GetActiveVariants();
             var output = ExportSettings.SnapshotOutput();
             var suffix = _exportVersionedPaths.Contains(capture.Image.FilePath)
@@ -54,8 +61,8 @@ public partial class MainWindowViewModel
                         capture.Image.FileName, variant, output, variants.Count > 1,
                         DateTime.Now.ToString("yyyyMMdd"), suffix))));
             }
-            catch (ArgumentException) { return "Choose a valid destination folder."; }
-            catch (NotSupportedException) { return "Choose a valid destination folder."; }
+            catch (ArgumentException) { return null; }
+            catch (NotSupportedException) { return null; }
         }
     }
 
@@ -76,7 +83,9 @@ public partial class MainWindowViewModel
     {
         OnPropertyChanged(nameof(ExportButtonLabel));
         OnPropertyChanged(nameof(ExportPathExample));
+        OnPropertyChanged(nameof(HasExportPathExample));
         OnPropertyChanged(nameof(ExportSubfolderHelp));
+        OnPropertyChanged(nameof(HasExportSubfolderHelp));
         OnPropertyChanged(nameof(ExportOptionsSummary));
         OnPropertyChanged(nameof(VisiblePickedPhotoCount));
         OnPropertyChanged(nameof(UsePickedPhotosLabel));

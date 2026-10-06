@@ -43,6 +43,53 @@ public sealed class ExportBatchSettingsTests
         Assert.Equal("No picked photos in the current view", vm.UsePickedPhotosScope);
     }
 
+    [Fact]
+    public async Task PathExample_ShowsOnlyWithRealPathAndHelpOnlyForSeveralSizes()
+    {
+        using var fixture = new CatalogVmFixture("export-path-visibility");
+        using var catalog = fixture.CreateCatalog();
+        await using var vm = fixture.CreateViewModel(catalog, new NullBaseLoader(),
+            loadMetadataAsync: _ => Task.CompletedTask,
+            availabilityService: new TestSourceAvailabilityService(SourceAvailability.RequiresHydration));
+        Assert.False(vm.HasExportPathExample);
+        Assert.Null(vm.ExportPathExample);
+
+        vm.Browse.SetImages([new ImageFile(fixture.Path("photo.jpg"))]);
+        vm.Browse.SelectAllVisible();
+        vm.SwitchToExportCommand.Execute(null);
+        vm.ActiveExportCapture = vm.ExportCaptures[0];
+        Assert.NotEmpty(vm.ExportSettings.ValidationReason);
+        Assert.False(vm.HasExportPathExample);
+        Assert.Null(vm.ExportPathExample);
+
+        vm.ExportSettings.OutputFolder = fixture.Path("bad\0folder");
+        Assert.Empty(vm.ExportSettings.ValidationReason);
+        Assert.False(vm.HasExportPathExample);
+        Assert.Null(vm.ExportPathExample);
+
+        vm.ExportSettings.OutputFolder = fixture.Path("copies");
+        Assert.True(vm.HasExportPathExample);
+        Assert.EndsWith(".jpg", vm.ExportPathExample);
+        Assert.False(vm.HasExportSubfolderHelp);
+        Assert.Null(vm.ExportSubfolderHelp);
+
+        vm.ExportSettings.ExportWeb = true;
+        Assert.True(vm.HasExportSubfolderHelp);
+        Assert.Equal("Each size gets its own subfolder.", vm.ExportSubfolderHelp);
+
+        var changed = new List<string?>();
+        vm.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+        var capture = vm.ActiveExportCapture;
+        vm.ActiveExportCapture = null;
+        Assert.Contains(nameof(vm.HasExportPathExample), changed);
+        Assert.False(vm.HasExportPathExample);
+
+        changed.Clear();
+        vm.ActiveExportCapture = capture;
+        Assert.Contains(nameof(vm.HasExportPathExample), changed);
+        Assert.True(vm.HasExportPathExample);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]

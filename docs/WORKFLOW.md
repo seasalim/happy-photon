@@ -409,10 +409,11 @@ Changing photos or settings during a run prepares the next batch; the running jo
    exported size and on **Preview output**; Develop and thumbnails stay unmarked. Font,
    style, size, color, opacity, edge, alignment, side-edge rotation and margin persist
    across sessions; size and margin follow the short edge. Blank enabled text blocks Export.
-7. Review **Example for this photo**: the relative output path includes the format extension,
-   size subfolder and any version suffix. One size goes directly into the destination;
-   multiple sizes each get a subfolder. Multiple versions of the same file in a batch get
-   stable `-V<n>` suffixes; a single version keeps its ordinary name.
+7. Expand **More options** and read **Example for this photo** under Filenames. It appears once
+   photos, a destination and sizes are valid, and shows the relative output path with the format
+   extension, size subfolder and any version suffix; with several sizes each gets a subfolder.
+   Multiple versions of the same file in a batch get stable `-V<n>` suffixes; a single version
+   keeps its ordinary name.
 8. Choose **Export N files** or press `Enter`. The fixed footer keeps the photo/size count,
    validation reason and action visible, including at the minimum window size.
 
