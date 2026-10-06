@@ -34,6 +34,8 @@
     <EmbeddedResource Include="Assets\Looks\*.json" />
     <AvaloniaResource Remove="Assets\DisplayP3-v4.icc" />
     <AvaloniaResource Remove="Assets\happy-photon-icon.svg" />
+    <AvaloniaResource Remove="Assets\happy-photon-icon-mono.svg" />
+    <AvaloniaResource Remove="Assets\happy-photon-icon-mono-midgray.svg" />
     <EmbeddedResource Include="Assets\DisplayP3-v4.icc"
                       LogicalName="HappyPhoton.Assets.DisplayP3-v4.icc" />
     <Compile Remove="Tests\**" />

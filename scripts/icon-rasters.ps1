@@ -1,5 +1,5 @@
 # Shared by the icon generators: loads the app's Magick.NET package and rasterises
-# Assets/happy-photon-icon.svg with transparent corners. Dot-source it.
+# Assets/happy-photon-icon.svg (or another -Source) with transparent corners. Dot-source it.
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -49,7 +49,9 @@ function Import-MagickNet {
 function Read-IconRaster {
     param(
         [Parameter(Mandatory)]
-        [int] $Size
+        [int] $Size,
+
+        [string] $Source = $sourcePath
     )
 
     $settings = [ImageMagick.MagickReadSettings]::new()
@@ -57,7 +59,7 @@ function Read-IconRaster {
     $settings.Height = $Size
     $settings.BackgroundColor = [ImageMagick.MagickColors]::Transparent
 
-    $image = [ImageMagick.MagickImage]::new($sourcePath, $settings)
+    $image = [ImageMagick.MagickImage]::new($Source, $settings)
     $image.Format = [ImageMagick.MagickFormat]::Png32
     $image.Strip()
     return $image
@@ -92,10 +94,12 @@ function Write-TransparentIcon {
         [string] $Destination,
 
         [Parameter(Mandatory)]
-        [int] $Size
+        [int] $Size,
+
+        [string] $Source = $sourcePath
     )
 
-    $image = Read-IconRaster -Size $Size
+    $image = Read-IconRaster -Size $Size -Source $Source
     try {
         $image.Write($Destination)
     }

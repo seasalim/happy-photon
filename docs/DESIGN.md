@@ -77,7 +77,6 @@ introduce no color cast beside photographs. Semantic colors retain their meaning
 Sora supplies headings; Hanken Grotesk supplies body and control chrome. Panel headers
 use mixed-case Hanken Grotesk SemiBold, muted and without tracking. JetBrains Mono is
 reserved for numeric readouts, slider values, dimensions and keyboard hints.
-Preset subgroup headers step down to body size (11), Medium, TextMuted.
 The type scale is Title 20, Heading 15, Label 12, Body 11 and Small 10;
 `FontSizeSmall` is the minimum. Use mixed case and no tracking anywhere.
 The welcome surface uses the named `FontSizeHero` token.

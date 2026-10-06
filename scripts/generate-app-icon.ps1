@@ -3,7 +3,7 @@ param()
 
 # Rasterises Assets/happy-photon-icon.svg into the app's own icon files: the 256 px
 # PNG (Help, the AppImage and the macOS .icns) and the Windows .ico, each frame
-# rasterised at its own size. MSIX and Store assets come from
+# rasterised at its own size. Also rasterises the title bar's monochrome marks, one per theme. MSIX and Store assets come from
 # generate-windows-msix-assets.ps1.
 
 . (Join-Path $PSScriptRoot 'icon-rasters.ps1')
@@ -12,10 +12,15 @@ Import-MagickNet
 
 $assetsDirectory = Join-Path $repositoryRoot 'Assets'
 $pngPath = Join-Path $assetsDirectory 'happy-photon-icon.png'
+$monoNames = @('happy-photon-icon-mono', 'happy-photon-icon-mono-midgray')
 $icoPath = Join-Path $assetsDirectory 'happy-photon-icon.ico'
 $icoSizes = @(16, 24, 32, 48, 64, 128, 256)
 
 Write-TransparentIcon -Destination $pngPath -Size 256
+foreach ($monoName in $monoNames) {
+    Write-TransparentIcon -Destination (Join-Path $assetsDirectory "$monoName.png") -Size 256 `
+        -Source (Join-Path $assetsDirectory "$monoName.svg")
+}
 
 # Magick.NET's ICO writer stores uncompressed bitmaps; each frame is packed as PNG
 # instead, which Windows reads at every size and keeps the .ico (and the exe) small.
@@ -74,4 +79,7 @@ finally {
 }
 
 Write-Output "Generated $pngPath"
+foreach ($monoName in $monoNames) {
+    Write-Output "Generated $(Join-Path $assetsDirectory "$monoName.png")"
+}
 Write-Output "Generated $icoPath ($($icoSizes -join ', ') px)"

@@ -158,14 +158,14 @@ public sealed class ThemeResourceTests
     // character. Checking the rendered pixels rather than a file path also keeps
     // the test honest if the mark is ever redrawn or renamed.
     [AvaloniaFact]
-    public void BrandMark_StaysChromaticInBothThemes()
+    public void BrandMark_IsAchromaticInBothThemes()
     {
-        Assert.True(
+        Assert.False(
             HasChroma(HappyPhotonThemes.MidGray),
-            "The Middle Gray brand mark lost its colour.");
-        Assert.True(
+            "The Middle Gray brand mark carries colour.");
+        Assert.False(
             HasChroma(ThemeVariant.Dark),
-            "The Dark brand mark lost its colour.");
+            "The Dark brand mark carries colour.");
     }
 
     private static bool HasChroma(ThemeVariant variant)

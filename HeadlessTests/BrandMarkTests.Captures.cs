@@ -63,7 +63,7 @@ public sealed partial class BrandMarkTests
     [AvaloniaTheory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task CaptureTitleBar_MarkCentreIsTheBrandColour(bool midgray)
+    public async Task CaptureTitleBar_MarkCentreIsTheNeutralDisc(bool midgray)
     {
         await using var scene = new TipsTestScene(CaptureSize.Width, CaptureSize.Height);
         var name = $"brand-titlebar-{(midgray ? "midgray" : "dark")}";
@@ -77,9 +77,11 @@ public sealed partial class BrandMarkTests
 
         using var shot = Shot(name);
         var pixel = Pixel(Rgba(shot), (int)shot.Width, (int)centre.X, (int)centre.Y);
-        var deltaE = DeltaE(pixel, Color.Parse(BrandHex));
+        var disc = midgray ? MidGrayMonoDiscHex : DarkMonoDiscHex;
+        var deltaE = DeltaE(pixel, Color.Parse(disc));
 
-        Assert.True(deltaE <= 3.0, $"{name}: the 20 px mark's centre {pixel} is ΔE {deltaE:F2} from {BrandHex}.");
+        Assert.True(pixel.R == pixel.G && pixel.G == pixel.B, $"{name}: the 20 px mark's centre {pixel} carries colour.");
+        Assert.True(deltaE <= 3.0, $"{name}: the 20 px mark's centre {pixel} is ΔE {deltaE:F2} from {disc}.");
     }
 
     private static MagickImage Shot(string name)

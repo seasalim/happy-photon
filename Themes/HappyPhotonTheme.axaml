@@ -144,7 +144,7 @@
     <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Dark">
             <ImageBrush x:Key="BrandMark"
-                        Source="/Assets/happy-photon-icon.png"
+                        Source="/Assets/happy-photon-icon-mono.png"
                         Stretch="Uniform"/>
             <Color x:Key="SurfaceLowestColor">#0e0e13</Color>
             <Color x:Key="SurfaceBaseColor">#131318</Color>
@@ -228,7 +228,7 @@
         <ResourceDictionary x:Key="{x:Static views:HappyPhotonThemes.MidGray}">
             <!-- Neutral chrome stays below the L* 50 image surround. -->
             <ImageBrush x:Key="BrandMark"
-                        Source="/Assets/happy-photon-icon.png"
+                        Source="/Assets/happy-photon-icon-mono-midgray.png"
                         Stretch="Uniform"/>
             <Color x:Key="SurfaceLowestColor">#303030</Color>
             <Color x:Key="SurfaceBaseColor">#363636</Color>

@@ -21,6 +21,10 @@ public sealed partial class BrandMarkTests
 
     private const string BrandHex = "#3aa6b9";
 
+    private const string DarkMonoDiscHex = "#d2d2d2";
+
+    private const string MidGrayMonoDiscHex = "#ececec";
+
     private const double DarkHeadingContrast = 5.99;
 
     private const double MidGrayHeadingContrast = 3.79;
