@@ -108,7 +108,7 @@ public sealed class DevelopReviewStateTests(ITestOutputHelper output)
                             Assert.Equal(0, background.A);
                             var label = button.GetVisualDescendants().OfType<TextBlock>().Single();
                             var contrast = ThemeResourceTests.Contrast(ColorOf(label.Foreground),
-                                ThemeResourceTests.Brush("SurfaceMid", theme).Color);
+                                ThemeResourceTests.Brush("SurfaceLow", theme).Color);
                             output.WriteLine($"Expanded label contrast: {contrast:F2}:1");
                             Assert.True(contrast >= 4.5);
                         }

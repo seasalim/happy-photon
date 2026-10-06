@@ -17,7 +17,7 @@
         </Style>
     </UserControl.Styles>
 
-    <Border Background="{DynamicResource SurfaceMid}">
+    <Border Background="{DynamicResource SurfaceLow}">
         <Grid RowDefinitions="*,Auto">
             <ScrollViewer x:Name="ExportSettingsScroll" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
                 <StackPanel Margin="15,0,15,15" Spacing="4">

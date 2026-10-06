@@ -65,7 +65,7 @@
         </Style>
     </UserControl.Styles>
 
-    <Border Background="{DynamicResource SurfaceMid}"
+    <Border Background="{DynamicResource SurfaceLow}"
             IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
         <Grid RowDefinitions="Auto,*,Auto">
             <StackPanel Grid.Row="0" IsEnabled="{Binding HasSelectedImage}">

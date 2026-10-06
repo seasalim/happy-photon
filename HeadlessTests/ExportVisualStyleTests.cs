@@ -36,7 +36,7 @@ public sealed partial class ExportVisualStyleTests : IDisposable
         try
         {
             var surface = Assert.IsType<Border>(pane.Content);
-            AssertBrush("SurfaceMid", surface.Background);
+            AssertBrush("SurfaceLow", surface.Background);
             pane.FindControl<Expander>("ExportMoreOptions")!.IsExpanded = true;
             viewModel.ExportFilenameChoice = 1;
             Dispatcher.UIThread.RunJobs();

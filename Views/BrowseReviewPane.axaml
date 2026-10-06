@@ -24,7 +24,7 @@
         </Style>
     </UserControl.Styles>
 
-    <Border Background="{DynamicResource SurfaceMid}"
+    <Border Background="{DynamicResource SurfaceLow}"
             IsEnabled="{Binding IsWorkspaceInteractionEnabled}">
         <Grid RowDefinitions="Auto,*,Auto">
             <Border x:Name="BrowseHistogramBox"

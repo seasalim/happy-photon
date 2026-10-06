@@ -20,7 +20,7 @@
                 <Grid RowDefinitions="Auto,Auto">
                     <ToggleButton Name="ExpanderHeader" Margin="-15,0" Padding="10,0" Height="32"
                                   VerticalContentAlignment="Center"
-                                  MinHeight="0" Background="{DynamicResource SurfaceHigh}" BorderThickness="0"
+                                  MinHeight="0" Background="{DynamicResource SurfaceMid}" BorderThickness="0"
                                   Theme="{DynamicResource FluentExpanderToggleButtonDownTheme}"
                                   Content="{TemplateBinding Header}"
                                   ContentTemplate="{TemplateBinding HeaderTemplate}"
@@ -53,7 +53,7 @@
         <Setter Property="Background" Value="{DynamicResource SurfaceHighest}"/>
     </Style>
     <Style Selector="Expander.develop-group /template/ ToggleButton#ExpanderHeader:disabled /template/ Border#ToggleButtonBackground">
-        <Setter Property="Background" Value="{DynamicResource SurfaceHigh}"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceMid}"/>
     </Style>
     <Style Selector="Expander.develop-group /template/ ToggleButton#ExpanderHeader:disabled">
         <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>

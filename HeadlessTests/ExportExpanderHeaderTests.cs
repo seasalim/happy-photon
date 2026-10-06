@@ -66,7 +66,7 @@ public sealed class ExportExpanderHeaderTests
             Assert.Equal(title.Text, AutomationProperties.GetName(header));
             Assert.Null(ToolTip.GetTip(header));
             var fill = header.GetVisualDescendants().OfType<Border>().Single(b => b.Name == "ToggleButtonBackground");
-            Assert.Equal(ThemeResourceTests.Brush("SurfaceHigh", pane.ActualThemeVariant).Color,
+            Assert.Equal(ThemeResourceTests.Brush("SurfaceMid", pane.ActualThemeVariant).Color,
                 Assert.IsAssignableFrom<ISolidColorBrush>(fill.Background).Color);
             var content = Assert.IsType<StackPanel>(expander.Content);
             var summary = Assert.IsType<TextBlock>(content.Children[0]);

@@ -34,9 +34,9 @@ public sealed class DevelopGroupBlockTests
                 Assert.Equal(32, header.Bounds.Height);
                 Assert.Equal(950, Bounds(header, window).Left);
                 Assert.Equal(1200, Bounds(header, window).Right);
-                AssertBrush(header.Background, "SurfaceHigh", header);
+                AssertBrush(header.Background, "SurfaceMid", header);
                 var fill = header.GetVisualDescendants().OfType<Border>().Single(b => b.Name == "ToggleButtonBackground");
-                AssertBrush(fill.Background, "SurfaceHigh", header);
+                AssertBrush(fill.Background, "SurfaceMid", header);
                 var mark = header.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Path>()
                     .Single(path => path.Name == "ExpandCollapseChevron");
                 Assert.Equal(1182, Bounds(mark, window).Right);
@@ -91,7 +91,7 @@ public sealed class DevelopGroupBlockTests
                 Assert.Equal(Assert.IsType<double>(disabled), effective);
                 var title = header.GetVisualDescendants().OfType<TextBlock>().Single(text => text.Classes.Contains("section-label"));
                 AssertBrush(title.Foreground, "TextMuted", title);
-                AssertBrush(fill.Background, "SurfaceHigh", header);
+                AssertBrush(fill.Background, "SurfaceMid", header);
             }
         });
     }

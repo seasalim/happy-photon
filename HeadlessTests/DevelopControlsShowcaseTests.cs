@@ -175,7 +175,7 @@ public sealed class DevelopControlsShowcaseTests
             vm.IsLocalHueExpanded = true;
             var theme = gray ? HappyPhotonThemes.MidGray : ThemeVariant.Dark;
             var section = new LocalsEditSection { DataContext = vm, Margin = new Thickness(15) };
-            var window = new Window { Content = section, Background = ThemeResourceTests.Brush("SurfaceMid", theme) };
+            var window = new Window { Content = section, Background = ThemeResourceTests.Brush("SurfaceLow", theme) };
             ShowcaseTestHelper.Capture($"08-develop-locals-expanded-wp7-{(gray ? "gray" : "dark")}",
                 window, new PixelSize(300, 1500), theme, _ =>
                 {
