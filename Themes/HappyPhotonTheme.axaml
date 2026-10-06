@@ -156,7 +156,7 @@
             <Color x:Key="SurfaceBrightColor">#39383e</Color>
             <Color x:Key="OutlineColor">#919191</Color>
             <Color x:Key="OutlineVariantColor">#464646</Color>
-            <Color x:Key="TextPrimaryColor">#e2e2e2</Color>
+            <Color x:Key="TextPrimaryColor">#d2d2d2</Color>
             <Color x:Key="TextSecondaryColor">#c7c7c7</Color>
             <Color x:Key="TextMutedColor">#919191</Color>
             <Color x:Key="TextDisabledColor">#919191</Color>
@@ -243,8 +243,8 @@
                  neutral family must not leak into this dictionary. -->
             <Color x:Key="OutlineColor">#c8c8c8</Color>
             <Color x:Key="OutlineVariantColor">#747474</Color>
-            <Color x:Key="TextPrimaryColor">#ffffff</Color>
-            <Color x:Key="TextSecondaryColor">#f0f0f0</Color>
+            <Color x:Key="TextPrimaryColor">#ececec</Color>
+            <Color x:Key="TextSecondaryColor">#e0e0e0</Color>
             <Color x:Key="TextMutedColor">#d4d4d4</Color>
             <Color x:Key="TextDisabledColor">#c8c8c8</Color>
             <Color x:Key="RawFileBackgroundColor">#444444</Color>

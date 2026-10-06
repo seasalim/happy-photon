@@ -243,10 +243,10 @@ public sealed class ThemeLiveSwitchTests
             Assert.All(
                 confirmation.GetLogicalDescendants().OfType<TextBlock>()
                     .Where(text => text.Classes.Contains("dialog-title") || text.Classes.Contains("dialog-body")),
-                text => Assert.Equal(Color.Parse("#ffffff"), ColorOf(text.Foreground)));
+                text => Assert.Equal(Color.Parse("#ececec"), ColorOf(text.Foreground)));
             Assert.All(input.GetLogicalDescendants().OfType<TextBlock>()
                     .Where(text => text.Classes.Contains("dialog-title") || text.Classes.Contains("dialog-body")),
-                text => Assert.Equal(Color.Parse("#ffffff"), ColorOf(text.Foreground)));
+                text => Assert.Equal(Color.Parse("#ececec"), ColorOf(text.Foreground)));
             confirmation.Close();
             input.Close();
         }
