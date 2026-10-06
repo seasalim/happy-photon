@@ -120,7 +120,7 @@ public sealed class DevelopControlsMeasurementTests(ITestOutputHelper output)
 
             foreach (var category in presets.GetVisualDescendants().OfType<Expander>())
             {
-                var name = category.GetVisualDescendants().OfType<TextBlock>().First(text => text.Classes.Contains("preset-header"));
+                var name = category.GetVisualDescendants().OfType<TextBlock>().First(text => text.Classes.Contains("section-label"));
                 var chevron = category.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Path>().First(path => path.Name == "ExpandCollapseChevron");
                 Assert.Equal(Middle(chevron, category), Middle(name, category), 0.5);
             }

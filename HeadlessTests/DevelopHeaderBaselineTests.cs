@@ -154,15 +154,16 @@ public sealed class DevelopHeaderBaselineTests(ITestOutputHelper output)
     private void MeasurePresets(Window window, string theme)
     {
         var presets = window.GetVisualDescendants().OfType<PresetsPanel>().Single();
-        var headers = presets.GetVisualDescendants().OfType<TextBlock>()
-            .Where(c => c.Classes.Contains("preset-header")).ToArray();
+        var headers = presets.GetVisualDescendants().OfType<Expander>()
+            .SelectMany(c => c.GetVisualDescendants().OfType<TextBlock>())
+            .Where(c => c.Classes.Contains("section-label")).ToArray();
         Assert.NotEmpty(headers);
 
         foreach (var header in headers)
         {
             Assert.True(header.TryFindResource("TextMuted", header.ActualThemeVariant, out var primary));
-            Assert.Equal(11, header.FontSize);
-            Assert.Equal(Avalonia.Media.FontWeight.Medium, header.FontWeight);
+            Assert.Equal(12, header.FontSize);
+            Assert.Equal(Avalonia.Media.FontWeight.SemiBold, header.FontWeight);
             Assert.Same(primary, header.Foreground);
             output.WriteLine($"L4 {theme} {header.Text}: size={header.FontSize}; weight={header.FontWeight}({(int)header.FontWeight}); foreground={header.Foreground}; sameTextMuted={ReferenceEquals(primary, header.Foreground)}");
         }

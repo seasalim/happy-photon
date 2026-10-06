@@ -9,11 +9,6 @@
         <Style Selector="Expander.preset-category /template/ ToggleButton#ExpanderHeader">
             <Setter Property="Background" Value="{DynamicResource SurfaceMid}"/>
         </Style>
-        <Style Selector="TextBlock.preset-header">
-            <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
-            <Setter Property="FontWeight" Value="Medium"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
-        </Style>
         <Style Selector="Button.preset">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>

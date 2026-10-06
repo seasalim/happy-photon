@@ -226,7 +226,7 @@ public sealed class DevelopControlsShowcaseTests
                 var historyHeader = history.FindControl<Grid>("HistoryHeader")!;
                 var presets = window.GetVisualDescendants().OfType<PresetsPanel>().Single();
                 var presetsHeader = presets.GetVisualDescendants().OfType<TextBlock>()
-                    .Single(text => text.Classes.Contains("section-label"));
+                    .Single(text => text.Classes.Contains("section-label") && text.FindAncestorOfType<Expander>() is null);
 
                 foreach (var (header, host) in new (Control, Control)[]
                     { (navigatorHeader, navigator), (historyHeader, history), (presetsHeader, presets) })

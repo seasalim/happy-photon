@@ -209,7 +209,7 @@ public partial class PresetsPanel : UserControl
             Header = new TextBlock
             {
                 Text = name,
-                Classes = { "preset-header" },
+                Classes = { "section-label" },
                 VerticalAlignment = VerticalAlignment.Center
             },
             IsExpanded = PresetGroups?.GetValueOrDefault(name, true) ?? true,
