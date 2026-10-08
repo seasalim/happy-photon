@@ -144,7 +144,7 @@ public sealed class RenderRepairsTests
     {
         using var basis = Fixture();
         var pipeline = new RenderPipeline();
-        Assert.Equal(14, RenderPipeline.Version);
+        Assert.Equal(15, RenderPipeline.Version);
         foreach (var asset in GoldenTestCases.Assets)
         foreach (var item in asset.SettingsCases)
         {

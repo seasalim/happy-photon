@@ -55,7 +55,7 @@ public sealed class WhitesBlacksCompatibilityTests(ITestOutputHelper output)
                 typeof(GeometrySettings).GetProperty(char.ToUpperInvariant(term[0]) + term[1..])!.SetValue(geometry, amount);
                 Record($"geometry__{term}-{(amount < 0 ? "minus" : "plus")}{Math.Abs(amount)}", basis, new() { Geometry = geometry });
             }
-        var goldenNames = Directory.GetFiles(Path.Combine(GoldenTestPaths.GoldenDirectory, "v14"), "*.png")
+        var goldenNames = Directory.GetFiles(Path.Combine(GoldenTestPaths.GoldenDirectory, "v15"), "*.png")
             .Select(p => Path.GetFileNameWithoutExtension(p)).Order().ToArray();
         Assert.Equal(goldenNames, current.Keys.Where(k => k.EndsWith("/pixels")).Select(k => k[..^7]).Order());
         var documents = ConstructionBaselineGoldens.migration.Split('\n', StringSplitOptions.RemoveEmptyEntries)

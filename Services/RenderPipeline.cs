@@ -7,7 +7,7 @@ namespace HappyPhoton.Services;
 
 public sealed class RenderPipeline
 {
-    public const int Version = 14;
+    public const int Version = 15;
 
     public RenderResult Render(RenderRequest request) =>
         RenderCore(request, DefaultBandPixelLimit, null);

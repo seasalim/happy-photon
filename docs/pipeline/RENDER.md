@@ -232,6 +232,10 @@ master(channel_c(t_c))`. Missing channel tables are identity. Both tone regimes 
 this seam, before RAW's channel-mixing AgX outset. Identity channels share the master
 LUT at no application cost.
 
+Points join by Catmull-Rom with each interior tangent measured in x (the chord between its
+neighbours), so the curve is C¹ however the points are spaced; evenly spaced points give
+the uniform spline. End tangents mirror the end segment through a 0–1-clamped phantom
+point, output clamps to 0–1, and points closer than 1e-4 in x make a step.
 Curve tables interpolate at `t·255`. [CurveData.cs](../../Models/CurveData.cs) orders
 X but permits decreasing Y for intentional solarization; monotonicity properties
 therefore use identity/monotone curves (TESTING.md §4.1).

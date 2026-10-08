@@ -81,7 +81,7 @@ public class CurveData
     /// </summary>
     public double GetValueAt(double x)
     {
-        return InterpolateMonotonic(Math.Clamp(x, 0, 1));
+        return InterpolateCatmullRom(Math.Clamp(x, 0, 1));
     }
 
     public void MovePoint(int index, double x, double y)
@@ -127,16 +127,16 @@ public class CurveData
             return;
         }
 
-        // Use monotonic cubic interpolation for smooth curve
+        // Catmull-Rom with tangents measured in x: smooth (C1) through unevenly spaced points
         for (int i = 0; i < 256; i++)
         {
             double x = i / 255.0;
-            double y = InterpolateMonotonic(x);
+            double y = InterpolateCatmullRom(x);
             LookupTable[i] = (byte)Math.Clamp((int)(y * 255), 0, 255);
         }
     }
 
-    private double InterpolateMonotonic(double x)
+    private double InterpolateCatmullRom(double x)
     {
         // Find the segment containing x
         int segmentIndex = 0;
@@ -163,7 +163,20 @@ public class CurveData
         var p0 = segmentIndex > 0 ? Points[segmentIndex - 1] : new CurvePoint(p1.X - (p2.X - p1.X), p1.Y - (p2.Y - p1.Y));
         var p3 = segmentIndex < Points.Count - 2 ? Points[segmentIndex + 2] : new CurvePoint(p2.X + (p2.X - p1.X), p2.Y + (p2.Y - p1.Y));
 
-        double t = (x - p1.X) / (p2.X - p1.X);
+        // Measure each tangent in x rather than in this segment's t, so neighbouring segments
+        // of different widths meet with the same slope. Corrections within 1e-9 of zero leave
+        // y0 and y3 untouched, preserving the uniform spline's bytes despite width rounding.
+        double width = p2.X - p1.X;
+        double y0 = p0.Y;
+        double y3 = p3.Y;
+
+        if (segmentIndex > 0)
+            y0 = AdjustNeighbourY(y0, p2.Y, width, p2.X - p0.X);
+
+        if (segmentIndex < Points.Count - 2)
+            y3 = AdjustNeighbourY(y3, p1.Y, width, p3.X - p1.X);
+
+        double t = (x - p1.X) / width;
 
         // Catmull-Rom spline interpolation
         double t2 = t * t;
@@ -171,13 +184,21 @@ public class CurveData
 
         double y = 0.5 * (
             (2 * p1.Y) +
-            (-p0.Y + p2.Y) * t +
-            (2 * p0.Y - 5 * p1.Y + 4 * p2.Y - p3.Y) * t2 +
-            (-p0.Y + 3 * p1.Y - 3 * p2.Y + p3.Y) * t3
+            (-y0 + p2.Y) * t +
+            (2 * y0 - 5 * p1.Y + 4 * p2.Y - y3) * t2 +
+            (-y0 + 3 * p1.Y - 3 * p2.Y + y3) * t3
         );
 
         // Clamp to valid range
         return Math.Clamp(y, 0, 1);
+    }
+
+    private static double AdjustNeighbourY(double y, double oppositeY, double width, double span)
+    {
+        double correction = 1 - 2 * width / span;
+        if (Math.Abs(correction) <= 1e-9) return y;
+
+        return y + correction * (oppositeY - y);
     }
 
     public CurveData Clone()
