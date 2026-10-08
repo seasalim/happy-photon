@@ -17,6 +17,9 @@ public sealed class DcpPerformanceGateTests
     // assertion per run under any background load (observed live).
     private const int Samples = 5;
     private const long MemoryBudget = 8L * 1024 * 1024;
+
+    private static int _exportCalls;
+
     private readonly ITestOutputHelper _output;
 
     public DcpPerformanceGateTests(ITestOutputHelper output) => _output = output;
@@ -399,18 +402,18 @@ public sealed class DcpPerformanceGateTests
         {
             EditSettings = new EditSettings { RawProfile = selection.Clone() }
         };
-        var builtInSettings = ExportSettings(Path.Combine(directory, "export-built-in"));
-        var activeSettings = ExportSettings(Path.Combine(directory, "export-active"));
+        var builtInRoot = Path.Combine(directory, "export-built-in");
+        var activeRoot = Path.Combine(directory, "export-active");
         var service = new ImageExportService(
             new RenderPipeline(),
             new RawBaseLoader(),
             new ExportMetadataService());
-        await Export(service, builtInImage, builtInSettings);
-        await Export(service, activeImage, activeSettings);
+        await Export(service, builtInImage, builtInRoot);
+        await Export(service, activeImage, activeRoot);
         var builtIn = await MedianAsync(() =>
-            Export(service, builtInImage, builtInSettings));
+            Export(service, builtInImage, builtInRoot));
         var active = await MedianAsync(() =>
-            Export(service, activeImage, activeSettings));
+            Export(service, activeImage, activeRoot));
         return new ExportDelta(builtIn, active);
     }
 
@@ -422,12 +425,16 @@ public sealed class DcpPerformanceGateTests
         OutputSharpening = OutputSharpeningMode.Off
     };
 
+    // Each call exports into a fresh folder: the encoder never overwrites, so a reused file name
+    // would fail every sample after the first. The export creates the folder inside the timed span.
     private static async Task Export(
         ImageExportService service,
         ImageFile image,
-        ExportSettings settings)
+        string root)
     {
-        var result = await service.ExportBatchAsync([image], settings);
+        var folder = Path.Combine(root, Interlocked.Increment(ref _exportCalls).ToString());
+        var result = await service.ExportBatchAsync([image], ExportSettings(folder));
+
         Assert.Equal(1, result.ExportedCount);
     }
 
