@@ -163,6 +163,48 @@ public sealed class DevelopControlsShowcaseTests
         });
     }
 
+    // FIXES-DEVELOP-WP12 visual review: the scope at the default and the widest right column.
+    [AvaloniaTheory]
+    [InlineData("develop-histogram", 250, false)]
+    [InlineData("develop-histogram", 250, true)]
+    [InlineData("develop-histogram", 450, false)]
+    [InlineData("develop-histogram", 450, true)]
+    [InlineData("develop-waveform", 450, false)]
+    [InlineData("develop-waveform", 450, true)]
+    [InlineData("browse", 450, false)]
+    public async Task ScopeHeightScenes(string mode, int column, bool gray)
+    {
+        var size = new PixelSize(1200, 700);
+        await DevelopToolsBaselineTests.WithScene("normal", size.Width, size.Height, async (vm, scope) =>
+        {
+            vm.AppTheme = gray ? AppTheme.MidGray : AppTheme.Dark;
+            ShootingInfoNavigatorTests.SetExif(vm.SelectedImage!);
+            var histogram = vm.EffectiveHistogram;
+            vm.IsDevelopMode = mode != "browse";
+
+            if (mode == "develop-waveform") vm.SelectedScope = ScopeView.Waveform;
+
+            ShowcaseTestHelper.Capture($"scope-height-{mode}-{column}-{(gray ? "gray" : "dark")}", scope, size,
+                gray ? HappyPhotonThemes.MidGray : ThemeVariant.Dark, window =>
+                {
+                    var shell = (Grid)window.FindControl<Border>("WorkspaceLeftPanel")!.Parent!;
+                    shell.ColumnDefinitions[4].Width = new GridLength(column);
+                    var scroll = window.GetVisualDescendants().OfType<ScrollViewer>()
+                        .SingleOrDefault(control => control.Name == "DevelopControlsScrollViewer");
+
+                    if (scroll is not null) scroll.Offset = default;
+
+                    // The thumbnail histogram needs a decoded thumbnail; show the preview's instead.
+                    if (mode == "browse") vm.Histogram = histogram;
+
+                    Dispatcher.UIThread.RunJobs();
+                    window.UpdateLayout();
+                    Assert.Equal(column, shell.ColumnDefinitions[4].ActualWidth);
+                });
+            await Task.CompletedTask;
+        });
+    }
+
     [AvaloniaTheory]
     [InlineData(false)]
     [InlineData(true)]

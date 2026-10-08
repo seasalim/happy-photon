@@ -67,6 +67,51 @@ public sealed class WaveformViewTests
         Assert.Throws<ObjectDisposedException>(() => _ = bitmap.PixelSize);
     }
 
+    // FIXES-DEVELOP-WP12 G4: a taller scope stretches the same 256 x 128 bitmap; resizing never repaints it.
+    [AvaloniaFact]
+    public void Resize_StretchesTheSameBitmapWithoutRepainting()
+    {
+        using var themeScope = new TestUiScope(
+            theme: Avalonia.Styling.ThemeVariant.Dark);
+        var view = new WaveformView
+        {
+            Waveform = FilledWaveform(level: 64),
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top
+        };
+        var window = new Window { Width = 222, Height = 300, Content = view };
+        using var windowScope = new TestUiScope(window);
+        Dispatcher.UIThread.RunJobs();
+        var image = view.FindControl<Image>("WaveformImage")!;
+        var bitmap = Assert.IsType<Avalonia.Media.Imaging.WriteableBitmap>(
+            view.BitmapForTesting);
+        var marker = Color.FromRgb(1, 2, 3);
+        WritePixel(bitmap, 0, 0, marker);
+
+        Assert.Equal(80, image.Bounds.Height);
+
+        window.Width = 422;
+        Dispatcher.UIThread.RunJobs();
+        window.UpdateLayout();
+
+        Assert.Equal(152, image.Bounds.Height);
+        Assert.Same(bitmap, view.BitmapForTesting);
+        Assert.Equal(
+            new PixelSize(WaveformData.ColumnCount, WaveformData.LevelCount),
+            bitmap.PixelSize);
+        Assert.Equal(marker, ReadPixel(bitmap, 0, 0));
+
+        view.Repaint();
+        var allocationStart = GC.GetAllocatedBytesForCurrentThread();
+        view.Repaint();
+        var repaintAllocation =
+            GC.GetAllocatedBytesForCurrentThread() - allocationStart;
+        _output.WriteLine(
+            $"Warmed WaveformView repaint at 152 px allocated {repaintAllocation} bytes.");
+
+        Assert.True(repaintAllocation < 4096);
+        Assert.Same(bitmap, view.BitmapForTesting);
+    }
+
     [AvaloniaTheory]
     [MemberData(nameof(ThemeResourceTests.Variants),
         MemberType = typeof(ThemeResourceTests))]
@@ -114,6 +159,22 @@ public sealed class WaveformViewTests
             0,
             bgra.Length);
         return Color.FromArgb(bgra[3], bgra[2], bgra[1], bgra[0]);
+    }
+
+    private static void WritePixel(
+        Avalonia.Media.Imaging.WriteableBitmap bitmap,
+        int x,
+        int y,
+        Color color)
+    {
+        using var framebuffer = bitmap.Lock();
+        var bgra = new[] { color.B, color.G, color.R, color.A };
+
+        Marshal.Copy(
+            bgra,
+            0,
+            IntPtr.Add(framebuffer.Address, y * framebuffer.RowBytes + x * 4),
+            bgra.Length);
     }
 
     private static Color ColorOf(IBrush brush) =>

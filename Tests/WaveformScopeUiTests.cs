@@ -89,8 +89,7 @@ public sealed class WaveformScopeUiTests : IDisposable
         Assert.False(rawButton.IsChecked);
         Assert.True(histogram.IsVisible);
         Assert.False(waveform.IsVisible);
-        Assert.Equal(80, histogram.FindControl<Canvas>("HistogramCanvas")!.Height);
-        Assert.Equal(80, waveform.FindControl<Image>("WaveformImage")!.Height);
+        Assert.Equal(80, histogram.FindControl<Canvas>("HistogramCanvas")!.Bounds.Height);
         Assert.False(rawButton.IsEnabled);
         Assert.Equal("Select a RAW photograph.", ToolTip.GetTip(rawButton));
 
@@ -104,6 +103,8 @@ public sealed class WaveformScopeUiTests : IDisposable
         Assert.True(waveformButton.IsChecked);
         Assert.False(histogram.IsVisible);
         Assert.True(waveform.IsVisible);
+        window.UpdateLayout();
+        Assert.Equal(80, waveform.Bounds.Height);
         Assert.Equal(loadCount, loader.LoadCount);
         Assert.Equal(activityEpoch, vm.BackgroundActivityEpoch);
 

@@ -287,6 +287,8 @@ CHARACTERIZATION.md §7.6.
   bodies may grow only while selected. Selection is session state; unavailable RAW
   stays disabled with a reason and falls back to display without losing the preference.
   Browse shows only the thumbnail histogram. RGB parade remains deferred.
+- Every scope plot, in Develop and Browse, is `max(80, round(80 × width / 222))` px tall
+  (`ScopePlotPanel`): 80 px at the default 250 px right column, taller as the pane widens.
 - A read-only row below either scope shows ISO, focal length, aperture and shutter; it hides when all four values are missing.
 - RAW shows sensor channels and clipping percentages, never a display luminance line.
   Display triangles indicate source saturation on the right and finalized floor on

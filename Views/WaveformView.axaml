@@ -3,8 +3,10 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="256" d:DesignHeight="80"
+             xmlns:views="using:HappyPhoton.Views"
              x:Class="HappyPhoton.Views.WaveformView">
-    <Image x:Name="WaveformImage"
-           Height="80"
-           Stretch="Fill"/>
+    <views:ScopePlotPanel>
+        <Image x:Name="WaveformImage"
+               Stretch="Fill"/>
+    </views:ScopePlotPanel>
 </UserControl>

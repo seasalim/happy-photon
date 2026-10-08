@@ -3,11 +3,12 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="250" d:DesignHeight="100"
+             xmlns:views="using:HappyPhoton.Views"
              x:Class="HappyPhoton.Views.HistogramView" x:Name="HistogramRoot">
 
     <Grid RowDefinitions="Auto,Auto">
-        <Grid Height="80">
-            <Canvas x:Name="HistogramCanvas" Height="80" ClipToBounds="True"/>
+        <views:ScopePlotPanel>
+            <Canvas x:Name="HistogramCanvas" ClipToBounds="True"/>
             <Grid x:Name="DisplayClippingIndicators"
                   IsVisible="False">
                 <ToggleButton Classes="icon-button compact" Focusable="False" IsChecked="{Binding IsClippingOverlayLatched, ElementName=HistogramRoot, Mode=OneWay}" x:Name="DisplayFloorTriangleTarget"
@@ -49,7 +50,7 @@
                     </Grid>
                 </ToggleButton>
             </Grid>
-        </Grid>
+        </views:ScopePlotPanel>
         <StackPanel Grid.Row="1" x:Name="RawClippingPanel"
                     IsVisible="False" Margin="0,5,0,0" Spacing="2">
                 <TextBlock Text="≥ Sensor white"
