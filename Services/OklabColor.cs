@@ -308,6 +308,7 @@ internal static partial class OklabColor
             MidpointRounding.AwayFromZero);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static double SmoothStep(double value)
     {
         var bounded = Math.Clamp(value, 0, 1);

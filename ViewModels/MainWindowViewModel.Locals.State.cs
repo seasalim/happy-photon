@@ -18,6 +18,14 @@ public partial class MainWindowViewModel
 
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {
+        if (e.PropertyName is nameof(SelectedImage) or nameof(WorkspaceMode) ||
+            e.PropertyName == nameof(IsLocalMaskVisible) && !CanShowMixerMask)
+            EndMixerBandHover();
+
+        if (e.PropertyName is nameof(PreviewImage) or nameof(WhiteBalanceKelvinPosition) or
+            nameof(WhiteBalanceTint) or nameof(SelectedWhiteBalanceMode) && _hoveredMixerBand is { } hover)
+            BeginMixerBandHover(hover.Band, hover.Tint, refresh: true);
+
         if (e.PropertyName == nameof(IsLocalHuePicking))
             OnPropertyChanged(nameof(IsLocalMaskVisible));
 

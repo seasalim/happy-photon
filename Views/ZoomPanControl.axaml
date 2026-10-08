@@ -41,6 +41,9 @@
                     <Canvas IsHitTestVisible="False" Width="{Binding #ImageControl.Width}" Height="{Binding #ImageControl.Height}">
                         <Image x:Name="SpotVisualization" Stretch="Fill"/>
                     </Canvas>
+                    <Image x:Name="MixerBandOverlay" Source="{Binding $parent[views:ZoomPanControl].MixerBandMask}"
+                           IsHitTestVisible="False" Stretch="Fill"
+                           Width="{Binding #ImageControl.Width}" Height="{Binding #ImageControl.Height}"/>
                     <views:SpotsOverlayControl x:Name="SpotsOverlay" IsVisible="False"
                                               Width="{Binding #ImageControl.Width}" Height="{Binding #ImageControl.Height}"/>
                     <views:CropOverlayControl x:Name="CropOverlay"

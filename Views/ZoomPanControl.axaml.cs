@@ -13,6 +13,15 @@ public partial class ZoomPanControl : UserControl
     public static readonly StyledProperty<Bitmap?> SourceProperty =
         AvaloniaProperty.Register<ZoomPanControl, Bitmap?>(nameof(Source));
 
+    public static readonly StyledProperty<Bitmap?> MixerBandMaskProperty =
+        AvaloniaProperty.Register<ZoomPanControl, Bitmap?>(nameof(MixerBandMask));
+
+    public Bitmap? MixerBandMask
+    {
+        get => GetValue(MixerBandMaskProperty);
+        set => SetValue(MixerBandMaskProperty, value);
+    }
+
     public static readonly StyledProperty<double> ZoomLevelProperty =
         AvaloniaProperty.Register<ZoomPanControl, double>(nameof(ZoomLevel), 1.0);
 

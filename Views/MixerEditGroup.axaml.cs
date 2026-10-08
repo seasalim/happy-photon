@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
 using HappyPhoton.Models;
+using HappyPhoton.ViewModels;
 
 namespace HappyPhoton.Views;
 
@@ -22,6 +23,20 @@ public partial class MixerEditGroup : UserControl
     public MixerEditGroup()
     {
         InitializeComponent();
+
+        foreach (var button in MixerBandPicker.Children.OfType<Button>())
+        {
+            button.PointerEntered += (_, _) =>
+            {
+                if (button.IsEffectivelyEnabled && DataContext is MainWindowViewModel vm &&
+                    button.CommandParameter is ColorMixerBand band &&
+                    this.TryFindResource("SurfaceLow", ActualThemeVariant, out var resource) && resource is ISolidColorBrush brush)
+                    vm.BeginMixerBandHover(band, (uint)(brush.Color.R << 16 | brush.Color.G << 8 | brush.Color.B));
+            };
+            button.PointerExited += (_, _) => (DataContext as MainWindowViewModel)?.EndMixerBandHover();
+        }
+
+        DetachedFromVisualTree += (_, _) => (DataContext as MainWindowViewModel)?.EndMixerBandHover();
     }
 
     private static IBrush CreateHueTrackBrush(ColorMixerBand band) =>

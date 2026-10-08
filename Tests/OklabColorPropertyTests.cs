@@ -6,6 +6,35 @@ namespace HappyPhoton.Tests;
 
 public sealed class OklabColorPropertyTests
 {
+    [Fact]
+    public void MixerMaskInfluenceMatchesRenderResponseAndReliability()
+    {
+        foreach (var chroma in new[] { 0d, .001, .0099, .01, .015, .025, .0399, .04, .1, .3 })
+        {
+            for (var degrees = -360; degrees <= 720; degrees += 3)
+            {
+                var hue = degrees * Math.PI / 180;
+                var sum = 0d;
+
+                for (var band = 0; band < OklabColor.MixerBandCount; band++)
+                {
+                    var weight = OklabColor.MixerBandInfluence(band, hue, chroma);
+                    var settings = new ColorMixerSettings();
+                    settings.GetBand((ColorMixerBand)band).Saturation = 100;
+                    var parameters = ColorMixerParameters.From(settings);
+                    var response = OklabColor.ApplyChroma(new(.6, chroma, hue), 0, 0, in parameters);
+                    var effective = chroma == 0 ? 0 : response.Chroma / chroma - 1;
+                    Assert.InRange(Math.Abs(weight - effective), 0, 1e-9);
+                    if (chroma <= OklabColor.MixerHueFloor) Assert.Equal(0, weight);
+
+                    sum += weight;
+                }
+
+                Assert.InRange(Math.Abs(sum - OklabColor.MixerHueReliability(chroma)), 0, 1e-9);
+            }
+        }
+    }
+
     [Theory]
     [InlineData(ColorMixerBand.Red, 24)]
     [InlineData(ColorMixerBand.Orange, 56)]

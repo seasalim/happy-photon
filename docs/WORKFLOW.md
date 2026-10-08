@@ -243,6 +243,7 @@ apart from geometry; blue responds as edits change the rendered output.
   colors and common skin hues.
 - **Saturation** scales every color's perceptual intensity uniformly; −100 is grayscale.
 - **Color Mixer** targets Red, Orange, Yellow, Green, Aqua, Blue, Purple, or Magenta.
+  Hover a swatch to see its reach: pixels outside that band dim until you leave.
   Pick a swatch, then use Hue to steer that band toward its neighbors, Saturation to
   change only its color intensity, and Luminance to lighten or darken it. A dot marks
   every touched band; double-click resets one slider, while the Develop footer Reset

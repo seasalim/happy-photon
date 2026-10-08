@@ -1,4 +1,5 @@
 using HappyPhoton.Models;
+using System.Runtime.CompilerServices;
 
 namespace HappyPhoton.Services;
 
@@ -73,6 +74,7 @@ internal static partial class OklabColor
     internal static double GetMixerBandCenterRadians(int band) =>
         MixerBandCenters[band];
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     internal static double MixerBandWeight(int band, double hueRadians)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(band);
@@ -89,9 +91,17 @@ internal static partial class OklabColor
         return 0;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     internal static double MixerHueReliability(double chroma) => SmoothStep(
         (chroma - HueReliabilityStart) /
         (HueReliabilityEnd - HueReliabilityStart));
+
+    // Every band's influence is zero at or below this chroma, so callers may skip the hue.
+    internal const double MixerHueFloor = HueReliabilityStart;
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    internal static double MixerBandInfluence(int band, double hueRadians, double chroma) =>
+        MixerHueReliability(chroma) * MixerBandWeight(band, hueRadians);
 
     internal static Oklch ApplyChroma(
         Oklch source,
@@ -261,6 +271,7 @@ internal static partial class OklabColor
         double rightWeight) =>
         left * leftWeight + right * rightWeight;
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void FindMixerSegment(
         double hue,
         out int left,
@@ -296,6 +307,7 @@ internal static partial class OklabColor
         leftWeight = 0.5 * (1 + Math.Cos(Math.PI * wrappedPosition));
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static double NormalizeHue(double hueRadians)
     {
         var normalized = hueRadians % Math.Tau;

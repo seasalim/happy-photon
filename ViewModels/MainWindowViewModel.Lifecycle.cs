@@ -15,6 +15,8 @@ public partial class MainWindowViewModel
         CancelAndDispose(ref _watermarkProofDebounce);
         CancelWatermarkSettingsSave();
         CancelAndDispose(ref _brushSaveDebounce);
+        EndMixerBandHover();
+        await _mixerMaskTask;
         _localMaskCancellation?.Cancel();
         await _localMaskTask;
         _localRangeMask?.Dispose();

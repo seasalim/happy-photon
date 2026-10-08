@@ -194,7 +194,9 @@ panel does not reflow across mixed-source filmstrips; a contradictory non-RAW lo
 fact disables the row without changing the stored value. Clip is the default.
 
 Color Mixer band selection is session state and untouched
-bands remain identity. Detail and Effects apply to all sources. Midpoint dims when
+bands remain identity. Hovering an enabled band dims unreached pixels with a transient
+SurfaceLow mask at (1 − weight) × 0.9 opacity, above Locals masks and suppressing
+clipping; leaving clears it. Detail and Effects apply to all sources. Midpoint dims when
 Vignette is zero; Geometry remains image-specific. Optics disables unavailable
 corrections in place and distinguishes corrective from aesthetic vignetting.
 Selecting an untouched R/G/B curve creates only a draft; committing materializes it.
