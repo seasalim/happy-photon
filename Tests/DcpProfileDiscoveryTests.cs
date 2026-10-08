@@ -370,7 +370,7 @@ public sealed partial class DcpProfileDiscoveryTests
             result.Options,
             option => !option.IsBuiltIn);
         Assert.Equal(DcpProfileErrorCode.Unavailable, unavailable.Status);
-        Assert.Equal(1, availability.CallCount);
+        Assert.Equal(2, availability.CallCount);
     }
 
     [Fact]

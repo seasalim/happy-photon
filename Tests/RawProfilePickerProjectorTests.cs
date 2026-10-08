@@ -6,7 +6,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed class RawProfilePickerProjectorTests
+public sealed partial class RawProfilePickerProjectorTests
 {
     [Fact]
     public void StatusUsesCanonicalPrecedence()

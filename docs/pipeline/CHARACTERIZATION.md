@@ -275,8 +275,10 @@ are fully parsed/hashed. Identity-scan and image-profile completion stay separat
 so no-match is distinct from true-empty, and stale results cannot complete a new scope.
 
 Discovery includes persisted user files and bounded DNG profile IFDs. Adobe matching
-uses normalized camera make/model against UniqueCameraModel; only Fujifilm removes
-the FinePix qualifier. Precedence is persisted user, embedded, Adobe A–Z, built-in,
+uses normalized make/model or DNG tag 50708 against UniqueCameraModel; only Fujifilm
+removes the FinePix qualifier. The closed [module-suffix grammar](../../Services/DcpCameraModule.cs) also matches
+make/model or tag 50708 with its own module suffix stripped, preserving `+` in this rule.
+Precedence is persisted user, embedded, Adobe (preferred module first, then A–Z), built-in,
 with earliest-source deduplication. Invalid persisted choices remain visible with
 built-in fallback. No-profile decode does no DCP work; embedded tags wait for discovery.
 

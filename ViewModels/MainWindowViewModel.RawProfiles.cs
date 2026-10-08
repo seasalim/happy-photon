@@ -153,7 +153,8 @@ public partial class MainWindowViewModel
                 image,
                 _rawProfileCameraIdentity,
                 cts.Token,
-                includeImageProfiles);
+                includeImageProfiles,
+                _renderDerivedRawProfileState?.State.DiscoveryHints);
             if (!IsCurrentRawProfileDiscovery(image, generation, cts))
             {
                 return;

@@ -58,7 +58,8 @@ internal sealed class DcpProfileDiscovery
         ImageFile image,
         CameraIdentity? cameraIdentity,
         CancellationToken cancellationToken,
-        bool includeImageProfiles = true)
+        bool includeImageProfiles = true,
+        DcpDiscoveryHints? hints = null)
     {
         var stopwatch = Stopwatch.StartNew();
         DcpDiscoveryResult? result = null;
@@ -73,7 +74,8 @@ internal sealed class DcpProfileDiscovery
                     image,
                     cameraIdentity,
                     includeImageProfiles,
-                    cancellationToken),
+                    cancellationToken,
+                    hints),
                 cancellationToken).ConfigureAwait(false);
             return result;
         }
@@ -114,10 +116,10 @@ internal sealed class DcpProfileDiscovery
         _adobeIndex.Invalidate();
     }
 
-    internal static string NormalizeCameraIdentity(string? make, string? model)
+    internal static string NormalizeCameraIdentity(string? make, string? model, bool preservePlus = false)
     {
-        var normalizedMake = NormalizePart(make);
-        var normalizedModel = NormalizePart(model);
+        var normalizedMake = NormalizePart(make, preservePlus);
+        var normalizedModel = NormalizePart(model, preservePlus);
         if (normalizedModel.StartsWith(
             normalizedMake + " ",
             StringComparison.Ordinal))
@@ -138,7 +140,8 @@ internal sealed class DcpProfileDiscovery
         ImageFile image,
         CameraIdentity? cameraIdentity,
         bool includeImageProfiles,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        DcpDiscoveryHints? hints)
     {
         var options = new List<DcpProfileOption>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -214,11 +217,27 @@ internal sealed class DcpProfileDiscovery
             Add(options, seen, InspectPersisted(persisted));
         }
 
+        string? dngModel = null;
+
+        if (image.Extension.Equals(".dng", StringComparison.OrdinalIgnoreCase) &&
+            SourceAccessPolicy.CanRead(_availability.GetAvailability(image.FilePath), SourceReadIntent.Background))
+        {
+            try
+            {
+                dngModel = _reader.ReadDngUniqueCameraModel(image.FilePath);
+            }
+            catch (Exception exception) when (exception is DcpProfileException or IOException or UnauthorizedAccessException)
+            {
+                // A missing or invalid identity tag does not prevent make/model matching.
+            }
+        }
+
         var identity = cameraIdentity?.Normalized ?? string.Empty;
         DcpAdobeScanResult? adobeScan = null;
-        if (identity.Length > 0)
+        if (identity.Length > 0 || !string.IsNullOrWhiteSpace(dngModel))
         {
-            adobeScan = _adobeIndex.FindMatches(identity, cancellationToken);
+            adobeScan = _adobeIndex.FindMatches(identity, cancellationToken,
+                NormalizeCameraIdentity(cameraIdentity?.Make, cameraIdentity?.Model, preservePlus: true), dngModel);
             foreach (var path in adobeScan.Matches)
             {
                 var option = InspectExternal(path, RawProfileSource.Adobe);
@@ -232,6 +251,8 @@ internal sealed class DcpProfileDiscovery
 
         options = options
             .OrderBy(option => SourceRank(option.Selection?.Source))
+            .ThenBy(option => option.Selection?.Source == RawProfileSource.Adobe
+                ? DcpCameraModule.Rank(option.DeclaredCameraModel, hints) : 1)
             .ThenBy(option => option.DisplayName, StringComparer.OrdinalIgnoreCase)
             .ToList();
         var hasProfiles = options.Any(option => !option.IsBuiltIn);
@@ -398,14 +419,14 @@ internal sealed class DcpProfileDiscovery
         _ => 3
     };
 
-    private static string NormalizePart(string? value)
+    private static string NormalizePart(string? value, bool preservePlus)
     {
         if (string.IsNullOrWhiteSpace(value)) return string.Empty;
         var builder = new StringBuilder(value.Length);
         var pendingSpace = false;
         foreach (var character in value.Trim().ToUpperInvariant())
         {
-            if (char.IsLetterOrDigit(character))
+            if (char.IsLetterOrDigit(character) || preservePlus && character == '+')
             {
                 if (pendingSpace && builder.Length > 0) builder.Append(' ');
                 builder.Append(character);

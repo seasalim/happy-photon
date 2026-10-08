@@ -80,6 +80,14 @@ internal sealed class DcpProfileReader
         return NullIfEmpty(ReadOptionalString(reader, ifd.Find(UniqueCameraModel)));
     }
 
+    internal string? ReadDngUniqueCameraModel(string path)
+    {
+        using var reader = DcpTiffReader.Open(path);
+        var ifd = reader.ReadFirstIfd();
+
+        return NullIfEmpty(ReadOptionalString(reader, ifd.Find(UniqueCameraModel)));
+    }
+
     internal DcpProfile ParseExternal(
         DcpExternalSnapshot snapshot,
         string fallbackName)

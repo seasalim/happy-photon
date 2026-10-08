@@ -36,8 +36,13 @@ internal sealed class DcpAdobeProfileIndex
 
     internal DcpAdobeScanResult FindMatches(
         string identity,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? moduleIdentity = null,
+        string? dngModel = null)
     {
+        var normalizedDng = DcpProfileDiscovery.NormalizeCameraIdentity(null, dngModel);
+        var moduleDng = DcpProfileDiscovery.NormalizeCameraIdentity(null, dngModel, preservePlus: true);
+        var dngBase = DcpCameraModule.Parse(moduleDng)?.Base ?? moduleDng;
         var matches = new ConcurrentBag<string>();
         var profilesScanned = 0;
         var enumeration = new DcpProfileEnumeration(EnumerateDirectory);
@@ -54,13 +59,14 @@ internal sealed class DcpAdobeProfileIndex
             {
                 var probe = ReadCameraModel(file);
                 if (!probe.IsReadable) return;
+
                 Interlocked.Increment(ref profilesScanned);
-                if (probe.UniqueCameraModel != null && string.Equals(
-                    DcpProfileDiscovery.NormalizeCameraIdentity(
-                        null,
-                        probe.UniqueCameraModel),
-                    identity,
-                    StringComparison.Ordinal))
+
+                if (probe.Model is { } model &&
+                    (identity.Length > 0 && model.Normalized == identity ||
+                     normalizedDng.Length > 0 && model.Normalized == normalizedDng ||
+                     model.ModuleBase != null &&
+                        (model.ModuleBase == (moduleIdentity ?? identity) || model.ModuleBase == dngBase)))
                 {
                     matches.Add(file.Path);
                 }
@@ -84,7 +90,7 @@ internal sealed class DcpAdobeProfileIndex
         var key = CacheKey(file);
         if (_cache.TryGetValue(key, out var cached))
         {
-            return new CameraModelProbe(true, cached.UniqueCameraModel);
+            return new CameraModelProbe(true, cached);
         }
         if (!SourceAccessPolicy.CanRead(
             _availability.GetAvailability(file.Path),
@@ -99,7 +105,7 @@ internal sealed class DcpAdobeProfileIndex
                 key,
                 _ => new CachedCameraModel(
                     _reader.ReadExternalUniqueCameraModel(file.Path)));
-            return new CameraModelProbe(true, cached.UniqueCameraModel);
+            return new CameraModelProbe(true, cached);
         }
         catch (Exception exception) when (exception is DcpProfileException or
             IOException or UnauthorizedAccessException)
@@ -231,10 +237,19 @@ internal sealed class DcpAdobeProfileIndex
         string Path,
         long Length,
         long LastWriteTicks);
-    private sealed record CachedCameraModel(string? UniqueCameraModel);
+
+    private sealed record CachedCameraModel(string? UniqueCameraModel)
+    {
+        internal string? Normalized { get; } = UniqueCameraModel == null ? null :
+            DcpProfileDiscovery.NormalizeCameraIdentity(null, UniqueCameraModel);
+
+        internal string? ModuleBase { get; } = DcpCameraModule.Parse(
+            DcpProfileDiscovery.NormalizeCameraIdentity(null, UniqueCameraModel, preservePlus: true))?.Base;
+    }
+
     private sealed record CameraModelProbe(
         bool IsReadable,
-        string? UniqueCameraModel)
+        CachedCameraModel? Model)
     {
         internal static CameraModelProbe Unreadable { get; } = new(false, null);
     }

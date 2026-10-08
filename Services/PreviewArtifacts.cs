@@ -206,7 +206,8 @@ internal sealed record DcpProfileState(
     string? Message,
     string? ProfileName,
     CameraIdentity? CameraIdentity,
-    RawProfileSelection? RequestedSelection = null)
+    RawProfileSelection? RequestedSelection = null,
+    DcpDiscoveryHints? DiscoveryHints = null)
 {
     internal static DcpProfileState From(
         BaseImageInfo info,
@@ -216,7 +217,8 @@ internal sealed record DcpProfileState(
             info.ProfileMessage,
             info.DcpProfile?.Name,
             info.CameraIdentity,
-            requestedSelection?.Clone());
+            requestedSelection?.Clone(),
+            info.ProfileDiscoveryHints);
 }
 
 public sealed class CachedPreviewBitmap : IDisposable

@@ -412,6 +412,7 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                 ProfileStatus = dcp?.Status ?? DcpProfileErrorCode.None,
                 ProfileMessage = dcp?.Message,
                 CameraIdentity = isMonochrome ? null : sensorCamera,
+                ProfileDiscoveryHints = new(rawMetadata.Lens, rawMetadata.FocalLength35mm ?? 0),
                 CameraFacts = new(sensorCamera, isMonochrome),
                 LensPrescription = lensPrescription,
                 LensPrescriptionSummary = lensResult.GetSummary(lensPrescription)

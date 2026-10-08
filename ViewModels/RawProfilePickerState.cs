@@ -162,17 +162,34 @@ internal static class RawProfilePickerProjector
             }
             merged.Add(option);
         }
-        return InstallOptions(merged, selection);
+
+        var ordered = merged.OrderBy(option =>
+        {
+            if (option.Selection?.Source != RawProfileSource.Adobe) return -1;
+            var index = discoveredProfiles.FindIndex(candidate => ProfilesEqual(candidate.Selection, option.Selection));
+
+            return index >= 0 ? index : int.MaxValue;
+        });
+
+        return InstallOptions(ordered, selection);
     }
 
     internal static ImmutableArray<RawProfileOptionViewModel> ReplaceOption(
         ImmutableArray<RawProfileOptionViewModel> current,
         RawProfileOptionViewModel option)
     {
-        var profiles = current
-            .Where(candidate => candidate.IsProfile &&
-                !ProfilesEqual(candidate.Selection, option.Selection))
-            .Append(option);
+        var profiles = current.Where(candidate => candidate.IsProfile).ToList();
+        var index = profiles.FindIndex(candidate => ProfilesEqual(candidate.Selection, option.Selection));
+
+        if (index >= 0)
+        {
+            profiles[index] = option;
+        }
+        else
+        {
+            profiles.Add(option);
+        }
+
         return InstallOptions(profiles, option.Selection);
     }
 
@@ -194,7 +211,7 @@ internal static class RawProfilePickerProjector
             menu,
             "ADOBE · CAMERAPROFILES",
             profiles.Where(option => option.Selection?.Source ==
-                RawProfileSource.Adobe));
+                RawProfileSource.Adobe), preserveOrder: true);
         AddGroup(
             menu,
             "BUILT-IN",
@@ -318,11 +335,11 @@ internal static class RawProfilePickerProjector
     private static void AddGroup(
         ICollection<RawProfileOptionViewModel> menu,
         string heading,
-        IEnumerable<RawProfileOptionViewModel> options)
+        IEnumerable<RawProfileOptionViewModel> options,
+        bool preserveOrder = false)
     {
-        var group = options
-            .OrderBy(option => option.Label, StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        var group = (preserveOrder ? options :
+            options.OrderBy(option => option.Label, StringComparer.OrdinalIgnoreCase)).ToList();
         if (group.Count == 0) return;
         menu.Add(RawProfileOptionViewModel.GroupHeader(heading));
         foreach (var option in group)

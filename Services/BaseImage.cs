@@ -105,6 +105,9 @@ public sealed record BaseImageInfo(
     internal DcpProfileErrorCode ProfileStatus { get; init; }
     internal string? ProfileMessage { get; init; }
     internal CameraIdentity? CameraIdentity { get; init; }
+
+    internal DcpDiscoveryHints? ProfileDiscoveryHints { get; init; }
+
     internal LensPrescription? LensPrescription { get; init; }
     public LensPrescriptionSummary? LensPrescriptionSummary { get; init; }
 }
