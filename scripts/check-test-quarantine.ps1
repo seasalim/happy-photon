@@ -148,10 +148,26 @@ function Test-Discovery([string[]] $projects, $entries) {
                 throw "Prebuilt test executable is missing: $binary. Run dotnet build HappyPhoton.sln --configuration $Configuration first."
             }
             $output = & dotnet $binary -list full/json -noColor 2>&1
-            if ($LASTEXITCODE -ne 0) {
-                throw "In-process test listing failed for ${project}: $($output -join "`n")"
+            $exitCode = $LASTEXITCODE
+            # Native stderr arrives as ErrorRecords; keep it out of the JSON but report it.
+            $errors = @($output | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] } |
+                ForEach-Object { $_.ToString() })
+            $listing = @($output | Where-Object { $_ -isnot [System.Management.Automation.ErrorRecord] })
+            if ($exitCode -ne 0) {
+                throw "In-process test listing failed for ${project}: $(($listing + $errors) -join "`n")"
             }
-            $cases = @($output -join "`n" | ConvertFrom-Json)
+
+            if ($errors) {
+                Write-Warning "Test listing for $project wrote to stderr:`n$($errors -join "`n")"
+            }
+
+            try {
+                $cases = @($listing -join "`n" | ConvertFrom-Json)
+            } catch {
+                throw "Test listing for $project is not JSON ($($_.Exception.Message)). stdout tail:`n" +
+                    "$(($listing | Select-Object -Last 5 | ForEach-Object { ([string]$_).Substring(0, [Math]::Min(300, ([string]$_).Length)) }) -join "`n")" +
+                    "`nstderr:`n$($errors -join "`n")"
+            }
             [pscustomobject]@{ schemaVersion = 1; project = $project; tests = $cases } |
                 ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Get-ManifestPath $directory $project)
         }
