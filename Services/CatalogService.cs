@@ -163,6 +163,7 @@ public partial class CatalogService : IDisposable
             try
             {
                 await _connection.OpenAsync();
+                await ApplyTestDurabilityAsync();
                 await CatalogSchema.InitializeAsync(_connection);
                 _lastStampedMaxImageId = await CatalogCacheStamp.CheckAndRefreshAsync(
                     _connection,

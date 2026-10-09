@@ -37,6 +37,7 @@
     <Compile Include="..\Tests\LocalsBrushWorkloads.cs" Link="LocalsBrushWorkloads.cs" />
     <Compile Include="..\Tests\LocalsBrushCoverage.cs" Link="LocalsBrushCoverage.cs" />
     <Compile Include="..\Tests\OpenMpRuntimeTests.cs" Link="OpenMpRuntimeTests.cs" />
+    <Compile Include="..\Tests\CatalogTestDurability.cs" Link="CatalogTestDurability.cs" />
     <Compile Include="..\Tests\OpenMpStartup.cs" Link="OpenMpStartup.cs" />
     <Compile Include="..\Tests\CullPerfFiles.cs" Link="CullPerfFiles.cs" />
     <Compile Include="..\Tests\CullPerfEvidence.cs" Link="CullPerfEvidence.cs" />
