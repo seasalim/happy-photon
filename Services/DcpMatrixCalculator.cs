@@ -192,19 +192,17 @@ internal static class DcpMatrixCalculator
     {
         var first = cameraData.CameraCalibration1;
         var second = cameraData.CameraCalibration2;
-        if (first == null && second == null)
+
+        // DNG 1.4/1.7: CameraCalibration applies only when the signatures match exactly; otherwise the
+        // identity. A null and an empty signature are the same absent value.
+        if (first == null && second == null || !string.Equals(
+            cameraData.CalibrationSignature ?? string.Empty,
+            profile.CalibrationSignature ?? string.Empty,
+            StringComparison.Ordinal))
         {
             return ChromaticAdaptation.Identity();
         }
-        if (!string.Equals(
-            cameraData.CalibrationSignature,
-            profile.CalibrationSignature,
-            StringComparison.Ordinal))
-        {
-            throw new DcpProfileException(
-                DcpProfileErrorCode.SignatureMismatch,
-                "Camera and profile calibration signatures do not match.");
-        }
+
         return Interpolate(
             first ?? ChromaticAdaptation.Identity(),
             profile.CalibrationIlluminant2.HasValue

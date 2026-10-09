@@ -132,24 +132,80 @@ public sealed class DcpMatrixAndHueSatTests
         Assert.Equal(DcpProfileErrorCode.MissingWhiteBalance, result.Status);
     }
 
+    // FIXES-DEVELOP-WP16: signatures select whether CameraCalibration applies (DNG 1.4/1.7); they never reject.
     [Fact]
-    public void CalibrationSignatureMismatch_RejectsProfile()
+    public void CalibrationSignatureMismatch_UsesIdentityCalibration()
     {
-        var result = DcpMatrixCalculator.Create(
-            Resolution(CreateProfile(signature: "profile")),
-            new DcpCameraData(
-                null,
-                ChromaticAdaptation.Identity(),
-                null,
-                null,
-                null,
-                null,
-                "camera"),
+        var profile = CreateProfile(signature: "profile");
+
+        var mismatched = CreateWithCalibration(profile, SkewCalibration(), "camera");
+        var uncalibrated = CreateWithCalibration(profile, null, "camera");
+
+        Assert.True(mismatched.IsActive);
+        Assert.Equal(DcpProfileErrorCode.None, mismatched.Status);
+        Assert.Equal(uncalibrated.CameraToRec2020, mismatched.CameraToRec2020);
+    }
+
+    [Fact]
+    public void CalibrationSignatureNullAndEmpty_MatchAndUseCameraCalibration()
+    {
+        var profile = CreateProfile(signature: null!);
+
+        var calibrated = CreateWithCalibration(profile, SkewCalibration(), string.Empty);
+        var uncalibrated = CreateWithCalibration(profile, null, string.Empty);
+
+        Assert.True(calibrated.IsActive);
+        Assert.NotEqual(uncalibrated.CameraToRec2020, calibrated.CameraToRec2020);
+    }
+
+    [Fact]
+    public void CalibrationSignatureMatch_UsesCameraCalibration()
+    {
+        var profile = CreateProfile(signature: "camera");
+
+        var calibrated = CreateWithCalibration(profile, SkewCalibration(), "camera");
+        var uncalibrated = CreateWithCalibration(profile, null, "camera");
+
+        Assert.True(calibrated.IsActive);
+        Assert.NotEqual(uncalibrated.CameraToRec2020, calibrated.CameraToRec2020);
+    }
+
+    [Fact]
+    public void CalibrationSignatureMatch_DualIlluminantUsesSecondCalibrationAtItsIlluminant()
+    {
+        // At 6500 K the weight sits on illuminant 2 (D65), so CC1 must not contribute.
+        var profile = CreateProfile(
+            color2: ChromaticAdaptation.Identity(),
+            illuminant1: 17,
+            illuminant2: 21,
+            signature: "camera");
+        var second = new[,]
+        {
+            { 0.95, 0.0, 0.08 },
+            { 0.03, 1.05, 0.0 },
+            { 0.0, 0.1, 0.9 }
+        };
+
+        var dual = DcpMatrixCalculator.Create(
+            Resolution(profile),
+            new DcpCameraData(null, SkewCalibration(), second, null, null, null, "camera"),
+            Facts([1, 1, 1]),
+            6500);
+        var secondOnly = DcpMatrixCalculator.Create(
+            Resolution(profile),
+            new DcpCameraData(null, second, second, null, null, null, "camera"),
+            Facts([1, 1, 1]),
+            6500);
+        var firstOnly = DcpMatrixCalculator.Create(
+            Resolution(profile),
+            new DcpCameraData(null, SkewCalibration(), SkewCalibration(), null, null, null, "camera"),
             Facts([1, 1, 1]),
             6500);
 
-        Assert.False(result.IsActive);
-        Assert.Equal(DcpProfileErrorCode.SignatureMismatch, result.Status);
+        Assert.True(dual.IsActive);
+        Assert.Equal(secondOnly.CameraToRec2020!.Cast<double>(), dual.CameraToRec2020!.Cast<double>(),
+            (expected, actual) => Math.Abs(expected - actual) < 1e-12);
+        Assert.NotEqual(firstOnly.CameraToRec2020, dual.CameraToRec2020);
     }
 
     [Fact]
@@ -310,6 +366,24 @@ public sealed class DcpMatrixAndHueSatTests
             null,
             null,
             new string('a', 64));
+
+    private static DcpCharacterizationResult CreateWithCalibration(
+        DcpProfile profile,
+        double[,]? calibration,
+        string signature) =>
+        DcpMatrixCalculator.Create(
+            Resolution(profile),
+            new DcpCameraData(null, calibration, null, null, null, null, signature),
+            Facts([1, 1, 1]),
+            6500);
+
+    // Non-diagonal: a diagonal calibration cancels in the as-shot normalisation and could not show its use.
+    private static double[,] SkewCalibration() => new[,]
+    {
+        { 1.0, 0.1, 0.0 },
+        { 0.0, 0.9, 0.05 },
+        { 0.05, 0.0, 1.1 }
+    };
 
     private static DcpProfileResolution Resolution(DcpProfile profile) =>
         DcpProfileResolution.Success(

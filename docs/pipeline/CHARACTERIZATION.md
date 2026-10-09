@@ -189,12 +189,15 @@ values reject the profile), `ProfileHueSatMapDims`, `ProfileHueSatMapData1/2`,
 `ProfileLookTableData` **ignored**, `ProfileEmbedPolicy` parsed and range-validated
 but not enforced because it controls embedding/redistribution, not processing,
 and Happy Photon does not write DNG files. From the camera/DNG side:
-`AnalogBalance`, `CameraCalibration1/2`
-with the calibration-signature matching rules, `ReductionMatrix1/2`, and
-`AsShotNeutral`/as-shot `cam_mul`. `ReductionMatrix1/2` are parsed and validated
+`AnalogBalance`, `CameraCalibration1/2`, `ReductionMatrix1/2`, and
+`AsShotNeutral`/as-shot `cam_mul`. `CameraCalibration1/2` apply only when the camera's
+`CameraCalibrationSignature` exactly matches the profile's `ProfileCalibrationSignature`
+(null and empty are the same absent value); otherwise the identity is used, as the DNG
+specification defines. Signatures select the calibration; they never reject a profile.
+`ReductionMatrix1/2` are parsed and validated
 but unused: they apply only to more-than-three-plane inputs, which the decode
 rejects (§6). Unsupported
-variants (unexpected dims, missing mandatory tags, non-matching signatures)
+variants (unexpected dims, missing mandatory tags)
 reject the profile explicitly — the picker reports it, decode falls back to
 the built-in path (§2), never a silent wrong matrix.
 
