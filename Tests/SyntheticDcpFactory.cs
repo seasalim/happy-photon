@@ -26,6 +26,7 @@ internal sealed record SyntheticDcpOptions
     internal double[]? ReductionMatrix1 { get; init; }
     internal double[]? ReductionMatrix2 { get; init; }
     internal double[]? AsShotNeutral { get; init; }
+    internal double[]? AsShotWhiteXy { get; init; }
     internal string? CameraCalibrationSignature { get; init; }
     internal bool CyclicIfd { get; init; }
     internal ushort? ExtraLongTag { get; init; }
@@ -47,6 +48,7 @@ internal static class SyntheticDcpFactory
     private const ushort ReductionMatrix2 = 50726;
     private const ushort AnalogBalance = 50727;
     private const ushort AsShotNeutral = 50728;
+    private const ushort AsShotWhiteXy = 50729;
     private const ushort CalibrationIlluminant1 = 50778;
     private const ushort CalibrationIlluminant2 = 50779;
     private const ushort UniqueCameraModel = 50708;
@@ -108,6 +110,7 @@ internal static class SyntheticDcpFactory
         AddMatrix(entries, ReductionMatrix2, options.ReductionMatrix2);
         AddUnsignedRational(entries, AnalogBalance, options.AnalogBalance);
         AddUnsignedRational(entries, AsShotNeutral, options.AsShotNeutral);
+        AddUnsignedRational(entries, AsShotWhiteXy, options.AsShotWhiteXy);
         AddShort(entries, CalibrationIlluminant1, options.Illuminant1);
         AddShort(entries, CalibrationIlluminant2, options.Illuminant2);
         AddAscii(entries, ProfileName, options.Name);

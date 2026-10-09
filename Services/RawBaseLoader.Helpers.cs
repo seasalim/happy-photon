@@ -43,6 +43,29 @@ public sealed partial class RawBaseLoader
         }
     }
 
+    internal static double[]? PrepareAsShotWhiteXy(
+        string path,
+        DcpProfileResolution resolution,
+        DcpCameraData cameraData)
+    {
+        if (cameraData.AsShotNeutral != null || cameraData.AsShotWhiteXy == null) return null;
+
+        try
+        {
+            var profile = resolution.Profile ?? new DcpProfileReader().ReadEmbeddedWhiteBalanceProfile(path);
+            var neutral = DcpMatrixCalculator.DeriveAsShotNeutral(profile, cameraData)!;
+
+            return neutral.Select(value => 1 / value).ToArray();
+        }
+        catch (Exception exception)
+        {
+            ImageServiceHelpers.LogDebug(nameof(RawBaseLoader),
+                $"As-shot xy balancing was rejected: {exception.Message}", path);
+
+            return null;
+        }
+    }
+
     private static (DcpCameraData Data, string? Error) TryReadDngCameraData(
         string path)
     {

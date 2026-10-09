@@ -40,7 +40,12 @@ All of the following run upstream of `convert_to_rgb` and are therefore
 - **White balance** (`scale_colors`,
   `postprocessing_utils_dcrdefs.cpp:111-212`): with `use_camera_wb=1` and a
   valid `cam_mul`, the as-shot multipliers neutralize the as-shot illuminant —
-  as-shot neutral is (1,1,1) in the seam. When `cam_mul` is missing/invalid,
+  as-shot neutral is (1,1,1) in the seam. DNGs with `AsShotWhiteXY` and no
+  `AsShotNeutral` instead use xy-derived `user_mul` gains for both selected-profile
+  and built-in renders. Their snapshot reports these gains as `CamMul`, and their
+  as-shot Kelvin/tint comes directly from xy (McCamy CCT and the model's uv tint).
+  Missing native matrices stay missing: built-in characterization retains its
+  uncharacterized passthrough. Otherwise, when `cam_mul` is missing/invalid,
   LibRaw falls back to auto-WB from image statistics (lines 123-160) — a
   pre-existing, image-dependent carve-out to the pipeline's no-auto invariant.
   LibRaw 0.22.2 offers a deterministic daylight fallback
@@ -190,7 +195,13 @@ values reject the profile), `ProfileHueSatMapDims`, `ProfileHueSatMapData1/2`,
 but not enforced because it controls embedding/redistribution, not processing,
 and Happy Photon does not write DNG files. From the camera/DNG side:
 `AnalogBalance`, `CameraCalibration1/2`, `ReductionMatrix1/2`, and
-`AsShotNeutral`/as-shot `cam_mul`. `CameraCalibration1/2` apply only when the camera's
+`AsShotNeutral`/as-shot `cam_mul`, or `AsShotWhiteXY` when `AsShotNeutral` is absent
+(the neutral wins if both tags exist). The xy path derives a green-normalized
+neutral as `AB · CC · CM · XYZ(xy, Y=1)`, interpolating matrices by McCamy CCT.
+Its reciprocal gains balance both selected-profile and built-in renders; without
+an active profile, decode reads the DNG's embedded matrices for this derivation
+only, leaving built-in characterization unchanged. This is the exception to
+§7.6's deferred embedded-profile reads. `CameraCalibration1/2` apply only when the camera's
 `CameraCalibrationSignature` exactly matches the profile's `ProfileCalibrationSignature`
 (null and empty are the same absent value); otherwise the identity is used, as the DNG
 specification defines. Signatures select the calibration; they never reject a profile.

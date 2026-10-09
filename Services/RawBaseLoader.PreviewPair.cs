@@ -14,7 +14,8 @@ public sealed partial class RawBaseLoader
     internal static LibRawOutputConfiguration ConfigureOutput(
         BaseDecodeSettings decode,
         bool preview,
-        bool isMonochrome = false)
+        bool isMonochrome = false,
+        double[]? asShotGains = null)
     {
         var highlight = decode.HlReconstruction switch
         {
@@ -27,6 +28,20 @@ public sealed partial class RawBaseLoader
             highlight,
             LibRawFbddMode.Off,
             preview);
+
+        if (!isMonochrome && asShotGains != null)
+        {
+            configuration = configuration with
+            {
+                UseCameraWhiteBalance = false,
+                UseAutoWhiteBalance = false,
+                UserMultiplier0 = (float)asShotGains[0],
+                UserMultiplier1 = (float)asShotGains[1],
+                UserMultiplier2 = (float)asShotGains[2],
+                UserMultiplier3 = (float)asShotGains[1]
+            };
+        }
+
         return !isMonochrome ? configuration : configuration with
         {
             HalfSize = false,

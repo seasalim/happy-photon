@@ -29,23 +29,29 @@ internal static class DcpMatrixCalculator
             return new DcpCharacterizationResult(
                 null, null, resolution.Status, resolution.Token, resolution.Message);
         }
-        if (facts.CamMul is not { Length: 3 } camMul ||
-            camMul.Any(value => !double.IsFinite(value) || value <= 0))
-        {
-            return Reject(
-                resolution,
-                DcpProfileErrorCode.MissingWhiteBalance,
-                "The profile cannot be applied because as-shot balancing facts are unavailable.");
-        }
 
         try
         {
             var profile = resolution.Profile;
+            var derivedNeutral = DeriveAsShotNeutral(profile, cameraData);
+            var camMul = derivedNeutral == null ? facts.CamMul : NormalizeReciprocal(derivedNeutral);
+
+            if (camMul is not { Length: 3 } ||
+                camMul.Any(value => !double.IsFinite(value) || value <= 0))
+            {
+                return Reject(
+                    resolution,
+                    DcpProfileErrorCode.MissingWhiteBalance,
+                    "The profile cannot be applied because as-shot balancing facts are unavailable.");
+            }
+
+            if (derivedNeutral != null) asShotKelvin = GetAsShotWhiteXy(cameraData.AsShotWhiteXy!).kelvin;
+
             var weight = GetInterpolationWeight(profile, asShotKelvin);
             var cc = GetCameraCalibration(cameraData, profile, weight);
             var ab = ChromaticAdaptation.CreateDiagonal(
                 cameraData.AnalogBalance ?? [1.0, 1.0, 1.0]);
-            var neutral = cameraData.AsShotNeutral ??
+            var neutral = cameraData.AsShotNeutral ?? derivedNeutral ??
                 NormalizeReciprocal(camMul);
             var balance = ChromaticAdaptation.CreateDiagonal(
                 NormalizeToGreen(camMul));
@@ -136,6 +142,51 @@ internal static class DcpMatrixCalculator
                 DcpProfileErrorCode.UnsupportedVariant,
                 exception.Message);
         }
+    }
+
+    internal static double[]? DeriveAsShotNeutral(DcpProfile profile, DcpCameraData cameraData)
+    {
+        if (cameraData.AsShotNeutral != null || cameraData.AsShotWhiteXy == null) return null;
+
+        var xy = cameraData.AsShotWhiteXy;
+        var weight = GetInterpolationWeight(profile, GetAsShotWhiteXy(xy).kelvin);
+        var ab = ChromaticAdaptation.CreateDiagonal(cameraData.AnalogBalance ?? [1, 1, 1]);
+        var cc = GetCameraCalibration(cameraData, profile, weight);
+        var cm = Interpolate(profile.ColorMatrix1, profile.ColorMatrix2, weight);
+        var xyzToCamera = ChromaticAdaptation.Multiply(ChromaticAdaptation.Multiply(ab, cc), cm);
+        var neutral = ChromaticAdaptation.Multiply(
+            xyzToCamera, [xy[0] / xy[1], 1, (1 - xy[0] - xy[1]) / xy[1]]);
+
+        if (neutral.Any(value => !double.IsFinite(value) || value <= 0))
+        {
+            throw Unsupported("The as-shot xy produces an invalid camera neutral.");
+        }
+
+        return NormalizeToGreen(neutral);
+    }
+
+    internal static (double kelvin, double tint) GetAsShotWhiteXy(double[] xy)
+    {
+        if (xy.Length != 2 || xy.Any(value => !double.IsFinite(value) || value <= 0) || xy.Sum() >= 1)
+        {
+            throw Unsupported("The as-shot xy white point is invalid.");
+        }
+
+        // McCamy CCT; tint is the model's vertical displacement in CIE 1960 uv.
+        var n = (xy[0] - 0.3320) / (xy[1] - 0.1858);
+        var kelvin = -449 * n * n * n + 3525 * n * n - 6823.3 * n + 5520.33;
+
+        if (!double.IsFinite(kelvin) || kelvin <= 0)
+        {
+            throw Unsupported("The as-shot xy has no valid correlated color temperature.");
+        }
+
+        var v = 6 * xy[1] / (-2 * xy[0] + 12 * xy[1] + 3);
+        var locus = WhiteBalanceModel.GetWhitePointUv(kelvin, 0).V;
+        var step = WhiteBalanceModel.GetWhitePointUv(kelvin, 1).V - locus;
+
+        return (kelvin, Math.Clamp((v - locus) / step,
+            WhiteBalanceModel.MinimumTint, WhiteBalanceModel.MaximumTint));
     }
 
     internal static double GetInterpolationWeight(

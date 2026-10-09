@@ -7,6 +7,72 @@ namespace HappyPhoton.Tests;
 
 public sealed class DcpProfileReaderTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ReadCameraData_AsShotWhiteXyIsReadOnlyWithoutNeutral(bool includeNeutral)
+    {
+        using var directory = new TemporaryDirectory();
+        var path = SyntheticDcpFactory.WriteTemporary(directory.Path, new SyntheticDcpOptions
+        {
+            AsShotWhiteXy = [0.3127, 0.3290],
+            AsShotNeutral = includeNeutral ? [0.5, 1, 0.75] : null
+        }, "white-xy.dng");
+
+        var camera = new DcpProfileReader().ReadCameraData(path);
+
+        if (includeNeutral)
+        {
+            Assert.NotNull(camera.AsShotNeutral);
+            Assert.Equal([0.5, 1, 0.75], camera.AsShotNeutral);
+            Assert.Null(camera.AsShotWhiteXy);
+        }
+        else
+        {
+            Assert.Null(camera.AsShotNeutral);
+            Assert.NotNull(camera.AsShotWhiteXy);
+            Assert.Equal([0.3127, 0.3290], camera.AsShotWhiteXy);
+        }
+    }
+
+    [Fact]
+    public void ReadCameraData_AsShotWhiteXyRejectsWrongLength()
+    {
+        using var directory = new TemporaryDirectory();
+        var path = SyntheticDcpFactory.WriteTemporary(directory.Path, new SyntheticDcpOptions
+        {
+            AsShotWhiteXy = [0.3, 0.3, 0.4]
+        }, "invalid-xy.dng");
+
+        Assert.Throws<DcpProfileException>(() => new DcpProfileReader().ReadCameraData(path));
+    }
+
+    [Fact]
+    public void ReadEmbeddedWhiteBalanceProfile_ReadsOnlyTheFirstMatrixPair()
+    {
+        using var directory = new TemporaryDirectory();
+        var path = SyntheticDcpFactory.WriteTemporary(directory.Path, new SyntheticDcpOptions
+        {
+            ColorMatrix2 = ScaleIdentity(2),
+            Illuminant1 = 17,
+            Illuminant2 = 21,
+            CalibrationSignature = "white-balance",
+            ExtraLongTag = 52529,
+            AsShotWhiteXy = [0.3127, 0.3290]
+        }, "extra-illuminant.dng");
+        var reader = new DcpProfileReader();
+
+        var profile = reader.ReadEmbeddedWhiteBalanceProfile(path);
+
+        Assert.Equal(1, profile.ColorMatrix1[0, 0]);
+        Assert.Equal(2, profile.ColorMatrix2![0, 0]);
+        Assert.Equal(17, profile.CalibrationIlluminant1);
+        Assert.Equal(21, profile.CalibrationIlluminant2);
+        Assert.Equal("white-balance", profile.CalibrationSignature);
+        Assert.NotNull(DcpMatrixCalculator.DeriveAsShotNeutral(profile, reader.ReadCameraData(path)));
+        Assert.Throws<DcpProfileException>(() => reader.ReadEmbeddedProfiles(path));
+    }
+
     [Fact]
     public void ParseExternal_ReadsFullSupportedSetAndDefaults()
     {

@@ -22,6 +22,7 @@ internal sealed class DcpProfileReader
     private const ushort ReductionMatrix2 = 50726;
     private const ushort AnalogBalance = 50727;
     private const ushort AsShotNeutral = 50728;
+    private const ushort AsShotWhiteXy = 50729;
     private const ushort CalibrationIlluminant1 = 50778;
     private const ushort CalibrationIlluminant2 = 50779;
     private const ushort CameraCalibrationSignature = 50931;
@@ -142,6 +143,29 @@ internal sealed class DcpProfileReader
         return profiles;
     }
 
+    internal DcpProfile ReadEmbeddedWhiteBalanceProfile(string dngPath)
+    {
+        using var reader = DcpTiffReader.Open(dngPath);
+        var ifd = reader.ReadFirstIfd();
+        var cm1 = ReadRequiredMatrix(reader, ifd, ColorMatrix1);
+        var cm2 = ReadMatrix(reader, ifd.Find(ColorMatrix2));
+        var illuminant1 = ifd.Find(CalibrationIlluminant1) is { } first ? reader.ReadShort(first) : 0;
+        var illuminant2 = ifd.Find(CalibrationIlluminant2) is { } second ? reader.ReadShort(second) : (int?)null;
+        _ = DcpMatrixCalculator.GetIlluminantTemperature(illuminant1);
+
+        if (illuminant2.HasValue) _ = DcpMatrixCalculator.GetIlluminantTemperature(illuminant2.Value);
+
+        if ((cm2 == null) != !illuminant2.HasValue)
+        {
+            throw Missing("ColorMatrix2 and CalibrationIlluminant2 must appear together.");
+        }
+
+        // Only the first illuminant pair supplies WB; this does not activate an embedded profile.
+        return new DcpProfile("Embedded white balance", null, cm1, cm2, null, null,
+            illuminant1, illuminant2, ReadOptionalString(reader, ifd.Find(ProfileCalibrationSignature)),
+            0, 0, 0, 0, false, null, null, string.Empty);
+    }
+
     internal DcpCameraData ReadCameraData(string dngPath)
     {
         using var reader = DcpTiffReader.Open(dngPath);
@@ -157,7 +181,12 @@ internal sealed class DcpProfileReader
                 ifd.Find(AsShotNeutral),
                 allowUnsigned: true,
                 allowShort: true),
-            ReadOptionalString(reader, ifd.Find(CameraCalibrationSignature)));
+            ReadOptionalString(reader, ifd.Find(CameraCalibrationSignature)))
+        {
+            AsShotWhiteXy = ifd.Find(AsShotNeutral) == null && ifd.Find(AsShotWhiteXy) is { } xy
+                ? reader.ReadRationals(xy, 2, allowUnsigned: true)
+                : null
+        };
     }
 
     private static FileInfo ValidateExternalFile(string path)

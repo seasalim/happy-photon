@@ -101,7 +101,7 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
             var sensorIdentity = context.GetSensorIdentity(cancellationToken);
             var isMonochrome = IsMonochromeSensor(sensorIdentity);
             var cameraData = DcpCameraData.Defaults;
-            if (!isMonochrome && requestedResolution.IsActive &&
+            if (!isMonochrome &&
                 file.Extension.Equals(".dng", StringComparison.OrdinalIgnoreCase))
             {
                 var cameraResult = TryReadDngCameraData(file.FilePath);
@@ -194,6 +194,8 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                 cameraFacts.PreMul);
             DcpCharacterizationResult? dcp = null;
             CameraRgbCharacterization? characterization = null;
+            double[]? xyGains = null;
+
             if (!isMonochrome)
             {
                 dcp = DcpMatrixCalculator.Create(
@@ -201,13 +203,23 @@ public sealed partial class RawBaseLoader : IBaseImageLoader
                     cameraData,
                     cameraFacts,
                     asShot.kelvin);
+                // Only an accepted profile may supply the seam's white-balance gains.
+                xyGains = PrepareAsShotWhiteXy(file.FilePath,
+                    dcp.IsActive ? requestedResolution : DcpProfileResolution.BuiltIn, cameraData);
+
+                if (xyGains != null)
+                {
+                    cameraFacts = cameraFacts with { CamMul = xyGains };
+                    asShot = DcpMatrixCalculator.GetAsShotWhiteXy(cameraData.AsShotWhiteXy!);
+                }
+
                 characterization = dcp.IsActive
                     ? CameraRgbCharacterization.CreateProfile(dcp.CameraToRec2020!)
                     : CameraRgbCharacterization.Create(cameraFacts);
             }
 
             context.ConfigureOutput(
-                ConfigureOutput(decode, preview, isMonochrome),
+                ConfigureOutput(decode, preview, isMonochrome, xyGains),
                 cancellationToken);
             performanceTrace.Mark("DecodeSetup");
             CullPerf?.Record("NativeStart", file.CatalogId);

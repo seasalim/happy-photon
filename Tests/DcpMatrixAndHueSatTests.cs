@@ -4,7 +4,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed class DcpMatrixAndHueSatTests
+public sealed partial class DcpMatrixAndHueSatTests
 {
     [Fact]
     public void BalancedSeam_KnownCalibrationRoundTripsNeutralToD50White()

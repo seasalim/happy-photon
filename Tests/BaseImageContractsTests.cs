@@ -14,7 +14,7 @@ public sealed class BaseImageContractsTests
 
         Assert.Same(BaseDecodeSettings.Default, settings);
         Assert.Equal(HlReconstructionMode.Clip, settings.HlReconstruction);
-        Assert.Equal("base-v21;hl=clip;lens=110", settings.CacheKey);
+        Assert.Equal("base-v22;hl=clip;lens=110", settings.CacheKey);
         Assert.Equal(1600, BaseImage.InteractivePreviewMaxDimension);
         Assert.Equal(3200, BaseImage.LargePreviewMaxDimension);
     }

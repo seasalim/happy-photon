@@ -98,6 +98,8 @@ internal sealed record DcpCameraData(
     double[]? AsShotNeutral,
     string CalibrationSignature)
 {
+    internal double[]? AsShotWhiteXy { get; init; }
+
     internal static DcpCameraData Defaults { get; } = new(
         null, null, null, null, null, null, string.Empty);
 }
