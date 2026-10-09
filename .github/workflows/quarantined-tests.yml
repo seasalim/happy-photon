@@ -49,16 +49,26 @@ jobs:
       - name: Run full observation suite
         id: observation
         continue-on-error: true
-        run: >
-          dotnet test HappyPhoton.sln
-          --configuration Release
-          --no-build
-          --no-restore
-          --settings HappyPhoton.AllTests.runsettings
-          --blame-hang
-          --blame-hang-timeout 90s
-          --logger "trx;LogFilePrefix=quarantine-observation"
-          --results-directory artifacts/test-results/quarantine
+        shell: pwsh
+        run: |
+          # The 16 GB Windows runner stalls when both test hosts run at once (FIXES-WP8).
+          $exitCode = 0
+          foreach ($project in @(
+              "Tests/HappyPhoton.Tests.csproj",
+              "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+              "Interop/HappyPhoton.LibRaw.Interop.Tests/HappyPhoton.LibRaw.Interop.Tests.csproj")) {
+            dotnet test $project `
+              --configuration Release `
+              --no-build `
+              --no-restore `
+              --settings HappyPhoton.AllTests.runsettings `
+              --blame-hang `
+              --blame-hang-timeout 90s `
+              --logger "trx;LogFilePrefix=quarantine-observation" `
+              --results-directory artifacts/test-results/quarantine
+            if ($LASTEXITCODE -ne 0) { $exitCode = $LASTEXITCODE }
+          }
+          exit $exitCode
 
       - name: Summarize quarantined outcomes
         if: always()
