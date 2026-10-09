@@ -10,16 +10,19 @@ public sealed class RenderScratchSlotTests
     [Fact]
     public async Task Scratch_ReusesAcrossDifferentThreads()
     {
+        // Retain thread objects because numeric IDs can be recycled after a thread exits.
         var first = await OnNewThread(() =>
         {
             var scratch = _slot.Take(16);
             _slot.Return(scratch);
-            return (ThreadId: Environment.CurrentManagedThreadId, Scratch: scratch);
-        });
-        var second = await OnNewThread(() =>
-            (ThreadId: Environment.CurrentManagedThreadId, Scratch: _slot.Take(16)));
 
-        Assert.NotEqual(first.ThreadId, second.ThreadId);
+            return (Thread: Thread.CurrentThread, Scratch: scratch);
+        });
+
+        var second = await OnNewThread(() =>
+            (Thread: Thread.CurrentThread, Scratch: _slot.Take(16)));
+
+        Assert.NotSame(first.Thread, second.Thread);
         Assert.Same(first.Scratch, second.Scratch);
     }
 
