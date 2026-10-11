@@ -39,7 +39,10 @@ public sealed class TestTeardownBaselineTests(ITestOutputHelper output)
                 // test-teardown-policy: allow - probe outer try/finally closes and restores prior theme.
                 window.Show();
                 Dispatcher.UIThread.RunJobs();
+                // The probe needs the old shape: Assert.Fail throws FailException, not TrueException.
+#pragma warning disable xUnit2020
                 Assert.True(false, "Injected old-shape assertion failure");
+#pragma warning restore xUnit2020
             });
 
             Assert.IsType<TrueException>(exception);

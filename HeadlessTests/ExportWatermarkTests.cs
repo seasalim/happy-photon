@@ -141,7 +141,7 @@ public sealed class ExportWatermarkTests
         var header = Assert.IsType<StackPanel>(expander.Header);
         var shown = header.GetLogicalDescendants().OfType<TextBlock>()
             .Where(text => text.IsEffectivelyVisible).Select(text => text.Text).ToArray();
-        Assert.Equal(["Watermark"], shown);
+        Assert.Equal("Watermark", Assert.Single(shown));
         // FIXES-DEVELOP-WP11 D-3 (b): the summary opens the expanded content instead of the header.
         var summary = Assert.IsType<StackPanel>(expander.Content).Children.OfType<TextBlock>().First();
         Assert.True(summary.IsVisible);

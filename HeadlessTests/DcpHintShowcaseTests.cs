@@ -157,7 +157,7 @@ public sealed class DcpHintShowcaseTests
                 {
                     var status = picker.FindControl<TextBlock>("RawProfileStatusText")!;
                     Assert.Equal(RawProfilePickerProjector.NoAdobeProfilesMessage, status.Text);
-                    Assert.Equal(1, status.TextLayout.TextLines.Count);
+                    Assert.Single(status.TextLayout.TextLines);
                 }
                 Assert.Equal(state == "detected", vm.RawProfilePickerState.Options
                     .Any(option => option.Label == "Camera Standard" && option.CanSelect));
