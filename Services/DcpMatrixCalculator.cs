@@ -126,7 +126,10 @@ internal static class DcpMatrixCalculator
             }
             return new DcpCharacterizationResult(
                 cameraToRec2020,
-                new DcpProfilePayload(resolution.Token, profile.Name, map),
+                new DcpProfilePayload(
+                    resolution.Token,
+                    DcpCameraModule.Label(profile, resolution.Selection?.Source),
+                    map),
                 DcpProfileErrorCode.None,
                 resolution.Token,
                 null);

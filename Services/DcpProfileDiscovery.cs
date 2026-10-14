@@ -373,7 +373,7 @@ internal sealed class DcpProfileDiscovery
         string? location)
     {
         var option = new DcpProfileOption(
-            profile.Name,
+            DcpCameraModule.Label(profile, source),
             new RawProfileSelection
             {
                 Source = source,

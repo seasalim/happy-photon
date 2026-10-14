@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using HappyPhoton.Models;
 
 namespace HappyPhoton.Services;
 
@@ -16,6 +17,24 @@ internal static class DcpCameraModule
 
     private static readonly Regex AndroidOptics = new(
         @"\A(?: \d+(?: \d+)?MM)?(?: F \d+(?: \d+)?)?\z", RegexOptions.CultureInvariant);
+
+    private static readonly Regex NormalizedWord = new(@"[\p{L}\p{Nd}+]+", RegexOptions.CultureInvariant);
+
+    internal static string Label(DcpProfile profile, RawProfileSource? source)
+    {
+        var declared = profile.UniqueCameraModel;
+        if (source != RawProfileSource.Adobe || string.IsNullOrWhiteSpace(declared)) return profile.Name;
+
+        var normalized = DcpProfileDiscovery.NormalizeCameraIdentity(null, declared, preservePlus: true);
+        var module = Parse(normalized);
+        if (module == null) return profile.Name;
+
+        // The module keeps the profile's own casing: count its words back from the end of the declared name.
+        var moduleWords = normalized[(module.Value.Base.Length + 1)..].Split(' ').Length;
+        var words = NormalizedWord.Matches(declared);
+
+        return $"{profile.Name} · {declared[words[^moduleWords].Index..].Trim()}";
+    }
 
     internal static (string Base, string Position, string Lens)? Parse(string model)
     {

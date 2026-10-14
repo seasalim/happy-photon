@@ -47,7 +47,7 @@ public sealed partial class RawProfileViewModelTests
             null, null, new CameraIdentity("Apple", "iPhone 12 Pro"), selection, new(null, 117)));
         await TestWaits.UntilAsync(() => !vm.RawProfilePickerState.IsLoading);
 
-        Assert.Equal(["Telephoto", "Front"], vm.RawProfilePickerState.Options
+        Assert.Equal(["Telephoto · back telephoto camera", "Front · front camera"], vm.RawProfilePickerState.Options
             .Where(option => option.IsProfile && option.Selection?.Source == RawProfileSource.Adobe)
             .Select(option => option.Label));
         Assert.True(RawProfilePickerProjector.ProfilesEqual(selection, vm.RawProfilePickerState.SelectedOption?.Selection));
@@ -60,7 +60,7 @@ public sealed partial class RawProfileViewModelTests
 
         await vm.SelectRawProfileAsync(preferred);
 
-        Assert.Equal(["Telephoto", "Front"], vm.RawProfilePickerState.Options
+        Assert.Equal(["Telephoto · back telephoto camera", "Front · front camera"], vm.RawProfilePickerState.Options
             .Where(option => option.IsProfile && option.Selection?.Source == RawProfileSource.Adobe)
             .Select(option => option.Label));
         Assert.True(RawProfilePickerProjector.ProfilesEqual(preferred.Selection,

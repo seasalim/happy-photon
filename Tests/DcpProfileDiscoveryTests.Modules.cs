@@ -139,7 +139,7 @@ public sealed partial class DcpProfileDiscoveryTests
         var result = await discovery.DiscoverAsync(image, new CameraIdentity("Samsung", "Galaxy S23 Ultra"),
             CancellationToken.None, hints: new(lens, focal));
 
-        Assert.Equal(preferred, result.Options[0].DisplayName);
+        Assert.Equal($"{preferred} · {preferred} Camera", result.Options[0].DisplayName);
         Assert.Null(image.EditSettings.RawProfile);
         Assert.Equal(modules.Length, result.AdobeIdentityMatchCount);
     }

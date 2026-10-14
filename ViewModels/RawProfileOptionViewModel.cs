@@ -31,9 +31,7 @@ public sealed class RawProfileOptionViewModel
         DeclaredCameraModel = option.Selection?.Source == RawProfileSource.UserFile
             ? option.DeclaredCameraModel?.Trim()
             : null;
-        ClosedRowTooltip = DeclaredCameraModel == null
-            ? null
-            : $"{Label} · {DeclaredCameraModel} · Chosen file";
+        ClosedRowTooltip = ClosedRowTip(Label, DeclaredCameraModel, Selection);
         IsBuiltIn = option.IsBuiltIn;
         Fingerprint = option.Fingerprint;
         IsProfile = true;
@@ -63,9 +61,7 @@ public sealed class RawProfileOptionViewModel
         IsChooseFile = isChooseFile;
         Fingerprint = fingerprint;
         DeclaredCameraModel = declaredCameraModel;
-        ClosedRowTooltip = DeclaredCameraModel == null
-            ? null
-            : $"{Label} · {DeclaredCameraModel} · Chosen file";
+        ClosedRowTooltip = ClosedRowTip(Label, DeclaredCameraModel, Selection);
     }
 
     internal static RawProfileOptionViewModel BuiltIn() => new(
@@ -99,6 +95,14 @@ public sealed class RawProfileOptionViewModel
         isProfile: true,
         fingerprint: Fingerprint,
         declaredCameraModel: DeclaredCameraModel);
+
+    // The closed row ellipsizes, so an Adobe option names itself in full there.
+    private static string? ClosedRowTip(string label, string? declaredCameraModel, RawProfileSelection? selection) =>
+        declaredCameraModel != null
+            ? $"{label} · {declaredCameraModel} · Chosen file"
+            : selection?.Source == RawProfileSource.Adobe
+                ? label
+                : null;
 
     private static string ProfileLabel(RawProfileSelection selection) =>
         selection.Source == RawProfileSource.Embedded
