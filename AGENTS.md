@@ -75,6 +75,13 @@ host lock) and before a release; a change to shared infrastructure (catalog sche
 `EditSettings` JSON) runs it once at FINALIZE. A red nightly blocks merges until it is fixed or the owner
 waives it (owner, 2026-10-02).
 
+**Nightly paused (owner, 2026-10-15).** The `\HappyPhoton nightly verify` task is disabled while
+HappyPhoton development is quiet. It had failed to start since 2026-10-09 (0x80070002), so
+`artifacts/nightly/latest.json` (a pass at `96a67b9`) is stale and is not a merge signal. Until the
+nightly resumes, run the full suite before a release and at FINALIZE for shared-infrastructure changes.
+To resume, fix the task's missing path, then run `Enable-ScheduledTask` elevated (pc-tools
+`docs/PC-REFERENCE.md`, *Scheduled tasks*).
+
 In Codex's restricted filesystem sandbox, run this script with escalated permissions
 from the start. Avalonia BuildServices writes its telemetry log under `%LOCALAPPDATA%`,
 so a sandboxed run fails with `UnauthorizedAccessException` before test discovery.
