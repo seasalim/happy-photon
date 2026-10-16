@@ -84,7 +84,9 @@ public sealed class SpotVisualizationGateTests(ITestOutputHelper output)
         var cachePath = catalog.GetPreviewPath(image.CatalogId);
         await TestWaits.UntilAsync(() => File.Exists(cachePath) && File.Exists(Path.ChangeExtension(cachePath, ".meta")));
         var cacheBefore = File.ReadAllBytes(cachePath);
-        var metaBefore = File.ReadAllBytes(Path.ChangeExtension(cachePath, ".meta"));
+        var metadataPath = Path.ChangeExtension(cachePath, ".meta");
+        Assert.True(PreviewCacheMetadata.TryRead(metadataPath, out var metaBefore));
+
         var service = new ImageExportService(new RenderPipeline(), new RawBaseLoader(), new ExportMetadataService());
         var settings = new ExportSettings { OutputFolder = fixture.Path("off"), Format = ExportFormat.Png };
         await service.ExportBatchAsync([image], settings);
@@ -101,7 +103,10 @@ public sealed class SpotVisualizationGateTests(ITestOutputHelper output)
         var on = File.ReadAllBytes(Directory.GetFiles(fixture.Path("on"), "*.png", SearchOption.AllDirectories).Single());
         Assert.Equal(off, on);
         Assert.Equal(cacheBefore, File.ReadAllBytes(cachePath));
-        Assert.Equal(metaBefore, File.ReadAllBytes(Path.ChangeExtension(cachePath, ".meta")));
+        Assert.True(PreviewCacheMetadata.TryRead(metadataPath, out var metaAfter));
+        // Every write gets a fresh ID even when its rendered content is identical.
+        Assert.NotEqual(metaBefore.Generation, metaAfter.Generation);
+        Assert.Equal(metaBefore with { Generation = metaAfter.Generation }, metaAfter);
         output.WriteLine($"HEAL-WP6 G2 S64 RAW export_bytes={on.Length} differing_bytes=0 preview_cache_differing_bytes=0");
     }
 
