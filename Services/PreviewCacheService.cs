@@ -37,6 +37,8 @@ public sealed class PreviewCacheService : IAsyncDisposable
             writerInHandGate: writerInHandGate, beforeWrite: beforeWrite);
     }
 
+    internal Action? AfterMetadataReadForTesting { get; set; }
+
     public string GetCachePath(ImageFile imageFile)
     {
         if (imageFile.CatalogId == 0)
@@ -66,6 +68,7 @@ public sealed class PreviewCacheService : IAsyncDisposable
     public CachedPreview? LoadRenderedPreview(ImageFile imageFile)
     {
         if (!IsCacheValid(imageFile)) return null;
+
         try
         {
             var path = _catalogService.GetPreviewPath(imageFile.CatalogId);
@@ -73,8 +76,22 @@ public sealed class PreviewCacheService : IAsyncDisposable
             PreviewCacheMetadata metadata = default;
             var hasMetadata = File.Exists(metadataPath) &&
                 PreviewCacheMetadata.TryRead(metadataPath, out metadata);
+            AfterMetadataReadForTesting?.Invoke();
+
+            var image = new MagickImage(path);
+
+            // The writer removes the old sidecar before replacing the JPEG.
+            // A matching generation on both sides of the decode proves one pair.
+            if (hasMetadata &&
+                (!PreviewCacheMetadata.TryRead(metadataPath, out var current) ||
+                    current.Generation != metadata.Generation))
+            {
+                image.Dispose();
+                return null;
+            }
+
             return new CachedPreview(
-                new MagickImage(path),
+                image,
                 hasMetadata ? metadata.SettingsHash : null,
                 hasMetadata ? metadata.Identity?.OriginalViewSize : null,
                 hasMetadata ? metadata.Identity?.OriginalImageSize : null);

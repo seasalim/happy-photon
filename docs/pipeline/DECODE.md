@@ -306,8 +306,10 @@ stored `detail.noiseReduction` input is ignored.
   source upgrade is queued.
 - **Rendered-preview cache:** `PreviewCacheService` stores the *last rendered output*
   (8-bit JPEG q90, 1600px) plus a sidecar `<id>.meta` containing `settingsHash` and
-  the render's original-image and post-geometry view dimensions. Legacy hash-only
-  sidecars remain readable but are rewritten with dimensions after the next render.
+  the render's original-image and post-geometry view dimensions. Each write has a
+  unique generation ID, checked before and after JPEG decode; a changed or missing
+  generation discards that read. Older sidecars provide only stale placeholders
+  until a fresh render rewrites them.
   - `RenderSettingsHash` hashes a JSON envelope of render version, base version, and
     canonical v4 settings, followed by a DCP outcome token suffix when present.
   - Develop entry: if cached hash matches current settings → decode its one BGRA buffer

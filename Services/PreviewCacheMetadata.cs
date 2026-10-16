@@ -9,31 +9,34 @@ internal readonly record struct PreviewCacheIdentity(
 
 internal readonly record struct PreviewCacheMetadata(
     string SettingsHash,
-    PreviewCacheIdentity? Identity)
+    PreviewCacheIdentity? Identity,
+    Guid Generation)
 {
-    private const int CurrentVersion = 1;
+    private const int CurrentVersion = 2;
 
     public static bool TryRead(
         string metadataPath,
         out PreviewCacheMetadata metadata)
     {
         metadata = default;
+
         try
         {
-            // Sidecars written before this format was introduced hold a bare
-            // hash, which is not JSON: deserializing throws and the entry reads
-            // as absent, so it re-renders once and is rewritten as a document.
-            // The preview cache is derived data and already invalidates
-            // wholesale on a render-version bump, so this needs no migration.
+            // Older sidecars cannot prove that metadata and pixels belong to
+            // the same write. Treat them as absent until the next render.
+            // Derived previews need no migration.
             var text = File.ReadAllText(metadataPath).Trim();
             var document = JsonSerializer.Deserialize<MetadataDocument>(text);
+
             if (document == null || document.Version != CurrentVersion ||
-                string.IsNullOrWhiteSpace(document.SettingsHash))
+                string.IsNullOrWhiteSpace(document.SettingsHash) ||
+                document.Generation == Guid.Empty)
             {
                 return false;
             }
 
             PreviewCacheIdentity? identity = null;
+
             if (document.OriginalViewWidth > 0 &&
                 document.OriginalViewHeight > 0)
             {
@@ -45,7 +48,10 @@ internal readonly record struct PreviewCacheMetadata(
                         document.OriginalImageWidth,
                         document.OriginalImageHeight));
             }
-            metadata = new PreviewCacheMetadata(document.SettingsHash, identity);
+
+            metadata = new PreviewCacheMetadata(
+                document.SettingsHash, identity, document.Generation);
+
             return true;
         }
         catch
@@ -60,6 +66,7 @@ internal readonly record struct PreviewCacheMetadata(
         JsonSerializer.Serialize(new MetadataDocument
         {
             Version = CurrentVersion,
+            Generation = Guid.NewGuid(),
             SettingsHash = settingsHash,
             OriginalViewWidth = identity.OriginalViewSize.Width,
             OriginalViewHeight = identity.OriginalViewSize.Height,
@@ -70,6 +77,9 @@ internal readonly record struct PreviewCacheMetadata(
     private sealed class MetadataDocument
     {
         public int Version { get; set; }
+
+        public Guid Generation { get; set; }
+
         public string SettingsHash { get; set; } = string.Empty;
         public int OriginalViewWidth { get; set; }
         public int OriginalViewHeight { get; set; }
