@@ -1,0 +1,4 @@
+{"utc":"2026-10-14T00:00:00Z","instance":"1","host":"HappyPhoton.Tests","pagedBytes":100}
+{"utc":"2026-10-14T00:00:00.5Z","instance":"1","host":"HappyPhoton.Tests","pagedBytes":160}
+{"utc":"2026-10-14T00:00:01Z","instance":"1","host":"HappyPhoton.Tests","pagedBytes":200}
+{"utc":"2026-10-14T00:00:01.5Z","instance":"1","host":"HappyPhoton.Tests","pagedBytes":180}

@@ -1,0 +1,10 @@
+<TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <TestDefinitions>
+    <UnitTest id="a"><TestMethod codeBase="HappyPhoton.Tests.dll" className="Fixture.A" name="One" /></UnitTest>
+    <UnitTest id="b"><TestMethod codeBase="HappyPhoton.Tests.dll" className="Fixture.B" name="Two" /></UnitTest>
+  </TestDefinitions>
+  <Results>
+    <UnitTestResult testId="a" testName="Fixture.A.One" outcome="Passed" startTime="2026-10-14T00:00:00Z" endTime="2026-10-14T00:00:01Z" duration="00:00:01" />
+    <UnitTestResult testId="b" testName="Fixture.B.Two" outcome="Passed" startTime="2026-10-14T00:00:00.5Z" endTime="2026-10-14T00:00:02Z" duration="00:00:01.5" />
+  </Results>
+</TestRun>

@@ -1,0 +1,100 @@
+using Xunit;
+namespace ProfileFixture;
+public partial class Conditions
+{
+    [Fact]
+    public void Always() { }
+
+    [Fact]
+    public void OptIn()
+    {
+        Assert.SkipWhen(Environment.GetEnvironmentVariable("PROFILE_GATE") != "1", "opt in");
+    }
+
+    [Fact]
+    public void Child()
+    {
+        var child = Environment.GetEnvironmentVariable("PROFILE_CHILD");
+        Assert.SkipWhen(child == null, "child only");
+    }
+
+    [Fact]
+    public void Platform()
+    {
+        Assert.SkipUnless(OperatingSystem.IsWindows(), "Windows");
+    }
+
+    [Fact]
+    public void Build()
+    {
+#if DEBUG
+        Assert.Fail("Release only");
+#endif
+    }
+
+    [Fact]
+    public void Silent()
+    {
+        if (Environment.GetEnvironmentVariable("PROFILE_SILENT") != "1") return;
+
+        Assert.True(true);
+    }
+
+    [Fact]
+    public void Helper() => RequireGate();
+
+    private static void RequireGate()
+    {
+        Assert.SkipUnless(Environment.GetEnvironmentVariable("PROFILE_HELPER") == "1", "opt in");
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Unresolved(bool enabled)
+    {
+        Assert.SkipWhen(enabled && Environment.GetEnvironmentVariable("PROFILE_GATE") != "1", "conditional");
+    }
+
+    [Fact]
+    public void Multiline()
+    {
+        Assert.SkipWhen(
+            Environment.GetEnvironmentVariable(
+                "PROFILE_MULTILINE") != "1", "opt in");
+    }
+
+    [Fact]
+    public void PresenceEmpty() => Assert.SkipWhen(string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PROFILE_EMPTY")), "opt in");
+
+    [Fact]
+    public void PresenceWhitespace() => Assert.SkipUnless(!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("PROFILE_SPACE")), "opt in");
+
+    [Fact]
+    public void PresenceNegated() => Assert.SkipWhen(!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PROFILE_PRESENT")), "disabled when set");
+
+    [Fact]
+    public void ActiveBuild()
+    {
+#if PROFILE_RELEASE
+        Assert.SkipWhen(Environment.GetEnvironmentVariable("PROFILE_BUILD") != "1", "opt in");
+#else
+        Assert.Skip("inactive");
+#endif
+    }
+    [Fact]
+    public void ParameterOnly()
+    {
+        var path = Environment.GetEnvironmentVariable("PROFILE_FIXTURE");
+        Assert.True(path == null || path.Length > 0);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void FixtureDependent(bool available)
+    {
+        Assert.SkipUnless(available, "Local fixture unavailable");
+    }
+
+}
