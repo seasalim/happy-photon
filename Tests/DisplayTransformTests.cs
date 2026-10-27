@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using ImageMagick;
@@ -10,9 +9,6 @@ public sealed class DisplayTransformTests
 {
     private static readonly string FixtureDirectory = Path.Combine(
         GoldenTestPaths.AssetDirectory, "softproof");
-    private readonly ITestOutputHelper _output;
-
-    public DisplayTransformTests(ITestOutputHelper output) => _output = output;
 
     [Fact]
     public void IdentityRows_ShowCanonicalObject()
@@ -292,49 +288,6 @@ public sealed class DisplayTransformTests
             TagCalls++;
             _colorSpace = MacOsLayerColorSpace.Srgb;
         }
-    }
-
-    [Fact]
-    public void DeriveCost_MeetsApprovedFullCpuGate()
-    {
-#if DEBUG
-        Assert.Skip("Run the FULL_CPU display performance gate in Release configuration.");
-#endif
-        Assert.SkipWhen(
-            Environment.GetEnvironmentVariable("HAPPY_PHOTON_FULL_CPU") != "1",
-            "Set HAPPY_PHOTON_FULL_CPU=1 to run the display-transform performance gate.");
-        var transform = Resolve("softproof-p3-gamma22.icc", DisplayAcmState.Off);
-        Measure(1600, 1067, 6, transform);
-        Measure(3200, 2133, 18, transform);
-    }
-
-    private void Measure(
-        int width,
-        int height,
-        double thresholdMilliseconds,
-        DisplayTransformSnapshot transform)
-    {
-        var pixels = new byte[checked(width * height * 4)];
-        for (var index = 0; index < pixels.Length; index += 4)
-        {
-            pixels[index] = (byte)(index / 4);
-            pixels[index + 1] = (byte)(index / 13);
-            pixels[index + 2] = (byte)(index / 29);
-            pixels[index + 3] = 255;
-        }
-        using var canonical = BitmapConversionService.ConvertToBitmap(pixels, width, height);
-        using (transform.Derive(canonical, DisplaySourceColorSpace.Srgb)) { }
-        var samples = new double[5];
-        for (var run = 0; run < samples.Length; run++)
-        {
-            var stopwatch = Stopwatch.StartNew();
-            using var displayed = transform.Derive(canonical, DisplaySourceColorSpace.Srgb);
-            samples[run] = stopwatch.Elapsed.TotalMilliseconds;
-        }
-        Array.Sort(samples);
-        _output.WriteLine($"display-derive {width}x{height}: median={samples[2]:F2} ms");
-        Assert.True(samples[2] <= thresholdMilliseconds,
-            $"{width} px median {samples[2]:F2} ms exceeded {thresholdMilliseconds:F0} ms.");
     }
 
     private static DisplayTransformSnapshot Resolve(

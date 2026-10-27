@@ -63,7 +63,7 @@ public sealed class RenderSequenceGoldenTests(ITestOutputHelper output)
             // Geometry is neutral, so crossing sees exactly width * height pixels.
             var workers = kind == "standard" ? 0 : Math.Min(cap,
                 Math.Min(Environment.ProcessorCount, Math.Max(1, (width * height + 32767) / 32768)));
-            output.WriteLine($"EXPECTED-WORKERS {key} cpu={Environment.ProcessorCount} cap={cap} crossing={workers} (formula, not observed; the cap is observed by RenderSequenceContentionTests)");
+            output.WriteLine($"EXPECTED-WORKERS {key} cpu={Environment.ProcessorCount} cap={cap} crossing={workers} (formula, not observed)");
             output.WriteLine($"STAGES {key} {string.Join(",", stages)}");
         }
     }

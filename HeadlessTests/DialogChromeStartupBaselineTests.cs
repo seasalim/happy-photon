@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Headless;
-using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using HappyPhoton.Services;
@@ -12,20 +11,6 @@ namespace HappyPhoton.Tests;
 
 public sealed class DialogChromeStartupBaselineTests(ITestOutputHelper output)
 {
-    [AvaloniaTheory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public async Task CaptureIsolatedStartupGate(bool pointerRecovery)
-    {
-        Assert.SkipWhen(Environment.GetEnvironmentVariable("HAPPY_PHOTON_DIALOG_STARTUP_CAPTURE") != "1",
-            "Set HAPPY_PHOTON_DIALOG_STARTUP_CAPTURE=1 to write isolated WP9 after-captures.");
-
-        for (var run = 1; run <= 3; run++)
-        {
-            await CaptureAsync(pointerRecovery, run);
-        }
-    }
-
     internal async Task CaptureAsync(bool pointerRecovery, int run)
     {
         using var directory = new TemporaryDirectory();

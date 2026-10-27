@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('G1', 'G2', 'G3', 'Sanity')][string]$Gate = 'Sanity',
+    [ValidateSet('G2', 'G3', 'Sanity')][string]$Gate = 'Sanity',
     [ValidateRange(1, 120)][int]$TimeoutSeconds = 120,
     [switch]$Sync
 )
@@ -14,7 +14,6 @@ if (Get-ChildItem (Join-Path $repo 'HeadlessTests/Paste*Gate*.cs') | Where-Objec
 }
 $oldPerf = $env:HAPPY_PHOTON_PERF
 $oldCpu = $env:HAPPY_PHOTON_FULL_CPU
-$oldSanity = $env:HAPPY_PHOTON_PASTE_SANITY
 $records = [Collections.Generic.List[object]]::new()
 $budget = [Diagnostics.Stopwatch]::StartNew()
 function RunSample([string]$filter) {
@@ -52,19 +51,9 @@ function RunSample([string]$filter) {
 }
 try {
     # The caller owns the exclusive host measurement lock. This runner does not acquire it.
-    $env:HAPPY_PHOTON_PERF = if ($Gate -in @('G1', 'G3')) { '1' } else { '0' }
+    $env:HAPPY_PHOTON_PERF = if ($Gate -eq 'G3') { '1' } else { '0' }
     $env:HAPPY_PHOTON_FULL_CPU = '1'
-    $env:HAPPY_PHOTON_PASTE_SANITY = '1'
     switch ($Gate) {
-        'G1' {
-            for ($pair = 0; $pair -lt 5; $pair++) {
-                RunSample 'FullyQualifiedName=HappyPhoton.Tests.PasteDevelopGateTests.G1_Raw'
-                RunSample 'FullyQualifiedName=HappyPhoton.Tests.PasteDevelopGateTests.G1_Heic'
-                if ($pair -eq 0 -and $budget.Elapsed.TotalSeconds * 5 -gt 600) {
-                    throw 'DEFERRED: the first process pair predicts more than ten minutes.'
-                }
-            }
-        }
         'G2' { RunSample 'FullyQualifiedName~PasteDevelopGateTests.G2_NoDecode' }
         'G3' {
             for ($sample = 0; $sample -lt 5; $sample++) {
@@ -76,10 +65,10 @@ try {
             }
         }
         'Sanity' {
-            RunSample 'FullyQualifiedName~PasteDevelopGateTests.Sanity|FullyQualifiedName~PasteDialogGateTests.Sanity'
+            RunSample 'FullyQualifiedName~PasteDialogGateTests.Sanity'
         }
     }
-    if ($Gate -in @('G1', 'G3')) {
+    if ($Gate -eq 'G3') {
         foreach ($group in ($records | Group-Object fixture)) {
             $samples = @($group.Group)
             if ($samples.Count -ne 5 -or @($samples.pid | Sort-Object -Unique).Count -ne 5) {
@@ -93,5 +82,4 @@ try {
 finally {
     $env:HAPPY_PHOTON_PERF = $oldPerf
     $env:HAPPY_PHOTON_FULL_CPU = $oldCpu
-    $env:HAPPY_PHOTON_PASTE_SANITY = $oldSanity
 }

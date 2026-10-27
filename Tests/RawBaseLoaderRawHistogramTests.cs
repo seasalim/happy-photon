@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using HappyPhoton.LibRaw.Interop;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
@@ -8,11 +7,6 @@ namespace HappyPhoton.Tests;
 
 public sealed class RawBaseLoaderRawHistogramTests
 {
-    private readonly ITestOutputHelper _output;
-
-    public RawBaseLoaderRawHistogramTests(ITestOutputHelper output) =>
-        _output = output;
-
     [Fact]
     public void SamplerSuccess_AttachesExactLoaderFact()
     {
@@ -171,35 +165,6 @@ public sealed class RawBaseLoaderRawHistogramTests
 
         Assert.DoesNotContain(sources, path =>
             File.ReadAllText(path).Contains("Sdcb.LibRaw", StringComparison.Ordinal));
-    }
-
-    [Fact]
-    public void RawHistogramPerformance_Canon6d()
-    {
-        Assert.SkipWhen(
-            Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1",
-            "Set HAPPY_PHOTON_PERF=1 to measure the 20 MP RAW histogram pass.");
-        var path = Path.Combine(GoldenTestPaths.AssetDirectory,
-            "canon-eos-6d-iso-6400.cr2");
-        using var context = LibRawContext.Open(path);
-        context.Unpack();
-        using var frame = RawSensorFrame.TryCreate(context);
-        Assert.NotNull(frame);
-        var stopwatch = Stopwatch.StartNew();
-        var artifacts = RawSensorHistogram.SampleArtifacts(
-            frame,
-            CancellationToken.None,
-            workerLimit: null,
-            saturationWidth: checked((int)(frame.VisibleWidth + 1) / 2),
-            saturationHeight: checked((int)(frame.VisibleHeight + 1) / 2));
-        stopwatch.Stop();
-
-        Assert.NotNull(artifacts);
-        Assert.NotNull(artifacts!.SourceSaturation);
-        _output.WriteLine(
-            $"RawHistogram fixture=canon-eos-6d-iso-6400.cr2; " +
-            $"photosites={artifacts.Histogram.Clipping!.TotalVisibleSamples}; " +
-            $"elapsed_ms={stopwatch.Elapsed.TotalMilliseconds:F1}");
     }
 
     private static RawBaseLoader Loader(

@@ -38,7 +38,7 @@ function Write-ProfileReport($Data, [string] $Path) {
         $lines.Add("## $hostName")
         $lines.Add('')
 
-        foreach ($workload in @('nightly', 'solo')) {
+        foreach ($workload in @('nightly', 'solo') | Where-Object { $_ -in $Data.workloads }) {
             $lines.Add("### Twenty slowest always-on classes ($workload)")
             $lines.Add('')
             $lines.Add('| Class | TRX seconds |')

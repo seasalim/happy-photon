@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using HappyPhoton.Services;
 using Microsoft.Data.Sqlite;
 using Xunit;
@@ -12,7 +11,7 @@ public sealed class BackupBaselineCollection
 }
 
 [Collection(BackupBaselineCollection.Name)]
-public sealed class BackupBaselineTests(BackupCatalogFixtures fixtures, ITestOutputHelper output)
+public sealed class BackupBaselineTests(BackupCatalogFixtures fixtures)
 {
     [Fact]
     public async Task EverydayFixture_HasPinnedShapeAndSize()
@@ -35,109 +34,6 @@ public sealed class BackupBaselineTests(BackupCatalogFixtures fixtures, ITestOut
             Assert.InRange(settings.Locals!.Count, 1, 2);
         }
     }
-
-    [Fact]
-    public async Task CopyControl_ReportsPinnedSizesAndFiveSamples()
-    {
-        Assert.SkipWhen(Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1",
-            "Set HAPPY_PHOTON_PERF=1 to measure BACKUP-WP1 baseline controls.");
-        // Run only under the workflow's exclusive host 'measure' lock. The external
-        // test invocation must have a 120 s process-tree timeout (including setup).
-        var archive = await fixtures.Archive;
-        var everyday = await fixtures.Everyday;
-        ReportSize("archive", archive);
-        ReportSize("everyday", everyday);
-        Assert.InRange(archive.SizeMiB, 160, 260);
-        Assert.InRange(everyday.SizeMiB, 1.5, 4);
-        AssertShape(archive);
-        AssertShape(everyday);
-
-        MeasureCopyControl(archive);
-    }
-
-    [Fact]
-    public async Task Schema3CopyControl_ReportsPinnedSizeAndFiveSamples()
-    {
-        Assert.SkipWhen(Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1",
-            "Set HAPPY_PHOTON_PERF=1 to measure BACKUP-WP4 G1 baseline controls.");
-        // The external invocation owns a 120 s process-tree timeout including setup.
-        var archive = await fixtures.Schema3Archive;
-        ReportSize("schema3_archive", archive);
-
-        using (var connection = Open(archive))
-        {
-            using var command = connection.CreateCommand();
-            long Scalar(string sql)
-            {
-                command.CommandText = sql;
-
-                return Convert.ToInt64(command.ExecuteScalar());
-            }
-
-            Assert.Equal(3, Scalar("SELECT value FROM app_settings WHERE key = 'schema_version';"));
-            Assert.Equal(225_000, archive.ImageRows);
-            Assert.Equal(archive.ImageRows, Scalar("SELECT count(*) FROM images;"));
-            Assert.Equal(archive.ImageRows, Scalar("SELECT count(*) FROM image_assessments;"));
-            Assert.Equal(0, Scalar("SELECT count(*) FROM pragma_table_info('images') WHERE name = 'history_position';"));
-            Assert.Equal(0, Scalar("SELECT count(*) FROM sqlite_master WHERE name = 'edit_history';"));
-            Assert.Equal(0, Scalar("PRAGMA freelist_count;"));
-            command.CommandText = "PRAGMA integrity_check;";
-            Assert.Equal("ok", command.ExecuteScalar());
-        }
-
-        // Report both observations even when the fixture falls outside the proposed envelope.
-        var samples = Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF_PROBE") == "1" ? 1 : 5;
-        var control = await fixtures.Archive;
-        ReportSize("archive", control);
-        AssertShape(control);
-        Assert.InRange(control.SizeMiB, 160, 260);
-        MeasureCopyControl(control, samples);
-        Assert.InRange(archive.SizeMiB, 160, 260);
-    }
-
-    private void MeasureCopyControl(BackupCatalogFixture archive, int sampleCount = 5)
-    {
-        var samples = new double[sampleCount];
-        using var copyDirectory = new TemporaryDirectory();
-        var target = Path.Combine(copyDirectory.Path, "copy-control.db");
-
-        try
-        {
-            for (var run = 0; run < samples.Length; run++)
-            {
-                var timer = Stopwatch.StartNew();
-                using (var source = new FileStream(archive.DatabasePath, FileMode.Open,
-                    FileAccess.Read, FileShare.Read, 1024 * 1024, FileOptions.SequentialScan))
-                using (var destination = new FileStream(target, FileMode.CreateNew,
-                    FileAccess.Write, FileShare.None, 1024 * 1024, FileOptions.SequentialScan))
-                {
-                    source.CopyTo(destination, 1024 * 1024);
-                    destination.Flush(flushToDisk: true);
-                }
-
-                timer.Stop();
-                samples[run] = timer.Elapsed.TotalMilliseconds;
-                output.WriteLine($"copy_sample_{run + 1}_ms={samples[run]:F3}");
-                Assert.Equal(archive.SizeBytes, new FileInfo(target).Length);
-                File.Delete(target); // Deletion is outside the measured interval.
-            }
-        }
-        finally
-        {
-            File.Delete(target);
-        }
-
-        var median = samples.Order().ElementAt(samples.Length / 2);
-        output.WriteLine($"copy_median_ms={median:F3} samples={samples.Length} warmups=0 " +
-            "buffer_bytes=1048576 flush_to_disk=true cache=uncontrolled " +
-            $"temp_volume={Path.GetPathRoot(archive.Root)}");
-        Assert.InRange(median, 100, 1000);
-    }
-
-    private void ReportSize(string name, BackupCatalogFixture fixture) =>
-        output.WriteLine($"{name}_bytes={fixture.SizeBytes} {name}_mib={fixture.SizeMiB:F6} " +
-            $"seed={BackupCatalogFixtures.Seed} images={fixture.ImageRows} " +
-            $"edited={fixture.EditedRows} history={fixture.HistoryRows}");
 
     private static SqliteConnection Open(BackupCatalogFixture fixture)
     {

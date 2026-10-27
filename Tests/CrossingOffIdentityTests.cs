@@ -10,9 +10,6 @@ namespace HappyPhoton.Tests;
 
 public sealed class CrossingOffIdentityTests
 {
-    private const string GenerateVariable =
-        "HAPPY_PHOTON_GENERATE_CROSSING_OFF_IDENTITY";
-
     private static readonly (string Key, string FileName, bool RequiresHeic)[]
         Classes =
         [
@@ -54,48 +51,6 @@ public sealed class CrossingOffIdentityTests
             .GetProperty("observations")
             .GetProperty("win-x64");
         AssertObservation(fileName, observations.GetProperty(key));
-    }
-
-    [Fact]
-    public void GeneratepreAgxReferences_WhenEnabled()
-    {
-        Assert.SkipWhen(
-            Environment.GetEnvironmentVariable(GenerateVariable) != "1",
-            $"Set {GenerateVariable}=1 to generate checkpoint-C references.");
-        Assert.Equal("win-x64", RuntimeInformation.RuntimeIdentifier);
-
-        var observations = new Dictionary<string, object>();
-        foreach (var row in Classes)
-        {
-            if (row.RequiresHeic && !SupportsHeic())
-            {
-                observations[row.Key] = new
-                {
-                    skipped = "ImageMagick HEIC reader unavailable"
-                };
-                continue;
-            }
-
-            observations[row.Key] = Measure(RenderPreAgx(row.FileName));
-        }
-
-        var payload = new
-        {
-            schemaVersion = 1,
-            baseCommit = "878903f",
-            renderPath = "full base -> unedited export render -> sRGB RGB8, full resolution, output sharpening off",
-            observations = new Dictionary<string, object>
-            {
-                ["win-x64"] = observations
-            }
-        };
-        File.WriteAllText(
-            BaselinePath,
-            JsonSerializer.Serialize(payload, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                WriteIndented = true
-            }) + Environment.NewLine);
     }
 
     private static void AssertObservation(

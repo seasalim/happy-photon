@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using HappyPhoton.LibRaw.Interop;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
@@ -25,55 +24,6 @@ public sealed partial class LensfunPrescriptionReaderTests : IDisposable
         Assert.Equal(615, database.EnglishAliasCameraCount);
         Assert.Equal(684, database.EnglishAliasLensCount);
         Assert.True(File.Exists(Path.Combine(path, "COPYING.CC_BY-SA_3.0")));
-    }
-
-    [Fact]
-    [Trait("Category", "Performance")]
-    public void ColdSnapshotResolutionStaysWithinSupplementaryGate()
-    {
-        Assert.SkipWhen(
-            Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1",
-            "Set HAPPY_PHOTON_PERF=1 to run the Lensfun cold-resolution gate.");
-
-        var path = Path.Combine(AppContext.BaseDirectory, "data", "lensfun");
-        var times = new List<double>();
-        LensfunDatabase? retained = null;
-        for (var run = 0; run < 5; run++)
-        {
-            var stopwatch = Stopwatch.StartNew();
-            retained = new LensfunDatabase(path);
-            var match = retained.Resolve(
-                "Canon", "EOS 6D", "Sigma 8mm f/3.5 EX DG Circular",
-                8, 3.5, 5472, 3648);
-            stopwatch.Stop();
-            Assert.NotNull(match);
-            times.Add(stopwatch.Elapsed.TotalMilliseconds);
-        }
-        retained = null;
-        Collect();
-        var before = GC.GetTotalMemory(true);
-        retained = new LensfunDatabase(path);
-        Assert.NotNull(retained.Resolve(
-            "Canon", "EOS 6D", "Sigma 8mm f/3.5 EX DG Circular",
-            8, 3.5, 5472, 3648));
-        Collect();
-        var retainedBytes = GC.GetTotalMemory(true) - before;
-        var median = times.Order().ElementAt(2);
-        Console.Error.WriteLine(
-            $"Lensfun G4 median={median:F1}ms retained={retainedBytes / 1048576d:F1}MB");
-
-        Assert.True(median <= 250,
-            $"Cold Lensfun resolution median was {median:F1} ms.");
-        Assert.True(retainedBytes <= 20 * 1024 * 1024,
-            $"Retained Lensfun memory was {retainedBytes / 1048576d:F1} MB.");
-        GC.KeepAlive(retained);
-
-        static void Collect()
-        {
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-        }
     }
 
     [Fact]

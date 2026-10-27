@@ -12,7 +12,7 @@ public sealed class SyncProfileBatchTests(ITestOutputHelper output)
     [Fact]
     public async Task AC1_150SameCamera30CompatibleMount20IncompatibleHaveExactHistoryAndCounts()
     {
-        await RunAsync("cold", measure: false);
+        await RunAsync("cold");
     }
 
     [Theory]
@@ -20,23 +20,16 @@ public sealed class SyncProfileBatchTests(ITestOutputHelper output)
     [InlineData("automatic")]
     public async Task G2_FactsInMemoryOrNeutralSelectionsHaveZeroOpensAndDecodes(string mode)
     {
-        await RunAsync(mode, measure: false);
-    }
-
-    [Fact]
-    public async Task G1_ColdProfilePasteAddedCostIsWithinHeaderControl()
-    {
-        SyncPhotoGateSupport.RequirePerformance();
-        await RunAsync("cold", measure: true, includeLook: true);
+        await RunAsync(mode);
     }
 
     [Fact]
     public async Task G1_MatchedArmsPreserveLookAndProfileTransferChecks()
     {
-        await RunAsync("cold", measure: false, includeLook: true);
+        await RunAsync("cold", includeLook: true);
     }
 
-    private async Task RunAsync(string mode, bool measure, bool includeLook = false)
+    private async Task RunAsync(string mode, bool includeLook = false)
     {
         using var fixture = new CatalogVmFixture("sync-profiles");
         using var catalog = await fixture.CreateCatalogAsync();
@@ -85,22 +78,6 @@ public sealed class SyncProfileBatchTests(ITestOutputHelper output)
 
         var headerMs = 0d;
         var controlMs = 0d;
-
-        if (measure)
-        {
-            var header = new LibRawProcessingService();
-            var times = new List<double>();
-
-            foreach (var path in paths)
-            {
-                var start = Stopwatch.GetTimestamp();
-                Assert.NotNull(header.ExtractMetadata(path));
-                times.Add(Stopwatch.GetElapsedTime(start).TotalMilliseconds);
-            }
-
-            headerMs = SyncProfileGateSupport.Median(times);
-            Assert.InRange(headerMs, 1, 40);
-        }
 
         if (includeLook)
         {
@@ -215,7 +192,5 @@ public sealed class SyncProfileBatchTests(ITestOutputHelper output)
 
         var added = (watch.Elapsed.TotalMilliseconds - controlMs) / 200;
         output.WriteLine($"SYNC_PROFILE_TRANSFER mode={mode} pasteMs={watch.Elapsed.TotalMilliseconds:R} controlMs={controlMs:R} headerMs={headerMs:R} addedMs={added:R} readerOpens={opens.Count} baseDecodes=0 changed={changed} history={changed}");
-
-        if (measure) Assert.True(added <= headerMs * 1.25 + 1, $"Added {added} ms; control {headerMs} ms");
     }
 }

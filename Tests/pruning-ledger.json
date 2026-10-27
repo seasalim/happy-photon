@@ -2512,6 +2512,779 @@
         "HappyPhoton.Tests.XmpCropDocumentTests.LightroomFixture_HasPinnedCropFact(fixture: \"lightroom-crop-rotated.xmp\", expected: Unsupported)",
         "HappyPhoton.Tests.XmpCropDocumentTests.LightroomFixture_HasPinnedCropFact(fixture: \"lightroom-crop-warp.xmp\", expected: Unsupported)"
       ]
+    },
+    {
+      "kind": "retired-gate",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.AutoStraightenTimingTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "928f572",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.DialogChromeStartupBaselineTests.CaptureIsolatedStartupGate"
+      ],
+      "variables": [
+        "HAPPY_PHOTON_DIALOG_STARTUP_CAPTURE"
+      ],
+      "reference": "adcb6c2",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.DisplayTransformTests.DeriveCost_MeetsApprovedFullCpuGate"
+      ],
+      "variables": [
+        "HAPPY_PHOTON_FULL_CPU"
+      ],
+      "reference": "CR_PLAN (archive); 4a744f3",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.ExportWorkspaceBaselineMeasurements",
+      "variables": [
+        "HP_EXPORT_BASELINE"
+      ],
+      "reference": "62c57ad",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.FullResolutionGateTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "REMOVE; e750702",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.MixerBandMaskGateTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "2ba7634",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.PasteDevelopGateTests.G1_Heic",
+        "HappyPhoton.Tests.PasteDevelopGateTests.G1_Raw",
+        "HappyPhoton.Tests.PasteDevelopGateTests.Sanity_Heic",
+        "HappyPhoton.Tests.PasteDevelopGateTests.Sanity_Raw"
+      ],
+      "variables": [
+        "HAPPY_PHOTON_PASTE_SANITY"
+      ],
+      "reference": "e7c5bc9",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.ProvisionalRotateMeasurementTests",
+      "variables": [
+        "HAPPY_PHOTON_ROTATE_MEASURE"
+      ],
+      "reference": "8f83f5f",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.SpotVisualizationGateTests.G1CopyHighPassAndBitmapCreation"
+      ],
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "ce00f40",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.SpotsMoveRenderGateTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "3434de2",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.UpgradeBackupGateTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "38e24ef",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.AutomaticRepairSourceTests.G2AutomaticSourceS64AgainstLh8"
+      ],
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "3434de2",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.BackupBaselineTests.CopyControl_ReportsPinnedSizesAndFiveSamples",
+        "HappyPhoton.Tests.BackupBaselineTests.Schema3CopyControl_ReportsPinnedSizeAndFiveSamples"
+      ],
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "903c038",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.BackupGateTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "903c038",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.BaseLoadControlPerformanceTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "938032f",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.BeforeAfterBaselineMeasurementTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "7a1050c",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.CompressedDngQualificationTests.ExternalCorpus_CompressionTagsAndNativeDecodeAreVerified"
+      ],
+      "variables": [
+        "HAPPY_PHOTON_DNG_DEFLATE",
+        "HAPPY_PHOTON_DNG_LOSSY"
+      ],
+      "reference": "6c2a387",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.CrossingOffIdentityTests.GeneratepreAgxReferences_WhenEnabled"
+      ],
+      "variables": [
+        "HAPPY_PHOTON_GENERATE_CROSSING_OFF_IDENTITY"
+      ],
+      "reference": "3e2f817",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.DependencyOutputIdentityTests",
+      "variables": [
+        "HAPPY_PHOTON_OUTPUT_IDENTITY_DIR",
+        "HAPPY_PHOTON_OUTPUT_IDENTITY_MODE"
+      ],
+      "reference": "331e3ec",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.DisplayPipelinePerformanceTests",
+      "variables": [
+        "HAPPY_PHOTON_FULL_CPU"
+      ],
+      "reference": "4a744f3",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.EditHistoryGateBaselineMeasurementTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "CR (archive); 4ff44a1",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.ExportIdentityOracleTests.ExportAndProof_MatchIndependentOracle_WhenEnabled"
+      ],
+      "variables": [
+        "HAPPY_PHOTON_EXPORT_ORACLE_DIR"
+      ],
+      "reference": "608e2a1",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.FinishingAuthoringTests",
+      "variables": [
+        "HAPPY_PHOTON_FREEZE_LOOK_MANIFEST",
+        "HAPPY_PHOTON_LOOK_AUTHORING"
+      ],
+      "reference": "c03ef6a",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.FinishingBaselineTests",
+      "variables": [
+        "HAPPY_PHOTON_FINISHING_CONTROLS"
+      ],
+      "reference": "c03ef6a",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.FolderLoadPerformanceTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "f44aee4",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.FullSizeExportPerformanceTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "608e2a1",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.HealControlBaselineTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "0515aaf",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.HorizonDetectionProfileTests",
+      "variables": [
+        "HAPPY_PHOTON_HORIZON_PROFILE"
+      ],
+      "reference": "67809a2",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.LensCorrectionPerformanceTests",
+      "variables": [
+        "HAPPY_PHOTON_RAF_LENS_PERF"
+      ],
+      "reference": "6f13acf",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.LensfunPrescriptionReaderTests.ColdSnapshotResolutionStaysWithinSupplementaryGate"
+      ],
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "e96af80",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.LensfunWarmResolvePerformanceTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "e96af80",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.LibRawBaselineProbeTests",
+      "variables": [
+        "HAPPY_PHOTON_BASELINE"
+      ],
+      "reference": "6c2a387",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.LuminanceNoiseReductionQualityTests",
+      "variables": [
+        "HAPPY_PHOTON_NR_QUALITY"
+      ],
+      "reference": "f320cad",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.PixelHashReportTests",
+      "variables": [
+        "HAPPY_PHOTON_PIXEL_HASH_REPORT"
+      ],
+      "reference": "c277527",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.PresenceGateTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "e65f631",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.RawBaseLoaderRawHistogramTests.RawHistogramPerformance_Canon6d"
+      ],
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "RAWHIST (archive), SWEEP (archive); 878903f",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.RawOrientationBaselineTests",
+      "variables": [
+        "HAPPY_PHOTON_ORIENTATION_MEASURE"
+      ],
+      "reference": "4d67f52",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.RawOrientationOpticsBaselineTests",
+      "variables": [
+        "HAPPY_PHOTON_ORIENTATION_MEASURE"
+      ],
+      "reference": "4d67f52",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.RawOrientationStateBaselineTests",
+      "variables": [
+        "HAPPY_PHOTON_ORIENTATION_MEASURE"
+      ],
+      "reference": "4d67f52",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.RawPreviewStagePerformanceTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF",
+        "HAPPY_PHOTON_PERF_RAW"
+      ],
+      "reference": "c19a780",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.RawRenderRotationControlTests",
+      "variables": [
+        "HAPPY_PHOTON_ORIENTATION_MEASURE"
+      ],
+      "reference": "4d67f52",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.RenderGeometryPerformanceTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "53432f3",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.RenderNoiseReductionRetentionPerformanceTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "449f141",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.RenderSequenceContentionTests",
+      "variables": [
+        "HAPPY_PHOTON_FULL_CPU",
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "c9e7674",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.RenderSequenceKernelTimingTests",
+      "variables": [
+        "HAPPY_PHOTON_FULL_CPU",
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "c9e7674",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.RenderSharpeningRetentionPerformanceTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "31032b1",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.RestoreGateTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "d5ec66e",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.SoftProofBaselineFixtureTests.GenerateProfilesAndChart"
+      ],
+      "variables": [
+        "HAPPY_PHOTON_GENERATE_SOFTPROOF_BASELINE"
+      ],
+      "reference": "4a744f3",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.SoftProofExportParityBaselineTests",
+      "variables": [
+        "HAPPY_PHOTON_SOFTPROOF_EXPORT_BASELINE"
+      ],
+      "reference": "4a744f3",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.StandardBaseLoaderPerformanceTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "ab026fb",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.StraightenGateWp3BaselineTests.OwnerG3Membership",
+        "HappyPhoton.Tests.StraightenGateWp3BaselineTests.OwnerJudgement",
+        "HappyPhoton.Tests.StraightenGateWp3BaselineTests.OwnerLandscapeMembership",
+        "HappyPhoton.Tests.StraightenGateWp3BaselineTests.OwnerLandscapeMetadata",
+        "HappyPhoton.Tests.StraightenGateWp3BaselineTests.OwnerNegativeMembership",
+        "HappyPhoton.Tests.StraightenGateWp3BaselineTests.OwnerReportSweep"
+      ],
+      "variables": [
+        "HAPPY_PHOTON_STRAIGHTEN_DIR"
+      ],
+      "reference": "f1c439c",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.SyncPhotoReaderGateTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "7b610bb",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.SyncPhotoRenderGateTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "7b610bb",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.SyncPhotoStorageGateTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "7b610bb",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.SyncProfileBatchTests.G1_ColdProfilePasteAddedCostIsWithinHeaderControl"
+      ],
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "095dae2",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.SyncSpotControlTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "07fb600",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.SyncSpotOrientationTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "07fb600",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.SyncSpotPasteGateTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "07fb600",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.SyncSpotStorageTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "07fb600",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.ThumbnailPairingPerformanceTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "PERFBASE_PLAN (archive); 5290061",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.ViewportRestingPerformanceTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "d1de5da",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.WaveformAccumulatorPerformanceTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "d75d45b",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.WhitesBlacksCompatibilityTests.FixtureFingerprints"
+      ],
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "e1ea5cc",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.WhitesBlacksGateTests",
+      "variables": [
+        "HAPPY_PHOTON_PERF"
+      ],
+      "reference": "e1ea5cc",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "retired-gate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.WindowsDisplayProfileSmokeTests",
+      "variables": [
+        "HAPPY_PHOTON_COMPAT"
+      ],
+      "reference": "4a744f3",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
+    },
+    {
+      "kind": "corrected-outcome",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "test": "HappyPhoton.Tests.LightroomCatalogReaderTests.ArchivedV3Smoke_HasPinnedCropFactsWhenFixtureIsPresent",
+      "outcomes": [
+        "NotExecuted",
+        "Passed"
+      ],
+      "reason": "Skip when the archived local catalog fixture is absent instead of reporting a pass without assertions.",
+      "reference": "TESTSUITE-WP5",
+      "wp": "TESTSUITE-WP5",
+      "date": "2026-10-27"
     }
   ]
 }

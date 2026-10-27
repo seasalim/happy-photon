@@ -1,12 +1,10 @@
 using System.Security.Cryptography;
-using ImageMagick;
 using Xunit;
 
 namespace HappyPhoton.Tests;
 
 public sealed class SoftProofBaselineFixtureTests
 {
-    private const string GenerateVariable = "HAPPY_PHOTON_GENERATE_SOFTPROOF_BASELINE";
     private static readonly string FixtureDirectory = Path.Combine(
         GoldenTestPaths.AssetDirectory, "softproof");
 
@@ -29,35 +27,6 @@ public sealed class SoftProofBaselineFixtureTests
             var bytes = File.ReadAllBytes(Path.Combine(FixtureDirectory, name));
             Assert.Equal(expectedHash, Convert.ToHexString(SHA256.HashData(bytes)));
         }
-    }
-
-    [Fact]
-    public void GenerateProfilesAndChart()
-    {
-        Assert.SkipWhen(
-            Environment.GetEnvironmentVariable(GenerateVariable) != "1",
-            $"Set {GenerateVariable}=1 to regenerate the committed inputs.");
-        Directory.CreateDirectory(FixtureDirectory);
-        foreach (var (name, bytes) in SoftProofIccFixtureWriter.CreateProfiles())
-        {
-            File.WriteAllBytes(Path.Combine(FixtureDirectory, name), bytes);
-        }
-
-        var pixels = new byte[64 * 64 * 3];
-        for (var index = 0; index < 4096; index++)
-        {
-            pixels[index * 3] = checked((byte)((index >> 8) * 17));
-            pixels[index * 3 + 1] = checked((byte)(((index >> 4) & 15) * 17));
-            pixels[index * 3 + 2] = checked((byte)((index & 15) * 17));
-        }
-        var settings = new PixelReadSettings(64, 64, StorageType.Char, PixelMapping.RGB);
-        settings.ReadSettings.ColorSpace = ColorSpace.sRGB;
-        using var chart = new MagickImage(pixels, settings)
-        {
-            Depth = 8,
-            Format = MagickFormat.Png
-        };
-        chart.Write(Path.Combine(FixtureDirectory, "softproof-chart.png"));
     }
 
     private const string MagickVersionOutput = """

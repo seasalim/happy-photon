@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('G1', 'G2', 'G3', 'G4', 'Sanity')][string]$Gate = 'Sanity',
+    [ValidateSet('G2', 'G3', 'G4', 'Sanity')][string]$Gate = 'Sanity',
     [ValidateRange(1, 120)][int]$TimeoutSeconds = 120,
     [ValidateRange(1, 600)][int]$BudgetSeconds = 600,
     [switch]$Transfer,
@@ -20,16 +20,15 @@ $oldTransfer = $env:HAPPY_PHOTON_SYNC_PHOTO_TRANSFER
 $budget = [Diagnostics.Stopwatch]::StartNew()
 $records = [Collections.Generic.List[string]]::new()
 $filters = switch ($Gate) {
-    'G1' { 'FullyQualifiedName~SyncPhotoRenderGateTests.G1' }
-    'G2' { 'FullyQualifiedName~SyncPhotoStorageGateTests.G2_BCap|FullyQualifiedName~SyncPhotoBatchGateTests.BatchControl' }
+    'G2' { 'FullyQualifiedName~SyncPhotoBatchGateTests.BatchControl' }
     'G3' { 'FullyQualifiedName~SyncPhotoBatchGateTests.BatchControl' }
     'G4' { 'FullyQualifiedName~SyncPhotoHeaderGateTests.G4' }
-    'Sanity' { 'FullyQualifiedName~SyncPhotoRenderGateTests.Sanity|FullyQualifiedName~SyncPhotoBatchGateTests.BatchControl' }
+    'Sanity' { 'FullyQualifiedName~SyncPhotoBatchGateTests.BatchControl' }
 }
 if ($Transfer) {
-    $filters = if ($Gate -eq 'G4') { 'FullyQualifiedName~SyncPhotoReaderGateTests.G4' }
-        elseif ($Gate -in @('G2', 'G3')) { 'FullyQualifiedName~SyncPhotoBatchGateTests.LocalsTransfer_AfterImplementation' }
-        else { $filters }
+    if ($Gate -notin @('G2', 'G3')) { throw 'Transfer requires G2 or G3.' }
+
+    $filters = 'FullyQualifiedName~SyncPhotoBatchGateTests.LocalsTransfer_AfterImplementation'
 }
 $runs = if ($Probe -or $Gate -eq 'Sanity') { 1 } elseif ($Gate -eq 'G3') { 5 } else { 3 }
 try {
@@ -75,22 +74,10 @@ try {
     }
 
     $metrics = switch ($Gate) {
-        'G1' { @('differingCodes') }
-        'G2' { @('final_snapshot_bytes', 'growthBytes') }
+        'G2' { @('growthBytes') }
         'G3' { @('milliseconds') }
         'G4' { @('rawMedianMs', 'heicMedianMs') }
         default { @() }
-    }
-
-    if ($Transfer -and $Gate -eq 'G2') { $metrics = @('growthBytes') }
-
-    if ($Gate -eq 'G1') {
-        foreach ($fixture in @('canon-eos-6d-iso-6400.cr2', 'iphone-14-pro-iso-1000.heic')) {
-            $matching = @($records | Where-Object { $_ -like "*fixture=$fixture *" })
-            if ($matching.Count -ne $runs) { throw "Missing samples for $fixture" }
-            Write-Output "SYNC_PHOTO_MEDIAN gate=G1 fixture=$fixture metric=differingCodes median=0 count=$runs"
-        }
-        $metrics = @()
     }
 
     foreach ($metric in $metrics) {

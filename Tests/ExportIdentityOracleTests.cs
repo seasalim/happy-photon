@@ -7,41 +7,8 @@ using Xunit;
 namespace HappyPhoton.Tests;
 
 // Independent baseCommit oracle; snapshots belong in the caller's run directory.
-public sealed class ExportIdentityOracleTests(ITestOutputHelper output)
+public sealed class ExportIdentityOracleTests
 {
-    [Fact]
-    public async Task ExportAndProof_MatchIndependentOracle_WhenEnabled()
-    {
-        var directory = Environment.GetEnvironmentVariable("HAPPY_PHOTON_EXPORT_ORACLE_DIR");
-        Assert.SkipWhen(string.IsNullOrWhiteSpace(directory),
-            "Set HAPPY_PHOTON_EXPORT_ORACLE_DIR to generate or compare an export oracle.");
-        var compare = Environment.GetEnvironmentVariable("HAPPY_PHOTON_EXPORT_ORACLE_COMPARE");
-        if (!string.IsNullOrWhiteSpace(compare))
-            Assert.True(File.Exists(compare), $"Oracle does not exist: {compare}");
-        // Independent renders check determinism, not performance.
-        var first = await CaptureAsync();
-        var second = await CaptureAsync();
-        AssertMatches(first, second, "repeat determinism");
-        AssertMatches(first, await CaptureAsync(disabled: true), "present but disabled");
-        if (!string.IsNullOrWhiteSpace(compare))
-        {
-            var expected = File.ReadAllLines(compare).ToDictionary(
-                line => line.Split(' ')[0], line => line.Split(' ')[1], StringComparer.Ordinal);
-            AssertMatches(expected, first, compare);
-            output.WriteLine($"Matched {first.Count} artifacts against {compare}.");
-        }
-        else
-        {
-            Directory.CreateDirectory(directory!);
-            File.WriteAllLines(Path.Combine(directory!, "hashes.txt"),
-                first.OrderBy(pair => pair.Key, StringComparer.Ordinal)
-                    .Select(pair => $"{pair.Key} {pair.Value}"));
-        }
-        output.WriteLine($"Deterministic: {first.Count} artifacts, 2 independent renders each.");
-        output.WriteLine("Encoded outputs: SHA-256 of complete file bytes. " +
-            "Proof: width/height UInt32 LE followed by row-major RGB UInt16 LE.");
-    }
-
     [Fact]
     public async Task AbsentAndDisabled_AreIdenticalAcrossFormatsSizesAndProofs() =>
         AssertMatches(await CaptureAsync(), await CaptureAsync(disabled: true), "absent == disabled");

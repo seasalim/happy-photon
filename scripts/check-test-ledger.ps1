@@ -71,7 +71,8 @@ function Read-LedgerEntry($Entry, [int] $Index) {
         return
     }
 
-    $label = "Entry $Index [$($Entry['removed'] -join ', ')]"
+    $name = if ($Entry['kind'] -eq 'corrected-outcome') { $Entry['test'] } else { $Entry['removed'] -join ', ' }
+    $label = "Entry $Index [$name]"
 
     foreach ($field in @('kind', 'reference', 'wp', 'date')) {
         if (-not (Test-LedgerText $Entry[$field])) { $issues.Add("${label}: missing or invalid $field.") }
@@ -88,10 +89,32 @@ function Read-LedgerEntry($Entry, [int] $Index) {
     $project = $Entry['project']
     $validProject = Test-LedgerProject $project $label
     $kind = $Entry['kind']
+
+    if ($kind -eq 'corrected-outcome') {
+        if ($Entry.Contains('removed')) { $issues.Add("${label}: corrected-outcome must not have removed.") }
+        if (-not (Test-LedgerText $Entry['reason'])) { $issues.Add("${label}: missing reason.") }
+
+        $test = $Entry['test']
+
+        if (-not (Test-LedgerText $test) -or $test -cnotmatch $namePattern) {
+            $issues.Add("${label}: invalid fully qualified test: $test.")
+        } elseif ($validProject) {
+            $methods.Add(@{ project = $project; name = $test })
+            $requirements.Add(@{ project = $project; test = $test; name = $test; case = $false; outcomes = $Entry['outcomes'] })
+        }
+
+        if ($Entry['outcomes'] -isnot [array] -or $Entry['outcomes'].Count -eq 0 -or
+            @($Entry['outcomes'] | Where-Object { $_ -cnotin @('Passed', 'NotExecuted') }).Count -gt 0) {
+            $issues.Add("${label}: outcomes must be a nonempty array of permitted TRX outcomes (Passed, NotExecuted).")
+        }
+
+        return
+    }
+
     $removed = @($Entry['removed'])
 
-    if ($removed.Count -eq 0 -or ($kind -ne 'folded' -and $Entry['removed'] -isnot [string])) {
-        $issues.Add("${label}: removed must name one class or method (an array is allowed for folded).")
+    if ($removed.Count -eq 0 -or ($kind -notin @('folded', 'retired-gate') -and $Entry['removed'] -isnot [string])) {
+        $issues.Add("${label}: removed must name one class or method (an array is allowed for folded or retired-gate).")
     }
 
     foreach ($name in $removed) {
@@ -103,6 +126,20 @@ function Read-LedgerEntry($Entry, [int] $Index) {
     }
 
     switch ($kind) {
+        'retired-gate' {
+            if ($Entry['variables'] -isnot [array] -or @($Entry['variables'] | Where-Object {
+                    $_ -isnot [string] -or $_ -cnotmatch '^[A-Z][A-Z0-9_]*$'
+                }).Count -gt 0) {
+                $issues.Add("${label}: variables must be an array of gating variable names.")
+            }
+
+            if ($Entry['removed'] -is [array]) {
+                $classes = @($removed | ForEach-Object { ([string]$_) -creplace '\.[^.]+$', '' } | Sort-Object -Unique -CaseSensitive)
+
+                if ($classes.Count -ne 1) { $issues.Add("${label}: retired-gate methods must belong to one class.") }
+            }
+        }
+
         { $_ -in @('duplicate', 'covered-cheaper') } {
             if ($Entry['survivor'] -isnot [array] -or $Entry['survivor'].Count -eq 0) {
                 $issues.Add("${label}: survivor must be a nonempty array of references.")

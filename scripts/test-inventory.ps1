@@ -1,7 +1,7 @@
 <#
 Consumes existing runs; never launches tests or takes a lease. RunsDirectory contains sampler
-outputs labelled solo/nightly. ManifestDirectory
-contains the ordinary quarantine check's *.manifest.json discovery files.
+outputs labelled solo/nightly; Workloads names the labels it requires (one run each per host).
+ManifestDirectory contains the ordinary quarantine check's *.manifest.json discovery files.
 ResolutionsPath defaults to the committed source reviews, shaped as JSON: [{project,class,method,category,variables,predicted,reason}].
 Environment permits Passed/NotExecuted only for reviewed platform/build-conditioned methods.
 Optional casePredictions [{name,predicted}] exhaustively pin runtime cases with explicit opt-in gates.
@@ -14,6 +14,7 @@ param(
     [Parameter(Mandatory)][string] $ManifestDirectory,
     [Parameter(Mandatory)][string] $SpecsDirectory,
     [string] $ResolutionsPath = "$PSScriptRoot/test-profile-resolutions.json",
+    [ValidateSet('solo', 'nightly')][string[]] $Workloads = @('solo', 'nightly'),
     [string] $OutputDirectory = "artifacts/test-profile/$([DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss'))-inventory"
 )
 
@@ -84,10 +85,10 @@ foreach ($project in $registry.projects) {
     if ($manifest.project -ne $project -or $manifest.schemaVersion -ne 1) { throw "Invalid discovery manifest: $manifestPath" }
 
     $index = Read-ProfileProject (Join-Path $root $project)
-    $solo = @($runs | Where-Object { $_.summary.workload -eq 'solo' -and $hostName -in $_.summary.hosts.host })
-    $nightly = @($runs | Where-Object { $_.summary.workload -eq 'nightly' -and $hostName -in $_.summary.hosts.host })
+    $solo = @($runs | Where-Object { $_.summary.workload -eq 'solo' -and 'solo' -in $Workloads -and $hostName -in $_.summary.hosts.host })
+    $nightly = @($runs | Where-Object { $_.summary.workload -eq 'nightly' -and 'nightly' -in $Workloads -and $hostName -in $_.summary.hosts.host })
 
-    foreach ($workload in @('solo', 'nightly')) {
+    foreach ($workload in $Workloads) {
         $selected = @(if ($workload -eq 'solo') { $solo } else { $nightly })
         if ($selected.Count -ne 1) { $issues.Add("${hostName}: expected one $workload run; found $($selected.Count).") }
     }
@@ -166,7 +167,7 @@ foreach ($project in $registry.projects) {
 
 $null = New-Item -ItemType Directory -Force -Path $OutputDirectory
 $data = @{
-    schemaVersion = 1; classes = @($inventory.ToArray()); unresolved = @($issues.ToArray())
+    schemaVersion = 1; workloads = $Workloads; classes = @($inventory.ToArray()); unresolved = @($issues.ToArray())
     retireTableReady = $issues.Count -eq 0
     counts = @($inventory | Group-Object project | ForEach-Object {
         @{ project = $_.Name; classes = $_.Count

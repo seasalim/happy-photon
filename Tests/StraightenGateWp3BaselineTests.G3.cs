@@ -8,23 +8,11 @@ public sealed partial class StraightenGateWp3BaselineTests
     public static IEnumerable<object[]> PublicG3Photos() =>
         HorizonDetectionFixtureTests.PublicLabels().Select(row => row.Take(2).ToArray());
 
-    public static IEnumerable<object[]> OwnerG3Photos() =>
-        HorizonDetectionFixtureTests.OwnerLabels().Select(row => row.Take(2).ToArray());
-
     [Theory]
     [MemberData(nameof(PublicG3Photos))]
     public void PublicG3Membership(string name, double label)
     {
         using var pair = StraightenGateFixtures.Load(name);
-
-        MeasureG3Membership(name, pair.Interactive.Pixels, label);
-    }
-
-    [Theory]
-    [MemberData(nameof(OwnerG3Photos))]
-    public void OwnerG3Membership(string name, double label)
-    {
-        using var pair = StraightenGateOwnerFixtures.Load(name);
 
         MeasureG3Membership(name, pair.Interactive.Pixels, label);
     }

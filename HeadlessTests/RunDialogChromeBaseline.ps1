@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('build', 'probe', 'startup', 'headless', 'policy')][string] $Mode = 'probe',
+    [ValidateSet('build', 'probe', 'headless', 'policy')][string] $Mode = 'probe',
     [ValidateRange(1, 600)][int] $TimeoutSeconds = 115
 )
 
@@ -24,9 +24,6 @@ switch ($Mode) {
 
         if ($Mode -eq 'probe') {
             $arguments += @('--filter', 'FullyQualifiedName~DialogChromeBaselineTests')
-        } elseif ($Mode -eq 'startup') {
-            $start.Environment['HAPPY_PHOTON_DIALOG_STARTUP_CAPTURE'] = '1'
-            $arguments += @('--filter', 'FullyQualifiedName~DialogChromeStartupBaselineTests')
         }
     }
 }

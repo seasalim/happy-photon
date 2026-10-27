@@ -97,7 +97,7 @@ try {
         citations = @(@{ path = 'docs/notes.md'; line = 3; keepQualifying = $false })
         runnerWorkloads = @(@{ runner = 'runner.ps1'; workloadReferences = @(@{ line = 23; text = '-Filter Fixture.Retire' }) })
     }
-    $data = @{ classes = $classes; unresolved = @('Unresolved method'); retireTableReady = $false }
+    $data = @{ workloads = @('solo', 'nightly'); classes = $classes; unresolved = @('Unresolved method'); retireTableReady = $false }
     Write-ProfileReport $data $report
     $text = Get-Content -Raw $report
     Assert-Equal ($text -match 'BLOCKED: 1 unresolved') $true 'Unresolved conditions block retire table'
@@ -113,6 +113,11 @@ try {
     $data.unresolved = @()
     Write-ProfileReport $data $report
     Assert-Equal ((Get-Content -Raw $report) -match '\| Fixture.Retire \| GATE \| No approved') $true 'Resolved retirement reason'
+    $data.workloads = @('nightly')
+    Write-ProfileReport $data $report
+    $text = Get-Content -Raw $report
+    Assert-Equal ([regex]::Matches($text, '### Twenty slowest always-on classes \(nightly\)').Count) 2 'Nightly-only inventory keeps its tables'
+    Assert-Equal ($text -match 'classes \(solo\)') $false 'Unrequested workload table absent'
 } finally {
     Remove-Item -LiteralPath $report
 }

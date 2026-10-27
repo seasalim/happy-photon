@@ -153,7 +153,8 @@ public sealed class LightroomCatalogReaderTests
     {
         var path = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory,
             "..", "..", "..", "..", "lrcrop-fixture-source", "trial.lrcat"));
-        if (!File.Exists(path)) return;
+        Assert.SkipWhen(!File.Exists(path), "Archived local catalog fixture is absent.");
+
         Assert.Equal("2C19B3477504620EA526D128654CA4D5C53F07ECC5ED340FFBF12FCAC2ABA311",
             Convert.ToHexString(SHA256.HashData(await File.ReadAllBytesAsync(path))));
         var builder = new SqliteConnectionStringBuilder { DataSource = path, Mode = SqliteOpenMode.ReadOnly };

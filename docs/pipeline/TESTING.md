@@ -228,30 +228,70 @@ runner](../cull-perf.md) owns frozen workload qualification and comparison. Perf
 are JIT-only: early ticks run tier-0 code; `DOTNET_TieredCompilation=0` shows
 steady-state cost.
 
-The table names additional environment variables; exact thresholds and sampling
-protocols live in the listed code. Report-only diagnostics are not acceptance gates.
+The table is the opt-in class index. For **class filter**, run
+`dotnet test HappyPhoton.sln -c Release --no-build --filter FullyQualifiedName~<class>`;
+append `.<method>` to select one gate. Runner paths below are invoked with `pwsh`;
+choose fixture/clarity values from the runner parameters. Set each row's gating variables before
+launching; performance gates also require the full-CPU marker above. Fixture paths,
+output paths and sample-count parameters remain in the named harnesses. Exact thresholds
+and sampling protocols live in code; report-only diagnostics are not acceptance gates.
 
-| Gate / diagnostic | Additional environment | What it measures or gates |
-|---|---|---|
-| Headless `RestoreCrash*Tests` | `HAPPY_PHOTON_RESTORE_FULL_MATRIX=1` (no performance markers needed) | Kill every discovered restore boundary and prove literal whole-root equivalence, including empty directories and cache tiers; run when `CatalogRestoreExecutor`, `CatalogLocationMigrator` or the restore UI path changes. Fingerprint tables: `artifacts/restore-crash/`. |
-| `AgxPerformanceGateTests` | `HAPPY_PHOTON_AGX_PERF_TARGET=srgb` or `display-p3`; `HAPPY_PHOTON_AGX_PERF_REPORT=<path>` | Integrated preview tick ≤150 ms, export and memory |
-| `AgxCrossingPerformanceTests` | None | Fused crossing cost |
-| `PerceptualChromaPerformanceTests` | None | Mixer/chroma cost including pixel-cache traffic; identity has no pixel access |
-| `DcpPerformanceGateTests` | `HAPPY_PHOTON_R5B_PERF=1` | Profile decode, matrix/HueSat, discovery, allocation and export deltas |
-| `RenderNoiseReductionPerformanceTests`, `ChromaNrPreviewPerformanceTests` | None | Full-resolution detail and preview NR latency/memory |
-| `WorkingSpaceColorConversionTests` | `MAGICK_MAP_LIMIT=0` for the disk-backed arm | Exact managed-kernel parity, including the disk-cache commit step |
-| `RenderSharpeningPreviewGateTests` | None | Fit/zoom feedback, determinism and tick cost; rerun full-resolution `RenderNoiseReductionPerformanceTests` when sharpening changes |
-| `AdjacentPreviewPerformanceTests` | None | Warm/cold navigation, overlap, decode uniqueness and retained pairs |
-| `WaveformTickPerformanceTests` | None | Scope-active tick and histogram-only delta |
-| `StraightenGateTimingTests.G5Detector` | `HAPPY_PHOTON_STRAIGHTEN_FIXTURE` selects 6D, HEIC or D300; `Tests/RunStraightenGates.ps1 -Gate G5Detector` | Held preview-base horizon detection ≤50 ms; 3 warm-ups, 11 samples, 5 fresh processes, beside the same-session `G5Before` NL control |
-| Effects arms in `PreviewPipelinePerformanceTests` and `ExportPipelinePerformanceTests` | None | Active preview ≤150 ms; export delta ≤max(5%, 500 ms per full render), memory and cancellation |
-| `CameraRgbCharacterizationPerformanceTests` | `HAPPY_PHOTON_R5A_PERF=1` | Fused import versus direct import latency/retained memory |
-| `RenderStageBreakdownPerformanceTests` | Optional `HAPPY_PHOTON_STAGE_REPORT_DIR` | Report-only stage attribution, allocation and base load |
-| `LocalsFusedBaselineTests` | `HAPPY_PHOTON_LOCALS_FIXTURE=raw`, `standard` or `synthetic`; `LOCALS_SAMPLES` | Local color/geometry/ranges, ≤150 ms tick, export delta ≤max(5%, 500 ms) |
-| Headless `LocalRangeOverlayGateTests` | `HAPPY_PHOTON_LOCALS_FIXTURE=standard` selects HEIC; otherwise RAW. Run both | Requested mask and hue-picker responsiveness |
-| Brush arms of `LocalsFusedBaselineTests` and `LocalRangeOverlayGateTests` | As locals | Production brush: B1/BCap tick ≤150 ms, BCap contended ≤175 ms, export ≤max(5%, 700 ms), mask ≤60 ms, index ≤1 MiB |
-| `PlatformRenderGoldens` | None | Platform-specific frozen render sentinels consumed by tests; not a timed gate |
-| `scripts/startup-perf.ps1` | Isolated catalog/cache roots | Published first-frame/startup milestones; supports cold-copy and runtime-environment comparisons |
+| Class | Runner or invocation | Gating variable | Meaning |
+|---|---|---|---|
+| `AdjacentPreviewPerformanceTests` | class filter | `HAPPY_PHOTON_PERF=1` | Warm/cold navigation, overlap, decode uniqueness and retained pairs. |
+| `AgxCrossingPerformanceTests` | class filter | `HAPPY_PHOTON_PERF=1` | Fused crossing cost. |
+| `AgxLookGateTests` | class filter | `HAPPY_PHOTON_LOOKGATE=1` | RAW preview review pairs; set HAPPY_PHOTON_LOOKGATE_DIR=&lt;directory&gt; for required output. |
+| `AgxPerformanceGateTests` | class filter | `HAPPY_PHOTON_PERF=1` | Integrated preview tick ≤150 ms, export and memory; set HAPPY_PHOTON_AGX_PERF_REPORT=&lt;path&gt;; HAPPY_PHOTON_AGX_PERF_TARGET selects srgb or display-p3. |
+| `CameraRgbCharacterizationPerformanceTests` | class filter | `HAPPY_PHOTON_R5A_PERF=1` | Fused import versus direct import latency and retained memory. |
+| `ChromaNrPreviewPerformanceTests` | class filter | `HAPPY_PHOTON_PERF=1` | Preview chroma NR latency and stage cost. |
+| `ColorMixerLookGateTests` | class filter; see §4.2 | `HAPPY_PHOTON_MIXER_LOOKGATE=1` | ColorChecker band-isolation sheet; HAPPY_PHOTON_MIXER_LOOKGATE_DIR selects output. |
+| `CullPerfOverheadTests` | `scripts/cull-perf.ps1 -NoBuild` | `CULL_PERF_RUN (runner sets it)` | Recording overhead and event loss. |
+| `CullPerfWorkloadTests` | `scripts/cull-perf.ps1 -NoBuild` | `CULL_PERF_RUN (runner sets it)` | Frozen culling workloads and evidence evaluation; see the culling runner. |
+| `DcpAdobeProfileProbeTests` | class filter, timing methods separately | `DCP_PROBE_CONTROL_MS=<parent control>` | Warm 500-profile and four-missing-root probe budgets; DCP_PROBE_GATE_ROOT selects the fixture root. |
+| `DcpPerformanceGateTests` | class filter | `HAPPY_PHOTON_R5B_PERF=1` | Profile decode, matrix/HueSat, discovery, allocation and export deltas. |
+| `ExportPipelinePerformanceTests` | class filter | `HAPPY_PHOTON_PERF=1` | Active export delta ≤max(5%, 500 ms per full render), memory and cancellation; HAPPY_PHOTON_PERF_RAW optionally selects a local RAW path. |
+| `FinishingGateTests` | `Tests/RunFinishingGates.ps1 -Gate <name>` | `HAPPY_PHOTON_FINISHING_GATES=1` | Look tick, export, parity, clipping and review sheets; see the FINISHING candidates and FINISHING G4 frozen clipping controls notes below. |
+| `HealGateTests` | `Tests/RunHealGates.ps1 -Gate <name> -Fixture <fixture>` | `HAPPY_PHOTON_PERF=1` | Heal candidate, render, registration, memory and diagnostic workloads described below. |
+| `HealHistoryControlTests` | `Tests/RunHealWp2Controls.ps1 -Gate G2` | `HEAL_CONTROL=1` | Frozen exposure-history control described below. |
+| `HorizonDetectionFixtureTests` | class filter, select the owner or report method | `HAPPY_PHOTON_STRAIGHTEN_DIR=<local folder>; HAPPY_PHOTON_STRAIGHTEN_REPORT=1 for reports` | Owner accuracy and report-only public/owner cases; labels and manifest must match. |
+| `LensPrescriptionReaderTests` | class filter, select FujiReaderParsesOptInLocalCorpus or FujiReaderParsesOptInXt50Fixture | `HAPPY_PHOTON_RAF_CORPUS=<local folder> or HAPPY_PHOTON_COMPAT=1` | Local RAF prescriptions or the cached X-T50 compatibility fixture (§1.1). |
+| `LoadingLabelDwellTests` | class filter | `LOADING_LABEL_RESULTS=<output directory>` | Frozen Loupe/Develop loading-label dwell workload and positive control. |
+| `LocalsContractPrototypeTests` | class filter, select Candidates_ReportMedianFivePixelCostAt1600Scale | `HAPPY_PHOTON_PERF=1` | Median-of-five local prototype pixel cost at preview scale. |
+| `LocalsFusedBaselineTests` | `Tests/RunLocalsBaseline.ps1 -Gate <name> -Fixture <fixture>` | `HAPPY_PHOTON_PERF=1` | Local color/geometry/ranges and brush: tick ≤150 ms, BCap contended ≤175 ms; frozen bounds below. |
+| `ModernCameraCompatibilityTests` | class filter; see §1.1 | `HAPPY_PHOTON_COMPAT=1, discovery or strict` | Selected modern-camera fixtures exercise complete application paths. |
+| `OpsGateTests` | `Tests/RunOpsGates.ps1 -Gate <name> -Fixture <fixture> -Clarity <clarity>` | `HAPPY_PHOTON_PERF=1` | Clarity/dehaze parity, cost, export, memory, halo and review sheets described below. |
+| `PerceptualChromaLookGateTests` | class filter; see §4.2 | `HAPPY_PHOTON_CHROMA_LOOKGATE=1` | Legacy/perceptual comparison sheets; HAPPY_PHOTON_CHROMA_LOOKGATE_DIR selects output. |
+| `PerceptualChromaPerformanceTests` | class filter | `HAPPY_PHOTON_PERF=1` | Mixer/chroma cost including pixel-cache traffic; identity has no pixel access. |
+| `PreviewPipelinePerformanceTests` | class filter | `HAPPY_PHOTON_PERF=1` | Preview ≤150 ms, histogram, develop-entry, RAW candidate and rendered-thumbnail latency. |
+| `ReferenceComparisonTests` | class filter; see §5.1 for the invocation | `HAPPY_PHOTON_COMPARE=1; OMP_NUM_THREADS=1` | Full comparison composition and optional external reference reports. |
+| `RenderNoiseReductionPerformanceTests` | class filter | `HAPPY_PHOTON_PERF=1` | Full-resolution detail and NR latency/memory. |
+| `RenderSharpeningPreviewGateTests` | class filter | `HAPPY_PHOTON_PERF=1` | Fit/zoom sharpening feedback, determinism and tick cost; also run full-resolution NR gates for sharpening changes. |
+| `RenderStageBreakdownPerformanceTests` | class filter | `HAPPY_PHOTON_PERF=1` | Report-only stage attribution, allocation and base load; HAPPY_PHOTON_STAGE_REPORT_DIR selects output. |
+| `StartupPerfPreparationTests` | `scripts/startup-perf.ps1` | `HAPPY_PHOTON_STARTUP_PERF_ROOT (runner sets it)` | Seed isolated catalog/cache roots for published startup milestones. |
+| `StraightenGateLabelTests` | class filter, select DumpPreviewBases | `HAPPY_PHOTON_STRAIGHTEN_DUMP=1` | Preview-base label inspection images. |
+| `StraightenGateOwnerTests` | class filter, select one workload | `HAPPY_PHOTON_STRAIGHTEN_DIR=<local folder>; HAPPY_PHOTON_STRAIGHTEN_OWNER_DUMP=1 for dumps` | Owner presence, frozen before-control, candidate diagnostics and preview dumps. |
+| `StraightenGateTimingTests` | `Tests/RunStraightenGates.ps1 -Gate G5Detector` | `HAPPY_PHOTON_PERF=1` | Held-base horizon detection ≤50 ms beside G5Before; HAPPY_PHOTON_STRAIGHTEN_FIXTURE selects 6D, HEIC or D300. |
+| `SyncPhotoBatchGateTests` | `Tests/MeasureSyncPhotoGates.ps1 -Gate G3`; add -Transfer for transfer | `HAPPY_PHOTON_PERF=1; HAPPY_PHOTON_SYNC_PHOTO_TRANSFER=1 for transfer` | Frozen batch control and locals transfer; the whole source file is the SyncProfile control. |
+| `SyncPhotoHeaderGateTests` | `Tests/MeasureSyncPhotoGates.ps1 -Gate G4` | `HAPPY_PHOTON_PERF=1` | RAW and HEIC header-read controls. |
+| `SyncProfileGateTests` | class filter, each gate separately | `HAPPY_PHOTON_PERF=1` | Profile header and default-group controls, including frozen source hashes. |
+| `SyncTransferBatchBaselineTests` | class filter, each gate separately | `HAPPY_PHOTON_PERF=1` | Paste/sync/undo model-update latency; HAPPY_PHOTON_SYNC_CONTROL_MS supplies the optional control. |
+| `WaveformTickPerformanceTests` | class filter | `HAPPY_PHOTON_PERF=1` | Scope-active tick and histogram-only delta. |
+| `WideGamutColorimetryTests` | class filter, select ActualRawDefaultAndEditedDivergence_IsReportedWithoutQualityBound | `HAPPY_PHOTON_PERF=1` | Report-only RAW colorimetric divergence without a quality bound. |
+| `WorkingSpaceColorConversionTests` | class filter, select a ManagedKernel method | `HAPPY_PHOTON_PERF=1` | Exact managed-kernel parity; set MAGICK_MAP_LIMIT=0 for the disk-cache commit arm. |
+| `WysiwygCalibrationTests` | class filter | `HAPPY_PHOTON_WYSIWYG=1` | Preview/export calibration; set HAPPY_PHOTON_WYSIWYG_REPORT=&lt;path&gt; for required output. |
+| `BrowseSelectionCommandCostGateTests` | class filter | `HAPPY_PHOTON_PERF=1` | Base-selection toggle and command eligibility cost. |
+| `CompactSliderEntryTests` | class filter, select a Baseline method | `HAPPY_PHOTON_SLIDER_KEYBOARD_BASELINE=1` | Focused-arrow bursts and open-field keyboard baselines. |
+| `CullPerfWindowTests` | `scripts/cull-perf.ps1 -NoBuild` | `CULL_PERF_RUN (runner sets it)` | Qualified Loupe frames. |
+| `LocalRangeOverlayGateTests` | class filter, each gate separately; `Tests/RunLocalsBaseline.ps1 -Gate BrushRequestedOverlay -Fixture <fixture>` for brush | `HAPPY_PHOTON_PERF=1` | Requested masks and hue-picker responsiveness; run RAW and HEIC via HAPPY_PHOTON_LOCALS_FIXTURE. |
+| `LocalsMoveRenderGateTests` | class filter | `HAPPY_PHOTON_PERF=1` | Crowded gradient-move and render reference. |
+| `PasteDialogGateTests` | `Tests/MeasurePasteGates.ps1 -Gate G3`; add -Sync for sync | `HAPPY_PHOTON_PERF=1` | Paste/sync dialog model-update latency. |
+| `ReadmeScreenshotTests` | class filter | `HAPPY_PHOTON_README_SHOTS=1` | README screenshot capture. |
+| `StorageRestoreTests` | class filter, select G1_StorageChooser_ListsThirtyWithoutOpeningArchives | `HAPPY_PHOTON_PERF=1` | Storage chooser over thirty archives without opening them. |
+| Headless `RestoreCrash*Tests` (full-matrix mode of always-on classes) | class filter using `RestoreCrash` | `HAPPY_PHOTON_RESTORE_FULL_MATRIX=1` (no performance markers needed) | Kill every discovered restore boundary and prove literal whole-root equivalence, including empty directories and cache tiers; run when `CatalogRestoreExecutor`, `CatalogLocationMigrator` or the restore UI path changes. Fingerprint tables: `artifacts/restore-crash/`. |
+
+`PlatformRenderGoldens` supplies platform-specific frozen render sentinels consumed by tests.
+`scripts/startup-perf.ps1` measures published first-frame/startup milestones, including
+cold-copy and runtime-environment comparisons, using isolated catalog/cache roots.
 
 `Tests/RunLocalsBaseline.ps1` selects a local gate/fixture/sample count in an isolated
 process. Local correctness is covered by `RenderLocalsTests`, `LocalPersistenceTests`,

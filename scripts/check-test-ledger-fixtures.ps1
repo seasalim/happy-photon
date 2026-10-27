@@ -31,7 +31,10 @@ function New-LedgerFixture {
         @{ kind = 'folded'; removed = 'Fixture.Tests.FoldThree';
             survivor = @{ project = $headless; test = 'Fixture.Tests.FoldedExisting' }; result = 'existing' },
         @{ kind = 'duplicate'; removed = 'Fixture.Shared.Identical';
-            survivor = @(@{ project = $unit; test = 'Fixture.Shared.Identical' }) }
+            survivor = @(@{ project = $unit; test = 'Fixture.Shared.Identical' }) },
+        @{ kind = 'retired-gate'; removed = 'Fixture.RetiredGate'; variables = @('FIXTURE_GATE') },
+        @{ kind = 'retired-gate'; removed = @('Fixture.Mixed.GateOne', 'Fixture.Mixed.GateTwo'); variables = @('FIXTURE_GATE') },
+        @{ kind = 'corrected-outcome'; test = 'Fixture.Tests.Optional'; outcomes = @('NotExecuted', 'Passed'); reason = 'Optional local fixture' }
     )
 
     foreach ($entry in $entries) {
@@ -45,7 +48,7 @@ function New-LedgerFixture {
     $rows = @{}
 
     foreach ($project in @($unit, $headless, $interop)) {
-        $names = if ($project -eq $headless) { @('Keep', 'Render', 'Theory', 'FoldedNew', 'FoldedExisting') } else { @('Keep') }
+        $names = if ($project -eq $headless) { @('Keep', 'Render', 'Theory', 'FoldedNew', 'FoldedExisting', 'Optional') } else { @('Keep') }
         $tests = @(foreach ($name in $names) {
             @{ Class = 'Fixture.Tests'; Method = $name; DisplayName = "Fixture.Tests.$name"; Traits = @{} }
         })
@@ -79,6 +82,7 @@ public partial class Tests
     public void Theory(int value) {}
     public void FoldedNew() {}
     public void FoldedExisting() {}
+    public void Optional() {}
 }'
             'HeadlessTests/Extra.cs' = ''
             'Tests/Cases.cs' = 'namespace Fixture { public class Tests { public void Keep() {} } public class Shared { public void Identical() {} } }'
@@ -349,8 +353,60 @@ try {
     Assert-LedgerFixture 'shard-duplicate' Results {
         param($m)
         $m.sharded = $true
-        $m.rows[$headless] += $m.rows[$headless][1]
-    } @('Fixture.Tests.Render', 'repeated across shard TRX')
+        $m.rows[$headless] += $m.rows[$headless][0]
+    } @('Fixture.Tests.Keep', 'repeated across shard TRX')
+    Assert-LedgerFixture 'retired-class-declared' Policy {
+        param($m)
+        $m.sources['HeadlessTests/Extra.cs'] = 'namespace Fixture; public class RetiredGate {}'
+    } @('Fixture.RetiredGate', 'still declared')
+    Assert-LedgerFixture 'retired-method-declared' Policy {
+        param($m)
+        $m.sources['HeadlessTests/Extra.cs'] = 'namespace Fixture; public class Mixed { public void GateOne() {} }'
+    } @('Fixture.Mixed.GateOne', 'still declared')
+    Assert-LedgerFixture 'retired-cross-class-array' Policy {
+        param($m)
+        $m.ledger.entries[9].removed = @('Fixture.Mixed.GateOne', 'Fixture.Other.GateTwo')
+    } @('retired-gate methods must belong to one class')
+    Assert-LedgerFixture 'retired-invalid-variables' Policy {
+        param($m)
+        $m.ledger.entries[8].variables = @('bad variable')
+    } @('variables must be an array')
+    Assert-LedgerFixture 'corrected-method-missing' Policy {
+        param($m)
+        $m.ledger.entries[10].test = 'Fixture.Tests.Missing'
+    } @('Fixture.Tests.Missing', 'not declared')
+    Assert-LedgerFixture 'corrected-class-is-not-method' Policy {
+        param($m)
+        $m.ledger.entries[10].test = 'Fixture.Tests'
+    } @('Fixture.Tests', 'not declared')
+    Assert-LedgerFixture 'retired-case-distinct-classes' Policy {
+        param($m)
+        $m.ledger.entries[9].removed = @('Fixture.Mixed.GateOne', 'Fixture.mixed.GateTwo')
+    } @('retired-gate methods must belong to one class')
+    Assert-LedgerFixture 'corrected-has-removal' Policy {
+        param($m)
+        $m.ledger.entries[10].removed = 'Fixture.Tests.Old'
+    } @('corrected-outcome must not have removed')
+    Assert-LedgerFixture 'corrected-invalid-outcomes' Policy {
+        param($m)
+        $m.ledger.entries[10].outcomes = @('Unknown')
+    } @('permitted TRX outcomes')
+    Assert-LedgerFixture 'corrected-skipped' Results {
+        param($m)
+        ($m.rows[$headless] | Where-Object method -EQ 'Fixture.Tests.Optional').outcome = 'NotExecuted'
+    }
+    Assert-LedgerFixture 'corrected-disallowed-outcome' Results {
+        param($m)
+        ($m.rows[$headless] | Where-Object method -EQ 'Fixture.Tests.Optional').outcome = 'Failed'
+    } @('Fixture.Tests.Optional', 'not NotExecuted or Passed')
+    Assert-LedgerFixture 'corrected-missing-trx' Results {
+        param($m)
+        $m.rows[$headless] = @($m.rows[$headless] | Where-Object method -NE 'Fixture.Tests.Optional')
+    } @('Fixture.Tests.Optional', 'missing from TRX')
+    Assert-LedgerFixture 'corrected-not-discovered' Results {
+        param($m)
+        $m.manifests[$headless].tests = @($m.manifests[$headless].tests | Where-Object Method -NE 'Optional')
+    } @('Fixture.Tests.Optional', 'not discovered')
     Write-Host "Ledger fixtures passed ($fixtureCount scenarios)."
 } finally {
     $resolved = [IO.Path]::GetFullPath($fixtureRoot)

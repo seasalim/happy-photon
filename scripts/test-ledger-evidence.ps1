@@ -17,6 +17,7 @@ function Get-LedgerDeclarations([string] $Project, [string[]] $Targets) {
     $symbols = @($evaluated.Properties.DefineConstants -split ';' | Where-Object { $_ })
     $options = [Microsoft.CodeAnalysis.CSharp.CSharpParseOptions]::Default.WithPreprocessorSymbols([string[]]$symbols)
     $names = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    $declaredMethods = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
 
     # Preserve every spelling: C# identifiers and the candidate regex are case-sensitive.
     $simpleNames = @($Targets | ForEach-Object { [regex]::Escape(($_ -split '[.+]')[-1]) })
@@ -35,20 +36,22 @@ function Get-LedgerDeclarations([string] $Project, [string[]] $Targets) {
             $cached = @{
                 source = $source
                 symbols = $evaluated.Properties.DefineConstants
-                names = Get-LedgerFileDeclarations $source $options
+                declarations = Get-LedgerFileDeclarations $source $options
             }
             $SourceCache.files[$item.FullPath] = $cached
         }
 
-        $names.UnionWith($cached.names)
+        $names.UnionWith($cached.declarations.names)
+        $declaredMethods.UnionWith($cached.declarations.methods)
     }
 
-    return ,$names
+    return @{ names = $names; methods = $declaredMethods }
 }
 
 function Get-LedgerFileDeclarations([string] $Source, $Options) {
     $tree = [Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree]::ParseText($Source, $Options)
     $names = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    $declaredMethods = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
 
     $containers = [Collections.Generic.Queue[object]]::new()
     $containers.Enqueue($tree.GetRoot())
@@ -79,11 +82,13 @@ function Get-LedgerFileDeclarations([string] $Source, $Options) {
         $null = $names.Add($class)
 
         foreach ($member in $type.Members | Where-Object { $_.GetType().Name -eq 'MethodDeclarationSyntax' }) {
-            $null = $names.Add("$class.$($member.Identifier.ValueText)")
+            $name = "$class.$($member.Identifier.ValueText)"
+            $null = $names.Add($name)
+            $null = $declaredMethods.Add($name)
         }
     }
 
-    return ,$names
+    return @{ names = $names; methods = $declaredMethods }
 }
 
 function Test-LedgerSources {
@@ -101,14 +106,14 @@ function Test-LedgerSources {
 
     foreach ($removal in $removals) {
         if (-not $removal.case -and $declarations.ContainsKey($removal.project) -and
-            $declarations[$removal.project].Contains($removal.name.Replace('+', '.'))) {
+            $declarations[$removal.project].names.Contains($removal.name.Replace('+', '.'))) {
             $issues.Add("Removed name still declared in $($removal.project): $($removal.name).")
         }
     }
 
     foreach ($method in $methods) {
-        if ($declarations.ContainsKey($method.project) -and -not $declarations[$method.project].Contains($method.name.Replace('+', '.'))) {
-            $issues.Add("Trimmed method not declared in $($method.project): $($method.name).")
+        if ($declarations.ContainsKey($method.project) -and -not $declarations[$method.project].methods.Contains($method.name.Replace('+', '.'))) {
+            $issues.Add("Ledger method not declared in $($method.project): $($method.name).")
         }
     }
 }
@@ -233,8 +238,10 @@ function Test-LedgerResults {
             $issues.Add("Ledger test missing from TRX: $label.")
         }
 
-        foreach ($result in $matches | Where-Object outcome -CNE 'Passed') {
-            $issues.Add("Ledger test not Passed: $($result.name) in $project ($($result.outcome)).")
+        $outcomes = if ($reference.ContainsKey('outcomes')) { @($reference.outcomes) } else { @('Passed') }
+
+        foreach ($result in $matches | Where-Object { $_.outcome -cnotin $outcomes }) {
+            $issues.Add("Ledger test not $($outcomes -join ' or '): $($result.name) in $project ($($result.outcome)).")
         }
     }
 
