@@ -57,8 +57,7 @@ public sealed class MoveBackupCleanupTests
             RedirectStandardOutput = true, RedirectStandardError = true
         };
 
-        foreach (var argument in new[] { typeof(MoveBackupCleanupTests).Assembly.Location, "-method",
-                     "HappyPhoton.Tests.MoveBackupCleanupTests.Child", "-showLiveOutput", "-noColor" })
+        foreach (var argument in new[] { typeof(MoveBackupCleanupTests).Assembly.Location, "--move-backup-cleanup-child" })
             start.ArgumentList.Add(argument);
 
         start.Environment["HP_MOVE_CLEANUP_CHILD"] = root;
@@ -90,11 +89,11 @@ public sealed class MoveBackupCleanupTests
         Assert.NotEqual(0, process.ExitCode);
     }
 
-    [Fact]
-    public async Task Child()
+    internal static async Task RunChildAsync()
     {
         var root = Environment.GetEnvironmentVariable("HP_MOVE_CLEANUP_CHILD");
-        Assert.SkipWhen(root == null, "Only the termination parent invokes this test.");
+        Assert.NotNull(root);
+
         var removedDirectories = int.Parse(Environment.GetEnvironmentVariable("HP_MOVE_CLEANUP_DIRECTORIES")!);
         var rollback = bool.Parse(Environment.GetEnvironmentVariable("HP_MOVE_CLEANUP_ROLLBACK")!);
         var service = RestoreTestSupport.Service(root!);

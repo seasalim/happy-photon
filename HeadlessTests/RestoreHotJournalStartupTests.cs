@@ -114,8 +114,7 @@ public sealed class RestoreHotJournalStartupTests(BackupCatalogFixtures fixtures
             UseShellExecute = false, CreateNoWindow = true,
             RedirectStandardOutput = true, RedirectStandardError = true
         };
-        foreach (var argument in new[] { typeof(RestoreHotJournalStartupTests).Assembly.Location, "-method",
-                     "HappyPhoton.Tests.RestoreHotJournalStartupTests.Child", "-showLiveOutput", "-noColor" })
+        foreach (var argument in new[] { typeof(RestoreHotJournalStartupTests).Assembly.Location, "--restore-hot-journal-startup-child" })
             start.ArgumentList.Add(argument);
         start.Environment["HP_STARTUP_HOT_CHILD"] = database;
         using var process = Process.Start(start)!;
@@ -136,11 +135,11 @@ public sealed class RestoreHotJournalStartupTests(BackupCatalogFixtures fixtures
         Assert.NotEqual(0, process.ExitCode);
     }
 
-    [Fact]
-    public void Child()
+    internal static void RunChild()
     {
         var database = Environment.GetEnvironmentVariable("HP_STARTUP_HOT_CHILD");
-        Assert.SkipWhen(database == null, "Only the termination parent invokes this test.");
+        Assert.NotNull(database);
+
         using var connection = CatalogService.OpenBackupCopy(database!, SqliteOpenMode.ReadWrite);
         using var command = connection.CreateCommand();
         command.CommandText = """
@@ -150,6 +149,7 @@ public sealed class RestoreHotJournalStartupTests(BackupCatalogFixtures fixtures
             UPDATE images SET file_name=printf('%0500d', id) WHERE id <= 100;
             """;
         command.ExecuteNonQuery();
+
         using var signal = new StreamWriter(Console.OpenStandardOutput()) { AutoFlush = true };
         signal.WriteLine("HOT_JOURNAL_READY");
         using var wait = new ManualResetEventSlim();

@@ -288,6 +288,7 @@ and sampling protocols live in code; report-only diagnostics are not acceptance 
 | `ReadmeScreenshotTests` | class filter | `HAPPY_PHOTON_README_SHOTS=1` | README screenshot capture. |
 | `StorageRestoreTests` | class filter, select G1_StorageChooser_ListsThirtyWithoutOpeningArchives | `HAPPY_PHOTON_PERF=1` | Storage chooser over thirty archives without opening them. |
 | Headless `RestoreCrash*Tests` (full-matrix mode of always-on classes) | class filter using `RestoreCrash` | `HAPPY_PHOTON_RESTORE_FULL_MATRIX=1` (no performance markers needed) | Kill every discovered restore boundary and prove literal whole-root equivalence, including empty directories and cache tiers; run when `CatalogRestoreExecutor`, `CatalogLocationMigrator` or the restore UI path changes. Fingerprint tables: `artifacts/restore-crash/`. |
+| Unit `BackupCrashTests`, `MoveBackupCrash*Tests` (full-matrix mode of always-on classes) | class filter using `BackupCrash` | `HAPPY_PHOTON_BACKUP_FULL_MATRIX=1` (no performance markers needed) | Kill every discovered backup, preset-write and move point and prove literal whole-root equivalence, including backup files and empty directories; run when `CatalogBackupService`, `PresetService` writes or the move path of `CatalogLocationMigrator` changes. Fingerprint tables: `artifacts/kill-points/`. |
 
 `PlatformRenderGoldens` supplies platform-specific frozen render sentinels consumed by tests.
 `scripts/startup-perf.ps1` measures published first-frame/startup milestones, including

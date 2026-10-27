@@ -48,7 +48,7 @@ public sealed class OpenMpRuntimeTests
         // Run the compiled xUnit executable directly: preserve this host's CPU budget,
         // and avoid a nested build/restore choosing a different package flavor.
         foreach (var argument in new[] { typeof(OpenMpRuntimeTests).Assembly.Location,
-                     "-method", "HappyPhoton.Tests.OpenMpRuntimeTests.NativeLimits_Child" })
+                     "--openmp-child" })
             start.ArgumentList.Add(argument);
         start.Environment["HAPPY_PHOTON_OPENMP_CHILD"] = first;
         start.Environment["HAPPY_PHOTON_EXPECTED_OMP"] = string.IsNullOrWhiteSpace(omp)
@@ -78,13 +78,14 @@ public sealed class OpenMpRuntimeTests
         Assert.Contains("OPENMP_LIMITS_VERIFIED", output);
     }
 
-    [Fact]
-    public void NativeLimits_Child()
+    internal static void RunChild()
     {
         var first = Environment.GetEnvironmentVariable("HAPPY_PHOTON_OPENMP_CHILD");
-        Assert.SkipWhen(first == null, "Runs only in an isolated child process.");
+        Assert.NotNull(first);
+
         AssertImageLibraryNotLoaded("Magick.Native");
         AssertImageLibraryNotLoaded(OperatingSystem.IsWindows() ? "raw_r" : "libraw");
+
         if (first == "magick")
         {
             LoadMagick();
@@ -97,11 +98,13 @@ public sealed class OpenMpRuntimeTests
             AssertImageLibraryNotLoaded("Magick.Native");
             LoadMagick();
         }
+
         var expected = int.Parse(Environment.GetEnvironmentVariable("HAPPY_PHOTON_EXPECTED_OMP")!);
         var runtime = OperatingSystem.IsWindows() ? "vcomp140.dll" : "libgomp.so.1";
         var module = Process.GetCurrentProcess().Modules.Cast<ProcessModule>()
             .Single(m => Path.GetFileName(m.FileName).StartsWith(runtime, StringComparison.OrdinalIgnoreCase));
         var handle = NativeLibrary.Load(module.FileName);
+
         try
         {
             var maximum = Marshal.GetDelegateForFunctionPointer<GetMaxThreads>(
@@ -114,6 +117,7 @@ public sealed class OpenMpRuntimeTests
                 Assert.StartsWith(AppContext.BaseDirectory, module.FileName, StringComparison.OrdinalIgnoreCase);
         }
         finally { NativeLibrary.Free(handle); }
+
         Console.WriteLine("OPENMP_LIMITS_VERIFIED");
     }
 

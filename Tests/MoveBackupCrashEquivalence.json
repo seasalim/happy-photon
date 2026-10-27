@@ -1,0 +1,32 @@
+{
+  "ordinary": {
+    "kept": [
+      "phase:Prepared",
+      "before:copy:archive-0.manifest.json",
+      "after:copy:archive-0.manifest.json",
+      "after:copy:archive-0.zip",
+      "after:copy:archive-1.manifest.json",
+      "after:copy:archive-1.zip",
+      "after:copy:archive-2.manifest.json",
+      "after:copy:archive-2.zip",
+      "after:copy:archive-3.manifest.json",
+      "after:copy:archive-3.zip",
+      "after:copy:archive-4.zip",
+      "after:copy:damaged.zip",
+      "phase:CatalogCopied",
+      "phase:Verified",
+      "phase:PointerFlipped"
+    ],
+    "pruned": {
+      "before:copy:archive-0.zip": "after:copy:archive-0.manifest.json",
+      "before:copy:archive-1.manifest.json": "after:copy:archive-0.zip",
+      "before:copy:archive-1.zip": "after:copy:archive-1.manifest.json",
+      "before:copy:archive-2.manifest.json": "after:copy:archive-1.zip",
+      "before:copy:archive-2.zip": "after:copy:archive-2.manifest.json",
+      "before:copy:archive-3.manifest.json": "after:copy:archive-2.zip",
+      "before:copy:archive-3.zip": "after:copy:archive-3.manifest.json",
+      "before:copy:archive-4.zip": "after:copy:archive-3.zip",
+      "before:copy:damaged.zip": "after:copy:archive-4.zip"
+    }
+  }
+}

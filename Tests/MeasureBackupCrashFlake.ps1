@@ -7,10 +7,12 @@ param(
 )
 
 # Caller holds the workflow host's exclusive measure lock. Build Release first.
-# HAPPY_PHOTON_PERF is cleared: RealTermination uses its everyday 26-case fixture.
+# HAPPY_PHOTON_PERF is cleared: RealTermination uses its everyday fixture.
 # The first sample probes whether the requested count fits the remaining budget.
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
+$map = Get-Content -Raw (Join-Path $PSScriptRoot 'BackupCrashEquivalence.json') | ConvertFrom-Json
+$caseCount = @($map.ordinary.kept).Count
 $results = Join-Path $PSScriptRoot "TestResults/backup-crash-$([Guid]::NewGuid().ToString('N'))"
 $null = New-Item -ItemType Directory -Path $results
 $timer = [Diagnostics.Stopwatch]::StartNew()
@@ -69,7 +71,7 @@ try {
         }
     }
 
-    Write-Output "workload=RealTermination cases=26 cpu_load=$CpuLoad workers=$($workers.Count) priority=BelowNormal budget_s=$BudgetSeconds results=$results"
+    Write-Output "workload=RealTermination cases=$caseCount cpu_load=$CpuLoad workers=$($workers.Count) priority=BelowNormal budget_s=$BudgetSeconds results=$results"
 
     for ($run = 1; $run -le $Runs; $run++) {
         $remaining = $BudgetSeconds - $timer.Elapsed.TotalSeconds
@@ -123,7 +125,7 @@ try {
             Write-Output "RESULT_READ_FAILURE run=$run error=$_"
         }
 
-        $valid = [int]$assembly.total -eq 26 -and [int]$assembly.skipped -eq 0
+        $valid = [int]$assembly.total -eq $caseCount -and [int]$assembly.skipped -eq 0
         $failure = $process.ExitCode -ne 0 -or -not $valid
         Write-Output "run=$run elapsed_ms=$($sample.Elapsed.TotalMilliseconds.ToString('F3')) exit=$($process.ExitCode) total=$($assembly.total) failed=$($assembly.failed) skipped=$($assembly.skipped)"
 

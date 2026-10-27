@@ -1,0 +1,36 @@
+{
+  "ordinary": {
+    "kept": [
+      "before:sweep",
+      "after:sweep",
+      "before:preset-write",
+      "after:preset-write",
+      "after:preset-rename",
+      "preset-open",
+      "after:zip",
+      "after:sidecar",
+      "after:publish-zip",
+      "after:publish-sidecar",
+      "after:snapshot-delete",
+      "list",
+      "after:prune-sidecar",
+      "after:prune-zip",
+      "after:outcome"
+    ],
+    "pruned": {
+      "before:snapshot": "after:sweep",
+      "before:preset-rename": "after:preset-write",
+      "before:preset-delete": "after:preset-rename",
+      "after:preset-delete": "after:preset-rename",
+      "after:snapshot": "after:preset-rename",
+      "before:zip": "preset-open",
+      "before:sidecar": "after:zip",
+      "before:publish-zip": "after:sidecar",
+      "before:publish-sidecar": "after:publish-zip",
+      "before:snapshot-delete": "after:publish-sidecar",
+      "before:prune-sidecar": "after:snapshot-delete",
+      "before:prune-zip": "after:prune-sidecar",
+      "before:outcome": "after:prune-zip"
+    }
+  }
+}

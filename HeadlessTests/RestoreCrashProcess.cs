@@ -45,8 +45,8 @@ internal static class RestoreCrashProcess
         using var timeout = new CancellationTokenSource(TestWaits.Condition);
         var signalled = false;
         var lines = new List<string>();
-        var snapshots = new Dictionary<string, RestoreCrashFingerprint>(StringComparer.Ordinal);
-        RestoreCrashFingerprint? paused = null;
+        var snapshots = new Dictionary<string, KillPointFingerprint>(StringComparer.Ordinal);
+        KillPointFingerprint? paused = null;
 
         try
         {
@@ -58,7 +58,7 @@ internal static class RestoreCrashProcess
                 {
                     var boundary = line["RESTORE_PAUSE:".Length..];
                     Assert.Contains(boundary, pauses);
-                    snapshots.Add(boundary, RestoreCrashFingerprint.Read(root));
+                    snapshots.Add(boundary, KillPointFingerprint.Read(root));
                     await process.StandardInput.WriteLineAsync("CONTINUE");
                     await process.StandardInput.FlushAsync();
                     continue;
@@ -67,7 +67,7 @@ internal static class RestoreCrashProcess
                 if (line != "RESTORE_KILL_READY") continue;
 
                 signalled = true;
-                if (full) paused = RestoreCrashFingerprint.Read(root);
+                if (full) paused = KillPointFingerprint.Read(root);
                 break;
             }
         }
@@ -85,7 +85,7 @@ internal static class RestoreCrashProcess
         Assert.NotEqual(0, process.ExitCode);
         if (!full) return;
 
-        var killed = RestoreCrashFingerprint.Read(root);
+        var killed = KillPointFingerprint.Read(root);
         var previous = predecessor == null ? null : snapshots.GetValueOrDefault(predecessor);
         var kept = equivalent == null ? null : snapshots.GetValueOrDefault(equivalent);
         var report = new

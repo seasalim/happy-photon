@@ -19,8 +19,7 @@ public sealed class RestoreHotJournalTests(BackupCatalogFixtures fixtures, ITest
             UseShellExecute = false, CreateNoWindow = true,
             RedirectStandardOutput = true, RedirectStandardError = true
         };
-        foreach (var argument in new[] { typeof(RestoreHotJournalTests).Assembly.Location, "-method",
-                     "HappyPhoton.Tests.RestoreHotJournalTests.Child", "-showLiveOutput", "-noColor" })
+        foreach (var argument in new[] { typeof(RestoreHotJournalTests).Assembly.Location, "--restore-hot-journal-child" })
             start.ArgumentList.Add(argument);
         start.Environment["HP_RESTORE_HOT_CHILD"] = f.Locations.DatabasePath;
         using var process = Process.Start(start)!;
@@ -74,11 +73,11 @@ public sealed class RestoreHotJournalTests(BackupCatalogFixtures fixtures, ITest
         Assert.Equal(recoveredDatabaseHash, CatalogBackupService.Hash(f.Locations.DatabasePath));
     }
 
-    [Fact]
-    public void Child()
+    internal static void RunChild()
     {
         var database = Environment.GetEnvironmentVariable("HP_RESTORE_HOT_CHILD");
-        Assert.SkipWhen(database == null, "Only the termination parent invokes this test.");
+        Assert.NotNull(database);
+
         using var connection = CatalogService.OpenBackupCopy(database!, SqliteOpenMode.ReadWrite);
         using var command = connection.CreateCommand();
         command.CommandText = """
@@ -88,6 +87,7 @@ public sealed class RestoreHotJournalTests(BackupCatalogFixtures fixtures, ITest
             UPDATE images SET file_name=printf('%0500d', id);
             """;
         command.ExecuteNonQuery();
+
         using var signal = new StreamWriter(Console.OpenStandardOutput()) { AutoFlush = true };
         signal.WriteLine("HOT_JOURNAL_READY");
         using var wait = new ManualResetEventSlim();

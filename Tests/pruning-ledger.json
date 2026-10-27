@@ -3285,6 +3285,73 @@
       "reference": "TESTSUITE-WP5",
       "wp": "TESTSUITE-WP5",
       "date": "2026-10-27"
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers",
+      "reference": "Tests/BackupCrashEquivalence.json: literal whole-root, same-run, kill-invariant fingerprints prove each pruned point equals its earlier kept point. Every row validates runtime discovery; full-matrix mode proves every pair. The map applies only to the ordinary Windows fixture; other hosts and HAPPY_PHOTON_PERF kill every point through the kept rows.",
+      "wp": "TESTSUITE-WP8",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers",
+      "removedCases": [
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"before:snapshot\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"before:preset-rename\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"before:preset-delete\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"after:preset-delete\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"after:snapshot\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"before:zip\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"before:sidecar\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"before:publish-zip\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"before:publish-sidecar\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"before:snapshot-delete\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"before:prune-sidecar\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"before:prune-zip\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"before:outcome\")"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"before:sweep\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"after:sweep\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"before:preset-write\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"after:preset-write\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"after:preset-rename\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"preset-open\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"after:zip\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"after:sidecar\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"after:publish-zip\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"after:publish-sidecar\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"after:snapshot-delete\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"list\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"after:prune-sidecar\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"after:prune-zip\")",
+        "HappyPhoton.Tests.BackupCrashTests.RealTermination_PreservesLiveCatalogAndCommitMarkers(point: \"after:outcome\")"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.MoveBackupCrashTests.KilledMover_PreservesSourceBeforeFlip_RecoversVerifiedDestination",
+      "reference": "Tests/MoveBackupCrashEquivalence.json: literal whole-root, same-run, kill-invariant fingerprints prove each pruned point equals its earlier kept point. Every row validates runtime discovery; full-matrix mode proves every pair. The map applies only to the ordinary Windows fixture; other hosts and HAPPY_PHOTON_PERF kill every point through the kept rows. Kept rows are split by map index modulo four; keptCases names the rows retained in the original class, with the other rows in MoveBackupCrashPart2Tests, MoveBackupCrashPart3Tests and MoveBackupCrashPart4Tests.",
+      "wp": "TESTSUITE-WP8",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.MoveBackupCrashTests.KilledMover_PreservesSourceBeforeFlip_RecoversVerifiedDestination",
+      "removedCases": [
+        "HappyPhoton.Tests.MoveBackupCrashTests.KilledMover_PreservesSourceBeforeFlip_RecoversVerifiedDestination(point: \"before:copy:archive-0.zip\")",
+        "HappyPhoton.Tests.MoveBackupCrashTests.KilledMover_PreservesSourceBeforeFlip_RecoversVerifiedDestination(point: \"before:copy:archive-1.manifest.json\")",
+        "HappyPhoton.Tests.MoveBackupCrashTests.KilledMover_PreservesSourceBeforeFlip_RecoversVerifiedDestination(point: \"before:copy:archive-1.zip\")",
+        "HappyPhoton.Tests.MoveBackupCrashTests.KilledMover_PreservesSourceBeforeFlip_RecoversVerifiedDestination(point: \"before:copy:archive-2.manifest.json\")",
+        "HappyPhoton.Tests.MoveBackupCrashTests.KilledMover_PreservesSourceBeforeFlip_RecoversVerifiedDestination(point: \"before:copy:archive-2.zip\")",
+        "HappyPhoton.Tests.MoveBackupCrashTests.KilledMover_PreservesSourceBeforeFlip_RecoversVerifiedDestination(point: \"before:copy:archive-3.manifest.json\")",
+        "HappyPhoton.Tests.MoveBackupCrashTests.KilledMover_PreservesSourceBeforeFlip_RecoversVerifiedDestination(point: \"before:copy:archive-3.zip\")",
+        "HappyPhoton.Tests.MoveBackupCrashTests.KilledMover_PreservesSourceBeforeFlip_RecoversVerifiedDestination(point: \"before:copy:archive-4.zip\")",
+        "HappyPhoton.Tests.MoveBackupCrashTests.KilledMover_PreservesSourceBeforeFlip_RecoversVerifiedDestination(point: \"before:copy:damaged.zip\")"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.MoveBackupCrashTests.KilledMover_PreservesSourceBeforeFlip_RecoversVerifiedDestination(point: \"phase:Prepared\")",
+        "HappyPhoton.Tests.MoveBackupCrashTests.KilledMover_PreservesSourceBeforeFlip_RecoversVerifiedDestination(point: \"after:copy:archive-1.manifest.json\")",
+        "HappyPhoton.Tests.MoveBackupCrashTests.KilledMover_PreservesSourceBeforeFlip_RecoversVerifiedDestination(point: \"after:copy:archive-3.manifest.json\")",
+        "HappyPhoton.Tests.MoveBackupCrashTests.KilledMover_PreservesSourceBeforeFlip_RecoversVerifiedDestination(point: \"phase:CatalogCopied\")"
+      ]
     }
   ]
 }
