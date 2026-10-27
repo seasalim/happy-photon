@@ -10,8 +10,49 @@ $null = New-Item -ItemType Directory -Path $fixtureRoot
 $stepSummary = $env:GITHUB_STEP_SUMMARY
 $env:GITHUB_STEP_SUMMARY = Join-Path $fixtureRoot "summary.md"
 
+function Split-HeadlessFixture([string] $Directory, [string] $Scenario) {
+    $path = Join-Path $Directory "HappyPhoton.Headless.Tests.trx"
+    [xml]$source = Get-Content -Raw -LiteralPath $path
+
+    foreach ($index in 1..2) {
+        $trx = $source.Clone()
+        $namespace = [Xml.XmlNamespaceManager]::new($trx.NameTable)
+        $namespace.AddNamespace("t", "http://microsoft.com/schemas/VisualStudio/TeamTest/2010")
+
+        foreach ($node in @($trx.SelectNodes("//t:UnitTestResult", $namespace))) {
+            $extra = $node.GetAttribute("testName").StartsWith("Other.Headless.Extra.")
+            $keep = if ($index -eq 1) { -not $extra } else { $extra }
+
+            if ($Scenario -like "*shards-duplicate" -and $extra) { $keep = $true }
+            if ($Scenario -eq "shards-missing" -and $extra) { $keep = $false }
+            if ($keep) { continue }
+
+            $id = $node.GetAttribute("testId")
+            $definition = $trx.SelectSingleNode("//t:UnitTest[@id='$id']", $namespace)
+            $null = $definition.ParentNode.RemoveChild($definition)
+            $null = $node.ParentNode.RemoveChild($node)
+        }
+
+        $trx.Save((Join-Path $Directory "headless-$index.trx"))
+    }
+
+    Remove-Item -LiteralPath $path
+}
+
 function Write-Fixture([string] $Scenario) {
     $projects = @($seed | ConvertFrom-Json)
+
+    if ($Scenario -like "*shards-*") {
+        foreach ($method in @("First", "Second")) {
+            $projects[1].tests += [pscustomobject]@{
+                Class = "Other.Headless.Extra"
+                Method = $method
+                DisplayName = "Other.Headless.Extra.$method"
+                Traits = @{}
+            }
+        }
+    }
+
     $directory = Join-Path $fixtureRoot $Scenario
     $null = New-Item -ItemType Directory -Path $directory
     $entry = [pscustomobject]@{
@@ -39,7 +80,7 @@ function Write-Fixture([string] $Scenario) {
         $definitions = @()
         $results = @()
         foreach ($case in $project.tests) {
-            if ($case.Method -eq "Flaky" -and $Scenario -notin @("executed-quarantine", "nightly-pass", "nightly-skipped")) { continue }
+            if ($case.Method -eq "Flaky" -and $Scenario -notin @("executed-quarantine", "nightly-pass", "nightly-skipped", "nightly-shards-pass", "nightly-shards-duplicate")) { continue }
             if ($Scenario -eq "missing-stable" -and $case.Method -eq "Stable" -and $project -eq $projects[0]) { continue }
             $id = [Guid]::NewGuid().ToString()
             $name = $case.DisplayName
@@ -51,6 +92,11 @@ function Write-Fixture([string] $Scenario) {
         $trx = "<TestRun xmlns='http://microsoft.com/schemas/VisualStudio/TeamTest/2010'><TestDefinitions>$($definitions -join '')</TestDefinitions><Results>$($results -join '')</Results><ResultSummary><Counters error='0' timeout='0' aborted='0' disconnected='0' notRunnable='0' /></ResultSummary></TestRun>"
         $trx | Set-Content (Join-Path $directory "$($project.assembly).trx")
     }
+
+    if ($Scenario -like "*shards-*") {
+        Split-HeadlessFixture $directory $Scenario
+    }
+
     if ($Scenario -eq "duplicate-trx") {
         Copy-Item (Join-Path $directory "HappyPhoton.Tests.trx") (Join-Path $directory "duplicate.trx")
     }
@@ -70,12 +116,25 @@ function Assert-Fixture([string] $Scenario, [string] $Mode, [string] $ExpectedEr
     if ($ExpectedError) {
         if ($message -notlike "$ExpectedError*") { throw "Fixture $Scenario expected '$ExpectedError', got '$message'." }
     } elseif ($message) { throw "Fixture $Scenario failed: $message" }
+
+    if ($Scenario -in @("shards-duplicate", "nightly-shards-duplicate", "shards-missing")) {
+        foreach ($method in @("First", "Second")) {
+            if (-not $message.Contains("Other.Headless.Extra.$method")) {
+                throw "Fixture $Scenario did not name Other.Headless.Extra.${method}: $message"
+            }
+        }
+    }
 }
 
 try {
     Assert-Fixture "discovery-pass" "Discovery"
     Assert-Fixture "stable-pass" "StableResults"
     Assert-Fixture "nightly-pass" "Results"
+    Assert-Fixture "shards-pass" "StableResults"
+    Assert-Fixture "nightly-shards-pass" "Results"
+    Assert-Fixture "shards-duplicate" "StableResults" "Test present in multiple TRX files"
+    Assert-Fixture "nightly-shards-duplicate" "Results" "Test present in multiple TRX files"
+    Assert-Fixture "shards-missing" "StableResults" "Stable manifest test is missing"
     Assert-Fixture "unregistered-trait" "Discovery" "Registered quarantine manifest mismatch"
     Assert-Fixture "untraited-entry" "Discovery" "Registered quarantine manifest mismatch"
     Assert-Fixture "executed-quarantine" "StableResults" "Default lane executed registered"
@@ -90,7 +149,7 @@ try {
     Assert-Fixture "duplicate-project" "Discovery" "Duplicate quarantine project"
     Assert-Fixture "unregistered-project" "Discovery" "Quarantine entry uses an unregistered project"
     Assert-Fixture "expired" "Discovery" "Quarantine expired"
-    Write-Host "Quarantine fixtures passed (three passing sets and fourteen rejected cases)."
+    Write-Host "Quarantine fixtures passed (five passing sets and seventeen rejected cases)."
 } finally {
     $env:GITHUB_STEP_SUMMARY = $stepSummary
     $resolved = [IO.Path]::GetFullPath($fixtureRoot)

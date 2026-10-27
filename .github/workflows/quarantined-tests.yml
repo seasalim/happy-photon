@@ -52,6 +52,7 @@ jobs:
         shell: pwsh
         run: |
           # The 16 GB Windows runner stalls when both test hosts run at once (FIXES-WP8).
+          # Hosted runners keep two processors; the runsettings cap of eight is for local runs.
           $exitCode = 0
           foreach ($project in @(
               "Tests/HappyPhoton.Tests.csproj",
@@ -65,7 +66,8 @@ jobs:
               --blame-hang `
               --blame-hang-timeout 90s `
               --logger "trx;LogFilePrefix=quarantine-observation" `
-              --results-directory artifacts/test-results/quarantine
+              --results-directory artifacts/test-results/quarantine `
+              '--' "RunConfiguration.EnvironmentVariables.DOTNET_PROCESSOR_COUNT=2"
             if ($LASTEXITCODE -ne 0) { $exitCode = $LASTEXITCODE }
           }
           exit $exitCode

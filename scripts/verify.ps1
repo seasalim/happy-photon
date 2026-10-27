@@ -9,6 +9,12 @@ param(
     [switch] $SkipQuarantine,
     [switch] $BlameHang,
     [switch] $SerialProjects,
+    # Full runs partition headless classes; filtered and serial runs keep one host.
+    [ValidateRange(1, [int]::MaxValue)]
+    [int] $HeadlessShards = 4,
+    # Override the runsettings processor cap for unsharded test hosts.
+    [ValidateRange(1, [int]::MaxValue)]
+    [int] $ProcessorCount,
     [string] $BlameHangTimeout = "90s",
     [string] $LogFilePrefix = "",
     [string] $ResultsDirectory = "",
@@ -58,16 +64,25 @@ try {
     $null = New-Item -ItemType Directory -Path $runDirectory
     Write-Host "Current-run test evidence: $runDirectory"
     $checker = Join-Path $PSScriptRoot "check-test-quarantine.ps1"
-    if (-not $SkipQuarantine) {
+    $useShards = -not $Filter -and -not $SerialProjects -and $HeadlessShards -gt 1
+
+    if (-not $SkipQuarantine -or $useShards) {
         & $checker -Configuration $Configuration -ResultsDirectory $runDirectory
     }
+
+    if ($useShards) {
+        . (Join-Path $PSScriptRoot "test-headless-shards.ps1")
+        $manifestPath = Join-Path $runDirectory "manifests/HappyPhoton.Headless.Tests.manifest.json"
+        $shards = @(Get-HeadlessTestShards $manifestPath $HeadlessShards)
+    }
+
     $policySeconds = $clock.Elapsed.TotalSeconds
     $clock.Restart()
     $phase = "tests"
     $prefix = if ($LogFilePrefix) { $LogFilePrefix } else { "verify" }
     $testArguments = @(
         "--configuration", $Configuration, "--no-build", "--no-restore",
-        "--logger", "trx;LogFilePrefix=$prefix", "--results-directory", $runDirectory)
+        "--results-directory", $runDirectory)
 
     if ($BlameHang) {
         $testArguments += @("--blame-hang", "--blame-hang-timeout", $BlameHangTimeout)
@@ -77,25 +92,36 @@ try {
         $testArguments += @("--filter", $Filter)
     }
 
-    $targets = if ($SerialProjects) {
-        @("Tests/HappyPhoton.Tests.csproj", "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
-            "Interop/HappyPhoton.LibRaw.Interop.Tests/HappyPhoton.LibRaw.Interop.Tests.csproj")
+    if ($useShards) {
+        $testExitCode = & (Join-Path $PSScriptRoot "run-test-shards.ps1") -Shards $shards `
+            -TestArguments $testArguments -RunDirectory $runDirectory -LogFilePrefix $prefix -ProcessorCount $ProcessorCount
     } else {
-        @("HappyPhoton.sln")
+        $testArguments += @("--logger", "trx;LogFilePrefix=$prefix")
+
+        if ($PSBoundParameters.ContainsKey("ProcessorCount")) {
+            $testArguments += @("--", "RunConfiguration.EnvironmentVariables.DOTNET_PROCESSOR_COUNT=$ProcessorCount")
+        }
+
+        $targets = if ($SerialProjects) {
+            @("Tests/HappyPhoton.Tests.csproj", "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+                "Interop/HappyPhoton.LibRaw.Interop.Tests/HappyPhoton.LibRaw.Interop.Tests.csproj")
+        } else {
+            @("HappyPhoton.sln")
+        }
+        $testExitCode = 0
+        $testLog = Join-Path $runDirectory "dotnet-test.log"
+
+        foreach ($target in $targets) {
+            Write-Host "Running tests: $target"
+            & dotnet test (Join-Path $repoRoot $target) @testArguments 2>&1 | Tee-Object -FilePath $testLog -Append
+
+            if ($LASTEXITCODE -ne 0) { $testExitCode = $LASTEXITCODE }
+        }
+
+        & (Join-Path $PSScriptRoot "report-test-abort.ps1") -OutputPath $testLog -ResultsDirectory $runDirectory
     }
-    $testExitCode = 0
-    $testLog = Join-Path $runDirectory "dotnet-test.log"
 
-    foreach ($target in $targets) {
-        Write-Host "Running tests: $target"
-        & dotnet test (Join-Path $repoRoot $target) @testArguments 2>&1 | Tee-Object -FilePath $testLog -Append
-
-        if ($LASTEXITCODE -ne 0) { $testExitCode = $LASTEXITCODE }
-    }
-
-    & (Join-Path $PSScriptRoot "report-test-abort.ps1") -OutputPath $testLog -ResultsDirectory $runDirectory
-
-    if (-not $SkipQuarantine -and -not $Filter) {
+    if ((-not $SkipQuarantine -or $useShards) -and -not $Filter) {
         & $checker -Mode StableResults -ResultsDirectory $runDirectory
     }
 

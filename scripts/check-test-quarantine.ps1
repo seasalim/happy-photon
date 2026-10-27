@@ -211,6 +211,8 @@ function Read-TrxResults([string] $Directory, [string[]] $Projects) {
         $assemblyProjects[$assembly] = $project
     }
     $projectFiles = @{}
+    $testFiles = [Collections.Generic.Dictionary[string, string]]::new([StringComparer]::Ordinal)
+    $duplicates = [Collections.Generic.List[string]]::new()
     $results = foreach ($file in $files) {
         [xml]$trx = Get-Content -Raw -LiteralPath $file.FullName
         $namespace = New-Object System.Xml.XmlNamespaceManager($trx.NameTable)
@@ -239,21 +241,41 @@ function Read-TrxResults([string] $Directory, [string[]] $Projects) {
             $definitions[$test.GetAttribute("id")] = $project
             if ($project) { $null = $fileProjects.Add($project) }
         }
+
         foreach ($project in $fileProjects) {
-            if ($projectFiles.ContainsKey($project)) { throw "Multiple TRX files for governed project $project." }
+            if ($projectFiles.ContainsKey($project) -and $project -ne "HeadlessTests/HappyPhoton.Headless.Tests.csproj") {
+                throw "Multiple TRX files for governed project $project."
+            }
+
             $projectFiles[$project] = $file.FullName
         }
+
         foreach ($node in $trx.SelectNodes("//t:UnitTestResult", $namespace)) {
             $testId = $node.GetAttribute("testId")
             if (-not $definitions.ContainsKey($testId)) { throw "TRX result has no test definition: $testId." }
+
+            $project = $definitions[$testId]
+            $name = $node.GetAttribute("testName")
+            $key = "$project|$name"
+
+            if ($project) {
+                if ($testFiles.ContainsKey($key) -and $testFiles[$key] -ne $file.FullName) {
+                    $duplicates.Add("$name in $project; $($testFiles[$key]); $($file.FullName).")
+                }
+
+                $testFiles[$key] = $file.FullName
+            }
+
             [pscustomobject]@{
-                Project = $definitions[$testId]
-                TestName = $node.GetAttribute("testName")
+                Project = $project
+                TestName = $name
                 Outcome = $node.GetAttribute("outcome")
                 Duration = $node.GetAttribute("duration")
             }
         }
     }
+
+    if ($duplicates.Count -gt 0) { throw "Test present in multiple TRX files:`n$($duplicates -join "`n")" }
 
     foreach ($project in $Projects) {
         if (-not $projectFiles.ContainsKey($project)) { throw "Missing TRX for governed project $project." }
@@ -283,10 +305,13 @@ function Test-StableResults($projects, $entries) {
             $parenthesis = $result.TestName.IndexOf('(')
             if ($parenthesis -ge 0) { $null = $names.Add($result.TestName.Substring(0, $parenthesis)) }
         }
-        foreach ($case in $manifest.tests) {
-            if (-not (Test-Quarantined $case) -and -not $names.Contains($case.DisplayName)) {
-                throw "Stable manifest test is missing from TRX: $($case.DisplayName) in $project."
-            }
+
+        $missing = @($manifest.tests | Where-Object {
+            -not (Test-Quarantined $_) -and -not $names.Contains($_.DisplayName)
+        })
+
+        if ($missing.Count -gt 0) {
+            throw "Stable manifest test is missing from TRX in ${project}:`n$($missing.DisplayName -join "`n")"
         }
     }
     Write-Host "Default TRX reconciled against all governed manifests; no quarantined test executed."

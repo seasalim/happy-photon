@@ -8,6 +8,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
+[Trait("Shard", "Own")]
 public sealed class RestoreCrashTests(BackupCatalogFixtures fixtures, ITestOutputHelper output)
 {
     private const int BatchCount = 16;

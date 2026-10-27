@@ -23,10 +23,11 @@ and TRX, and reports build, policy+discovery and tests+reconciliation timings.
 The checker's `-Mode StableResults` reconciles those manifests with TRX: no
 registered quarantined test may execute, and every stable manifest case must
 appear as Passed, Failed or NotExecuted, matching display names or theory
-prefixes. Both StableResults and nightly Results mode require exactly one TRX
-per governed project from the current run; Results mode additionally requires
-every registered quarantined test to have executed. Callers must supply an
-isolated current-run directory, never a directory of accumulated results.
+prefixes. Both StableResults and nightly Results mode accept headless shard TRX
+files as one assembly, reject tests repeated across files, and require exactly one
+TRX for each other governed project. Results mode additionally requires every
+registered quarantined test to have executed. Callers must supply an isolated
+current-run directory, never a directory of accumulated results.
 `./scripts/check-test-quarantine-fixtures.ps1` exercises these checks without
 a build.
 

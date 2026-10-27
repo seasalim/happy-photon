@@ -7,13 +7,17 @@ Use `Tests/TemporaryDirectory.cs` for disposable test roots and
 keep every non-default setting explicit at the call site.
 
 Ordinary `dotnet test` runs use `HappyPhoton.runsettings`, which gives each test
-host two logical processors. This bounds xUnit collection concurrency, managed
+host eight logical processors. This bounds xUnit collection concurrency, managed
 pixel workers, and the shared Magick/LibRaw OpenMP budget together. Each test
 assembly sets the budget before native loading, including `MAGICK_THREAD_LIMIT`,
-so the default host uses two native workers. Explicit environment limits win. Opt-in performance
-measurements bypass that cap in a fresh process with
-`HAPPY_PHOTON_FULL_CPU=1`, which switches to `HappyPhoton.FullCpu.runsettings`:
-the same quarantine filter without the processor cap.
+so the default host uses eight native workers. Explicit environment limits win.
+`verify.ps1 -ProcessorCount <n>` overrides the cap for unsharded test hosts.
+Full `verify.ps1` runs use four headless shards at two processors each with isolated
+temporary roots; `-HeadlessShards <n>` changes the count, while `-Filter`,
+`-SerialProjects` or `-HeadlessShards 1` keeps one headless host.
+Opt-in performance measurements use `HAPPY_PHOTON_FULL_CPU=1` in a fresh process,
+which switches to `HappyPhoton.FullCpu.runsettings` with the same quarantine filter
+and no processor cap; the full-CPU helper requires the marker and more than eight processors.
 
 ## 1. Sample assets (`Tests/assets/`)
 

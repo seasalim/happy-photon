@@ -50,7 +50,7 @@ internal static class PasteGateSupport
 #if DEBUG
         Assert.Fail("Build the paste gates in Release.");
 #endif
-        Assert.True(Environment.ProcessorCount > 2,
+        Assert.True(PerfEnvironment.IsFullCpu,
             "Set HAPPY_PHOTON_FULL_CPU=1 for timing runs.");
     }
 

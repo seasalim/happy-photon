@@ -14,10 +14,11 @@ public sealed partial class LocalRangeOverlayGateTests
     public async Task BrushRequestedOverlay()
     {
         Assert.SkipWhen(Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1", "Opt-in approved brush mask gate");
-        if (Environment.ProcessorCount <= 2) throw new InvalidOperationException("Full CPU required");
+        if (!PerfEnvironment.IsFullCpu) throw new InvalidOperationException("Full CPU required");
 #if DEBUG
         throw new InvalidOperationException("Use Release");
 #endif
+
         var samples = int.Parse(Environment.GetEnvironmentVariable("LOCALS_SAMPLES") ?? "5");
         Assert.Equal(5, samples);
         var standard = Environment.GetEnvironmentVariable("HAPPY_PHOTON_LOCALS_FIXTURE") == "standard";

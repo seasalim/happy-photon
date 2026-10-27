@@ -23,7 +23,8 @@ public sealed partial class LocalRangeOverlayGateTests(ITestOutputHelper output)
     private async Task RequestedOverlay(bool hue, bool eight = false)
     {
         Assert.SkipWhen(Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1", "Opt-in overlay gate");
-        Assert.True(Environment.ProcessorCount > 2, "Full CPU required");
+        Assert.True(PerfEnvironment.IsFullCpu, "Full CPU required");
+
         var standard = Environment.GetEnvironmentVariable("HAPPY_PHOTON_LOCALS_FIXTURE") == "standard";
         var path = GoldenTestPaths.Asset(standard ? "iphone-14-pro-iso-1000.heic" : "canon-eos-6d-iso-6400.cr2");
         Assert.Equal(0, (int)File.GetAttributes(path) & (0x1000 | 0x40000 | 0x400000));

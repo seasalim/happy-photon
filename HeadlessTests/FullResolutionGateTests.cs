@@ -153,7 +153,7 @@ public sealed partial class FullResolutionGateTests(ITestOutputHelper output)
     private static void OptIn()
     {
         Assert.SkipWhen(Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1", "Opt-in WP5 gates");
-        Assert.True(Environment.ProcessorCount > 2);
+        Assert.True(PerfEnvironment.IsFullCpu);
     }
 
     private static long PrivateBytes()

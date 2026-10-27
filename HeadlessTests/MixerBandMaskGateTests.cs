@@ -14,10 +14,11 @@ public sealed class MixerBandMaskGateTests(ITestOutputHelper output)
     public async Task WarmedBuildMeetsPinnedLocalRangeControl()
     {
         Assert.SkipWhen(Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1", "Opt-in WP14 measure gate");
-        Assert.True(Environment.ProcessorCount > 2, "Full CPU required");
+        Assert.True(PerfEnvironment.IsFullCpu, "Full CPU required");
 #if DEBUG
         throw new InvalidOperationException("Use Release for measurements");
 #endif
+
         const double reference = 9.47;
         var path = GoldenTestPaths.Asset("canon-eos-6d-iso-6400.cr2");
         GoldenTestPaths.RequireReadableFixture(path);

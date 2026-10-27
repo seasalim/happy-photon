@@ -21,10 +21,11 @@ public sealed class AutoStraightenTimingTests(ITestOutputHelper output)
         Assert.SkipUnless(Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") == "1",
             "Opt-in Crop Auto timing requires the measure host lock");
         Assert.Equal("1", Environment.GetEnvironmentVariable("HAPPY_PHOTON_FULL_CPU"));
-        Assert.True(Environment.ProcessorCount > 2);
+        Assert.True(PerfEnvironment.IsFullCpu);
 #if DEBUG
         Assert.Fail("Use Release");
 #endif
+
         var name = Environment.GetEnvironmentVariable("HAPPY_PHOTON_STRAIGHTEN_FIXTURE")
             ?? "nikon-d300-colorchecker.nef";
         Assert.Contains(name, new[] { "nikon-d300-colorchecker.nef", "canon-eos-6d-iso-6400.cr2" });

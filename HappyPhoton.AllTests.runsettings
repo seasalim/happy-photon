@@ -2,7 +2,7 @@
 <RunSettings>
   <RunConfiguration>
     <EnvironmentVariables>
-      <DOTNET_PROCESSOR_COUNT>2</DOTNET_PROCESSOR_COUNT>
+      <DOTNET_PROCESSOR_COUNT>8</DOTNET_PROCESSOR_COUNT>
     </EnvironmentVariables>
   </RunConfiguration>
 </RunSettings>

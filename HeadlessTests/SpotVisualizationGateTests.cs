@@ -14,7 +14,8 @@ public sealed class SpotVisualizationGateTests(ITestOutputHelper output)
     public async Task G1CopyHighPassAndBitmapCreation()
     {
         Assert.SkipWhen(Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1", "Opt-in HEAL-WP6 G1");
-        Assert.True(Environment.ProcessorCount > 2);
+        Assert.True(PerfEnvironment.IsFullCpu);
+
         using var fixture = new CatalogVmFixture("visualize-timing");
         using var catalog = await fixture.CreateCatalogAsync();
         var loader = new GatedBaseImageLoader(new RawBaseLoader(), new SourceAvailabilityService());

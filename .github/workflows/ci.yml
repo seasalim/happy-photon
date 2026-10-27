@@ -107,6 +107,10 @@ jobs:
             ResultsDirectory = "artifacts/test-results/${{ matrix.rid }}"
             # The 16 GB Windows runner stalls when both test hosts run at once (FIXES-WP8).
             SerialProjects = "${{ matrix.rid }}" -eq "win-x64"
+            # Hosted runners keep two processors and one headless host; the runsettings cap of
+            # eight and the four headless shards are for local runs.
+            ProcessorCount = 2
+            HeadlessShards = 1
           }
           ./scripts/verify.ps1 @verifyArguments
 
