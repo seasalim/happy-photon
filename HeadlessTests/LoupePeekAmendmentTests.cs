@@ -31,6 +31,19 @@ public sealed partial class LoupePeekTests
             var offset = scroll.Offset;
             var pointer = Center(viewer, window);
 
+            window.MouseDown(pointer, MouseButton.Left, RawInputModifiers.None);
+            var moved = pointer + new Vector(20, 12);
+            window.MouseMove(moved, RawInputModifiers.LeftMouseButton);
+            Drain();
+            clock.Advance(TimeSpan.FromSeconds(1));
+            Drain();
+            Assert.False(viewer.IsLoupePeekActive);
+            Assert.Equal(offset.X - 20, scroll.Offset.X, precision: 8);
+            Assert.Equal(offset.Y - 12, scroll.Offset.Y, precision: 8);
+            window.MouseUp(moved, MouseButton.Left, RawInputModifiers.None);
+            scroll.Offset = offset;
+            Drain();
+
             Engage(window, clock, pointer);
             Assert.True(viewer.IsLoupePeekActive);
             window.MouseMove(
@@ -49,44 +62,6 @@ public sealed partial class LoupePeekTests
             Assert.Equal(size, Image(viewer).Bounds.Size);
             Assert.Equal(offset.X, scroll.Offset.X, precision: 8);
             Assert.Equal(offset.Y, scroll.Offset.Y, precision: 8);
-        }
-        finally
-        {
-            window.Close();
-        }
-    }
-
-    [AvaloniaFact]
-    public void MoveBeforeHoldThreshold_ContinuesAsOrdinaryPan()
-    {
-        var clock = new TestTimeProvider();
-        using var bitmap = CreateBitmap(2400, 1800);
-        var viewer = CreateViewer(clock, bitmap, new object());
-        viewer.OriginalViewPixelSize = bitmap.PixelSize;
-        using var windowScope = Show(viewer, 500, 400);
-        var window = windowScope.Window!;
-        try
-        {
-            viewer.AutoFit = false;
-            viewer.ZoomLevel = 0.5;
-            Drain();
-            var scroll = Scroll(viewer);
-            scroll.Offset = new Vector(220, 170);
-            Drain();
-            var before = scroll.Offset;
-            var pointer = Center(viewer, window);
-
-            window.MouseDown(pointer, MouseButton.Left, RawInputModifiers.None);
-            var moved = pointer + new Vector(20, 12);
-            window.MouseMove(moved, RawInputModifiers.LeftMouseButton);
-            Drain();
-            clock.Advance(TimeSpan.FromSeconds(1));
-            Drain();
-
-            Assert.False(viewer.IsLoupePeekActive);
-            Assert.Equal(before.X - 20, scroll.Offset.X, precision: 8);
-            Assert.Equal(before.Y - 12, scroll.Offset.Y, precision: 8);
-            window.MouseUp(moved, MouseButton.Left, RawInputModifiers.None);
         }
         finally
         {

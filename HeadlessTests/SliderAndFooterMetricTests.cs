@@ -307,12 +307,36 @@ public sealed class SliderAndFooterMetricTests
 
         foreach (var slider in sliders)
         {
+            var text = slider.FindControl<TextBlock>("ValueText")!;
+            var column = slider.FindControl<Grid>("LayoutGrid")!.ColumnDefinitions[2].ActualWidth;
+            var positive = slider.Label == "Exposure" ? .35 : 15;
+
+            foreach (var value in new[] { positive, 0, -positive })
+            {
+                slider.SetCurrentValue(CompactSlider.ValueProperty, value);
+                Dispatcher.UIThread.RunJobs();
+                Assert.Equal(value, slider.Value);
+                var magnitude = Math.Abs(value).ToString(slider.Label == "Exposure" ? "F2" : "F0");
+                var expected = value > 0 ? "+" + magnitude : value < 0 ? "-" + magnitude : magnitude;
+                Assert.Equal(expected, text.Text);
+            }
+
+            Assert.Equal(40, column);
+            var candidates = slider.Label == "Exposure"
+                ? new[] { "+3.00", "-3.00" }
+                : new[] { "+100", "-100" };
+
+            foreach (var candidate in candidates)
+            {
+                Assert.True(IntrinsicWidth(text, candidate) <= column,
+                    $"{slider.Label}: '{candidate}' exceeds {column}px.");
+                Assert.Equal(TextTrimming.None, text.TextTrimming);
+            }
+
             foreach (var value in new[] { slider.Minimum, slider.Maximum })
             {
                 slider.SetCurrentValue(CompactSlider.ValueProperty, value);
                 Dispatcher.UIThread.RunJobs();
-                var text = slider.FindControl<TextBlock>("ValueText")!;
-                var column = slider.FindControl<Grid>("LayoutGrid")!.ColumnDefinitions[2].ActualWidth;
                 Assert.Equal(40, column);
                 Assert.StartsWith(value > 0 ? "+" : "-", text.Text);
                 Assert.Equal(TextTrimming.None, text.TextTrimming);
@@ -324,11 +348,11 @@ public sealed class SliderAndFooterMetricTests
         }
     }
 
-    private static double IntrinsicWidth(TextBlock source)
+    private static double IntrinsicWidth(TextBlock source, string? text = null)
     {
         var probe = new TextBlock
         {
-            Text = source.Text,
+            Text = text ?? source.Text,
             FontFamily = source.FontFamily,
             FontSize = source.FontSize,
             FontStyle = source.FontStyle,
@@ -337,6 +361,7 @@ public sealed class SliderAndFooterMetricTests
             LetterSpacing = source.LetterSpacing
         };
         probe.Measure(Size.Infinity);
+
         return probe.DesiredSize.Width;
     }
 

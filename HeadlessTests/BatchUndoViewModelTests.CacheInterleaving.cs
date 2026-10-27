@@ -9,13 +9,12 @@ namespace HappyPhoton.Tests;
 public sealed partial class BatchUndoViewModelTests
 {
     public static IEnumerable<object[]> UndoCacheInterleavingCases =>
-        Enumerable.Range(1, 10).SelectMany(iteration => new[]
-        {
-            new object[] { iteration, false, false },
-            new object[] { iteration, false, true },
-            new object[] { iteration, true, false },
-            new object[] { iteration, true, true }
-        });
+    [
+        [1, false, false],
+        [1, false, true],
+        [1, true, false],
+        [1, true, true]
+    ];
 
     [AvaloniaTheory]
     [MemberData(nameof(UndoCacheInterleavingCases))]

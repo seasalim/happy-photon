@@ -1,10 +1,7 @@
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
-using Avalonia.LogicalTree;
 using Avalonia.Media;
 using Avalonia.Styling;
-using HappyPhoton.Views;
 using ImageMagick;
 using Xunit;
 
@@ -35,26 +32,6 @@ public sealed partial class BrandMarkTests
 
     private static string AssetPath(string name) =>
         Path.Combine(GoldenTestPaths.RepositoryRoot, "Assets", name);
-
-    [AvaloniaTheory]
-    [InlineData(false, DarkHeadingContrast, 4.5)]
-    [InlineData(true, MidGrayHeadingContrast, 3.0)]
-    public async Task WelcomeHeading_MeetsItsContrastOnTheCard(bool midgray, double expected, double minimum)
-    {
-        await using var scene = new WelcomeScene();
-        var variant = midgray ? HappyPhotonThemes.MidGray : ThemeVariant.Dark;
-        using var themeScope = new TestUiScope(scene.Window, variant);
-
-        var heading = scene.Heading();
-        var card = heading.GetLogicalAncestors().OfType<Border>().First(border => border.Background != null);
-        var ratio = ThemeResourceTests.Contrast(
-            Assert.IsAssignableFrom<ISolidColorBrush>(heading.Foreground).Color,
-            Assert.IsAssignableFrom<ISolidColorBrush>(card.Background).Color);
-
-        Assert.InRange(ratio, expected - 0.05, expected + 0.05);
-        Assert.True(ratio >= minimum, $"Welcome heading contrast {ratio:F2}:1 is under {minimum}:1.");
-        Assert.Equal(Color.Parse(BrandHex), ThemeResourceTests.Brush(BrandKey, variant).Color);
-    }
 
     [AvaloniaTheory]
     [InlineData(256, 3.0)]

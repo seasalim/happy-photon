@@ -19,37 +19,6 @@ namespace HappyPhoton.Tests;
 public sealed partial class DevelopAssessmentBarTests
 {
     [AvaloniaFact]
-    public async Task AllStatesMatchFooterAndCompactCluster()
-    {
-        await WithWindow(async (window, vm, other) =>
-        {
-            var pane = window.FindControl<DevelopViewerPane>("DevelopViewerPane")!;
-            var full = pane.FindControl<ImageAssessmentControl>("DevelopImageAssessment")!;
-            var footer = window.FindControl<BrowseGridView>("BrowseGridView")!
-                .FindControl<ImageAssessmentControl>("ImageAssessment")!;
-
-            foreach (var flag in Enum.GetValues<ImageFlag>())
-            foreach (var rating in Enumerable.Range(0, 6))
-            foreach (var label in Enum.GetValues<ColorLabel>())
-            {
-                vm.SelectedImage!.Flag = flag;
-                vm.SelectedImage.Rating = rating;
-                vm.SelectedImage.ColorLabel = label;
-                Settle(window);
-                AssertState(pane, footer, vm.SelectedImage);
-            }
-
-            Assert.Empty(full.Classes);
-
-            vm.SelectedImage = other;
-            Settle(window);
-            AssertState(pane, footer, other);
-
-            await Task.CompletedTask;
-        });
-    }
-
-    [AvaloniaFact]
     public async Task ShortcutsClicksUndoAndPhotoChangesKeepActiveState()
     {
         await WithWindow(async (window, vm, other) =>

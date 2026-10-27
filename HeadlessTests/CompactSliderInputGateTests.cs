@@ -42,6 +42,10 @@ public sealed class CompactSliderInputGateTests
         var (slider, window, scope) = ShowSlider();
         using var windowScope = scope;
         var layout = slider.FindControl<Grid>("LayoutGrid")!;
+        var thumb = slider.FindControl<Avalonia.Controls.Shapes.Path>("ThumbMark")!;
+        var inactiveColor = Assert.IsAssignableFrom<ISolidColorBrush>(thumb.Fill).Color;
+        var hoverColor = Assert.IsAssignableFrom<ISolidColorBrush>(
+            thumb.FindResource(thumb.ActualThemeVariant, "TextSecondary")).Color;
         IPointer? pressedPointer = null;
         window.AddHandler(
             InputElement.PointerPressedEvent,
@@ -56,6 +60,10 @@ public sealed class CompactSliderInputGateTests
         try
         {
             var capturedCount = 0;
+            var visibleCount = 0;
+            var capturedClassCount = 0;
+            var lastCapturedColor = inactiveColor;
+
             for (var attempt = 0; attempt < attemptCount; attempt++)
             {
                 pressedPointer = null;
@@ -63,60 +71,22 @@ public sealed class CompactSliderInputGateTests
                     new Point(110, 11),
                     MouseButton.Left,
                     RawInputModifiers.None);
+
                 if (pressedPointer?.Captured == layout)
                 {
                     capturedCount++;
                 }
 
-                window.MouseUp(
-                    new Point(110, 11),
-                    MouseButton.Left,
-                    RawInputModifiers.None);
-            }
-
-            Assert.True(
-                capturedCount == attemptCount,
-                $"Captured {capturedCount}/{attemptCount} first presses.");
-        }
-        finally
-        {
-            window.Close();
-        }
-    }
-
-    [AvaloniaFact]
-    public void CapturedPress_ChangesThumbColorUntilRelease()
-    {
-        const int attemptCount = 100;
-        var (slider, window, scope) = ShowSlider();
-        using var windowScope = scope;
-        var thumb = slider.FindControl<Avalonia.Controls.Shapes.Path>("ThumbMark")!;
-        var inactiveColor = Assert.IsAssignableFrom<ISolidColorBrush>(
-            thumb.Fill).Color;
-
-        // VISUALS-WP3: after release the pointer still hovers the row, so the mark shows the row-hover color.
-        var hoverColor = Assert.IsAssignableFrom<ISolidColorBrush>(
-            thumb.FindResource(thumb.ActualThemeVariant, "TextSecondary")).Color;
-
-        try
-        {
-            var visibleCount = 0;
-            var capturedClassCount = 0;
-            var lastCapturedColor = inactiveColor;
-            for (var attempt = 0; attempt < attemptCount; attempt++)
-            {
-                window.MouseDown(
-                    new Point(110, 11),
-                    MouseButton.Left,
-                    RawInputModifiers.None);
                 Dispatcher.UIThread.RunJobs();
+
                 if (thumb.Classes.Contains("pointer-captured"))
                 {
                     capturedClassCount++;
                 }
-                var capturedColor = Assert.IsAssignableFrom<ISolidColorBrush>(
-                    thumb.Fill).Color;
+
+                var capturedColor = Assert.IsAssignableFrom<ISolidColorBrush>(thumb.Fill).Color;
                 lastCapturedColor = capturedColor;
+
                 if (capturedColor != inactiveColor)
                 {
                     visibleCount++;
@@ -127,12 +97,12 @@ public sealed class CompactSliderInputGateTests
                     MouseButton.Left,
                     RawInputModifiers.None);
                 Dispatcher.UIThread.RunJobs();
-                Assert.Equal(
-                    hoverColor,
-                    Assert.IsAssignableFrom<ISolidColorBrush>(
-                        thumb.Fill).Color);
+                Assert.Equal(hoverColor, Assert.IsAssignableFrom<ISolidColorBrush>(thumb.Fill).Color);
             }
 
+            Assert.True(
+                capturedCount == attemptCount,
+                $"Captured {capturedCount}/{attemptCount} first presses.");
             Assert.True(
                 visibleCount == attemptCount,
                 $"Showed capture feedback on {visibleCount}/{attemptCount} presses; " +

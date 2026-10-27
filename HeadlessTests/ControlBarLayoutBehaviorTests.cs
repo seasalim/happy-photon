@@ -19,6 +19,9 @@ public sealed class ControlBarLayoutBehaviorTests(ITestOutputHelper output)
             var bar = ControlBarGateScene.Bar(window, true);
             var slider = ControlBarGateScene.Named<CompactSlider>(bar, "DevelopZoomSlider");
             var full = ControlBarGateScene.Full(bar);
+            var left = ControlBarGateScene.Named<StackPanel>(bar, "DevelopImageActionsPanel");
+            var right = ControlBarGateScene.Named<StackPanel>(bar, "DevelopViewStatePanel");
+            var sawOffCentre = false;
             var sawSlider = false;
             var sawNoSliderCentred = false;
 
@@ -26,6 +29,7 @@ public sealed class ControlBarLayoutBehaviorTests(ITestOutputHelper output)
             {
                 ControlBarGateScene.ViewerWidth(window, bar, width);
                 if (!full.IsEffectivelyVisible) continue;
+
                 var offset = ControlBarGateScene.Offset(full, bar);
                 output.WriteLine($"WP12 G4 Develop order width={width} slider={slider.IsVisible} offset={offset:F3}");
 
@@ -38,45 +42,25 @@ public sealed class ControlBarLayoutBehaviorTests(ITestOutputHelper output)
                 {
                     sawNoSliderCentred = true;
                 }
+
+                if (!slider.IsVisible && offset > 1)
+                {
+                    var cluster = ControlBarGateScene.Bounds(full, bar);
+                    var leftBounds = ControlBarGateScene.Bounds(left, bar);
+                    var rightBounds = ControlBarGateScene.Bounds(right, bar);
+                    var low = leftBounds.Right + cluster.Width / 2;
+                    var high = rightBounds.Left - cluster.Width / 2;
+                    Assert.True(low <= high, "Full cluster cannot fit between side groups.");
+                    var expectedCentre = Math.Clamp(bar.Bounds.Width / 2, low, high);
+                    Assert.True(Math.Abs(cluster.Center.X - expectedCentre) <= 1,
+                        $"Cluster centre {cluster.Center.X:F3} differs from minimum shift {expectedCentre:F3} at {width}.");
+                    Assert.False(cluster.Intersects(leftBounds));
+                    Assert.False(cluster.Intersects(rightBounds));
+                    sawOffCentre = true;
+                }
             }
 
             Assert.True(sawSlider && sawNoSliderCentred, "Missing slider-shown and slider-hidden centred tiers.");
-            await Task.CompletedTask;
-        });
-    }
-
-    [AvaloniaFact]
-    public async Task DevelopHasMinimallyShiftedFullClusterWithSliderHidden()
-    {
-        await ControlBarGateScene.WithScene(async (window, vm) =>
-        {
-            ControlBarGateScene.Mode(window, vm, "develop");
-            var bar = ControlBarGateScene.Bar(window, true);
-            var slider = ControlBarGateScene.Named<CompactSlider>(bar, "DevelopZoomSlider");
-            var full = ControlBarGateScene.Full(bar);
-            var left = ControlBarGateScene.Named<StackPanel>(bar, "DevelopImageActionsPanel");
-            var right = ControlBarGateScene.Named<StackPanel>(bar, "DevelopViewStatePanel");
-            var sawOffCentre = false;
-
-            foreach (var width in Enumerable.Range(0, 81).Select(step => 1400 - step * 10))
-            {
-                ControlBarGateScene.ViewerWidth(window, bar, width);
-                if (!full.IsEffectivelyVisible || slider.IsVisible) continue;
-                var cluster = ControlBarGateScene.Bounds(full, bar);
-                if (ControlBarGateScene.Offset(full, bar) <= 1) continue;
-                var leftBounds = ControlBarGateScene.Bounds(left, bar);
-                var rightBounds = ControlBarGateScene.Bounds(right, bar);
-                var low = leftBounds.Right + cluster.Width / 2;
-                var high = rightBounds.Left - cluster.Width / 2;
-                Assert.True(low <= high, "Full cluster cannot fit between side groups.");
-                var expectedCentre = Math.Clamp(bar.Bounds.Width / 2, low, high);
-                Assert.True(Math.Abs(cluster.Center.X - expectedCentre) <= 1,
-                    $"Cluster centre {cluster.Center.X:F3} differs from minimum shift {expectedCentre:F3} at {width}.");
-                Assert.False(cluster.Intersects(leftBounds));
-                Assert.False(cluster.Intersects(rightBounds));
-                sawOffCentre = true;
-            }
-
             Assert.True(sawOffCentre, "Missing full-cluster off-centre tier with the slider hidden.");
             await Task.CompletedTask;
         });

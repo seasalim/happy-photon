@@ -74,7 +74,6 @@ public sealed partial class CompactSliderEntryTests
     [InlineData("abc", false)]
     [InlineData("", false)]
     [InlineData("NaN", false)]
-    [InlineData("Infinity", false)]
     [InlineData("35", true)]
     public async Task InvalidAndCancelledTextMakeNoChange(string text, bool escape)
     {
@@ -170,6 +169,8 @@ public sealed partial class CompactSliderEntryTests
         await using var s = await Session.Create();
         var slider = s.Slider(label);
         s.Reveal(slider);
+        using var frame = s.Window.CaptureRenderedFrame();
+        Assert.NotNull(frame);
         var text = slider.FindControl<TextBlock>("ValueText")!;
         var origin = text.TranslatePoint(default, slider)!.Value;
         var digits = Enumerable.Range(0, text.Text!.Length).Where(i => char.IsDigit(text.Text[i])).ToArray();

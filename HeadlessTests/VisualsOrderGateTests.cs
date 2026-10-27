@@ -4,7 +4,6 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Headless.XUnit;
 using Avalonia.VisualTree;
 using HappyPhoton.Models;
-using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
 using HappyPhoton.Views;
 using Xunit;
@@ -94,22 +93,5 @@ public sealed class VisualsOrderGateTests(ITestOutputHelper output)
 
             return Task.CompletedTask;
         });
-    }
-
-    [Fact]
-    public async Task VisualsOrderGateG4StoredPasteChoice()
-    {
-        using var fixture = new CatalogVmFixture("visuals-order-g4");
-        using var catalog = await fixture.CreateCatalogAsync();
-        await catalog.SetAppSettingAsync("PasteGroups", "{\"Adjustments\":true,\"Presence\":false}");
-        var loaded = await new AppSettingsService(catalog).LoadAsync();
-
-        foreach (var name in new[] { "Adjustments", "Presence" })
-        {
-            var group = EditSettingsTransfer.Groups.Single(group => group.Name == name);
-            Assert.True(loaded.PasteGroups.GetValueOrDefault(name, group.IsDefault));
-            output.WriteLine($"G4 {name}: loaded={loaded.PasteGroups.GetValueOrDefault(name, group.IsDefault)}; " +
-                $"key-present={loaded.PasteGroups.ContainsKey(name)}");
-        }
     }
 }

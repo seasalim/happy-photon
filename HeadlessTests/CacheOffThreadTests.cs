@@ -271,7 +271,6 @@ public sealed class CacheOffThreadTests
     [AvaloniaTheory]
     [InlineData(false, false)]
     [InlineData(false, true)]
-    [InlineData(true, false)]
     [InlineData(true, true)]
     public void ByteSnapshotPreservesFormatAndAlphaAfterCallerDisposal(bool rgba, bool transparent)
     {

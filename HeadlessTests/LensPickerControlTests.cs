@@ -104,14 +104,7 @@ public sealed class LensPickerControlTests : IDisposable
         Dispatcher.UIThread.RunJobs();
         ShowcaseTestHelper.Capture("optics-picker-narrow", scope, new PixelSize(240, 320), ThemeVariant.Dark);
         optics.DataContext = null;
-    }
 
-    [AvaloniaFact]
-    public async Task ManualWithoutDataReportsUnavailableCorrections()
-    {
-        using var catalog = await _fx.CreateCatalogAsync();
-        await using var vm = _fx.CreateViewModel(catalog, new NullBaseLoader(),
-            loadMetadataAsync: _ => Task.CompletedTask);
         vm.ApplyLensPrescription(true, new LensPrescriptionSummary(
             LensA, string.Empty, false, false, false) { IsManual = true });
         Assert.Equal($"{LensA} · No correction data · Manual", vm.LensSourceText);

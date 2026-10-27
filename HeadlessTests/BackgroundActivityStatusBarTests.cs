@@ -33,7 +33,13 @@ public sealed class BackgroundActivityStatusBarTests
         var dot = view.FindControl<Ellipse>("BackgroundActivityDot")!;
         var label = view.FindControl<TextBlock>("BackgroundActivityLabel")!;
         var progress = view.FindControl<ProgressBar>("BackgroundActivityProgress")!;
+        var exportProgress = queue.FindControl<ProgressBar>("ExportProgressBar")!;
+        var exportLabel = queue.FindControl<TextBlock>("ExportProgressLabel")!;
 
+        Assert.False(exportProgress.IsIndeterminate);
+        Assert.Equal(2, exportProgress.Height);
+        Assert.Equal(10, exportLabel.FontSize);
+        Assert.Equal(0, exportLabel.LetterSpacing);
         Assert.False(segment.IsVisible);
         Assert.Equal("Background activity", AutomationProperties.GetName(segment));
         Assert.Equal(AutomationLiveSetting.Polite,

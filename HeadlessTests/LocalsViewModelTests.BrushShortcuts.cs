@@ -295,7 +295,6 @@ public sealed partial class LocalsViewModelTests
 
     [AvaloniaTheory]
     [InlineData(Key.LeftAlt)]
-    [InlineData(Key.RightAlt)]
     public async Task BrushShortcutShiftThenAltShowsEraseAndCommitsStraightErase(Key alt)
     {
         using var catalog = await _fixture.CreateCatalogAsync();

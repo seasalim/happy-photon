@@ -54,6 +54,8 @@ try {
         & (Join-Path $PSScriptRoot "check-test-teardown-fixtures.ps1")
         & (Join-Path $PSScriptRoot "check-test-sqlite-pools.ps1")
         & (Join-Path $PSScriptRoot "check-test-quarantine-fixtures.ps1")
+        & (Join-Path $PSScriptRoot "check-test-ledger.ps1") -Mode Policy
+        & (Join-Path $PSScriptRoot "check-test-ledger-fixtures.ps1")
         & (Join-Path $PSScriptRoot "check-test-abort-fixtures.ps1")
     }
     if ($PolicyOnly) { return }
@@ -66,8 +68,28 @@ try {
     $checker = Join-Path $PSScriptRoot "check-test-quarantine.ps1"
     $useShards = -not $Filter -and -not $SerialProjects -and $HeadlessShards -gt 1
 
-    if (-not $SkipQuarantine -or $useShards) {
+    # Every unfiltered run needs discovery evidence for the pruning ledger.
+    if (-not $SkipQuarantine -or -not $Filter) {
         & $checker -Configuration $Configuration -ResultsDirectory $runDirectory
+    }
+
+    if (-not $Filter) {
+        $interopProject = "Interop/HappyPhoton.LibRaw.Interop.Tests/HappyPhoton.LibRaw.Interop.Tests.csproj"
+        $interopAssembly = [IO.Path]::GetFileNameWithoutExtension($interopProject)
+        [xml]$interopDefinition = Get-Content -Raw -LiteralPath (Join-Path $repoRoot $interopProject)
+        $framework = [string]$interopDefinition.Project.PropertyGroup.TargetFramework
+        $binary = Join-Path (Split-Path (Join-Path $repoRoot $interopProject)) "bin/$Configuration/$framework/$interopAssembly.dll"
+        $listing = & dotnet $binary -list full/json -noColor 2>&1
+
+        if ($LASTEXITCODE -ne 0) { throw "Interop test discovery failed: $($listing -join "`n")" }
+
+        $listingErrors = @($listing | Where-Object { $_ -is [Management.Automation.ErrorRecord] })
+
+        if ($listingErrors.Count -gt 0) { Write-Warning ($listingErrors -join "`n") }
+
+        $json = ($listing | Where-Object { $_ -isnot [Management.Automation.ErrorRecord] }) -join "`n"
+        @{ schemaVersion = 1; project = $interopProject; tests = @($json | ConvertFrom-Json) } |
+            ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $runDirectory "manifests/$interopAssembly.manifest.json")
     }
 
     if ($useShards) {
@@ -123,6 +145,10 @@ try {
 
     if ((-not $SkipQuarantine -or $useShards) -and -not $Filter) {
         & $checker -Mode StableResults -ResultsDirectory $runDirectory
+    }
+
+    if (-not $Filter) {
+        & (Join-Path $PSScriptRoot "check-test-ledger.ps1") -Mode Results -ResultsDirectory $runDirectory
     }
 
     if ($testExitCode -ne 0) { throw "Solution tests failed with exit code $testExitCode." }

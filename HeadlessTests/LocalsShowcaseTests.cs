@@ -19,7 +19,6 @@ public sealed partial class LocalsShowcaseTests(ITestOutputHelper output)
     [InlineData("develop-locals-linear-selected", true, false, false)]
     [InlineData("develop-locals-mask-overlay", true, true, false)]
     [InlineData("develop-locals-exited", true, false, true)]
-    [InlineData("develop-locals-locked", true, false, false)]
     [InlineData("develop-locals-geometry", true, false, false)]
     [InlineData("develop-locals-radial-selected", true, false, false)]
     [InlineData("develop-locals-radial-outside", true, true, false)]

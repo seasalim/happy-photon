@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.VisualTree;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
@@ -31,6 +32,12 @@ public sealed partial class BeforeAfterSplitHeadlessTests
         var window = new MainWindow { Width = 1280, Height = 800 };
         using var windowScope = TestUiScope.ForMainWindow(window, vm);
         Drain();
+
+        foreach (var key in new[] { Key.Oem5, Key.OemBackslash })
+        {
+            var binding = Assert.Single(window.KeyBindings, item => item.Gesture.Key == key);
+            Assert.Same(vm.ToggleBeforeAfterCommand, binding.Command);
+        }
 
         var split = Descendant<ToggleButton>(window, "BeforeAfterSplitButton");
         var bar = Descendant<Border>(window, "DevelopControlBar");

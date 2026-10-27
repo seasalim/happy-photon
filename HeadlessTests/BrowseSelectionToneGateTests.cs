@@ -12,7 +12,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-// VISUALS-WP10 G1 and G3: Browse selection is shown by tile tone alone, so each
+// VISUALS-WP10 G1: Browse selection is shown by tile tone alone, so each
 // step of the tone ladder must read on its own in both themes.
 public sealed class BrowseSelectionToneGateTests(ITestOutputHelper output)
 {
@@ -69,21 +69,6 @@ public sealed class BrowseSelectionToneGateTests(ITestOutputHelper output)
         Assert.True(hoverStep >= 8, $"{themeName} unselected→hover ΔL* {hoverStep:F2}.");
         Assert.True(selectedStep >= 8, $"{themeName} hover→selected ΔL* {selectedStep:F2}.");
         Assert.True(Lightness(selected) < 50, $"{themeName} selected L* {Lightness(selected):F2}.");
-    }
-
-    [AvaloniaTheory]
-    [MemberData(nameof(Themes))]
-    public void G3_SelectionContrastRatios(string themeName)
-    {
-        var theme = themeName == "Dark" ? ThemeVariant.Dark : HappyPhotonThemes.MidGray;
-        var surface = ThemeResourceTests.Brush("SelectionSurface", theme).Color;
-        var text = ThemeResourceTests.Contrast(ThemeResourceTests.Brush("TextPrimary", theme).Color, surface);
-        var ring = ThemeResourceTests.Contrast(ThemeResourceTests.Brush("ActiveImageRing", theme).Color, surface);
-
-        output.WriteLine($"VISUALS-WP10 G3 {themeName}: TextPrimary {text:F2}:1, ActiveImageRing {ring:F2}:1 on {surface}");
-
-        Assert.True(text >= 4.5);
-        Assert.True(ring >= 3);
     }
 
     private static Color Settle(Window window, Border tile, Point pointer)

@@ -64,19 +64,6 @@ public sealed partial class LocalsViewModelTests
         }
         finally { release.TrySetResult(); }
     }
-    [AvaloniaFact]
-    public async Task MonochromeBrushIgnoresStoredHueWithoutAcquiringAMaskBase()
-    {
-        using var catalog = await _fixture.CreateCatalogAsync();
-        await using var vm = CreateVm(catalog, mono: true, raw: true);
-        await Prepare(vm, catalog); await vm.ToggleLocalsModeCommand.ExecuteAsync(null);
-        vm.SelectedImage!.EditSettings.Locals = [new() { Type = "brush",
-            Hue = new() { Enabled = true }, Strokes = [new() { Points = [new(8192, 8192)] }] }];
-        vm.SelectedLocal = vm.Locals[0];
-        Assert.False(vm.IsSelectedLocalRangeRestricted);
-        await vm.PendingLocalMaskTask;
-        Assert.NotNull(vm.LocalRangeMask); Assert.False(vm.IsLocalRangeMaskUpdating);
-    }
 
     [AvaloniaFact]
     public async Task FirstBrushStrokePinsEmptyMaskWithToggleOffThenHidesAtRelease()

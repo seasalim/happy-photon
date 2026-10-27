@@ -42,6 +42,13 @@ public sealed class ImageFileThumbnailLifetimeTests
         browse.ReplaceThumbnail(image, null);
         Dispatcher.UIThread.RunJobs();
         Assert.Throws<ObjectDisposedException>(() => _ = secondBitmap.PixelSize);
+
+        var defaultBitmap = BitmapConversionService.ConvertToBitmap(source)!;
+        var defaultImage = new ImageFile("image.jpg");
+        var defaultBrowse = new BrowseImageState();
+        defaultBrowse.ReplaceThumbnail(defaultImage, defaultBitmap);
+        defaultBrowse.ReplaceThumbnail(defaultImage, null);
+        Assert.Throws<ObjectDisposedException>(() => _ = defaultBitmap.PixelSize);
     }
 
     [AvaloniaFact]
@@ -70,20 +77,6 @@ public sealed class ImageFileThumbnailLifetimeTests
         Assert.Equal(4, secondBitmap.PixelSize.Width);
         Dispatcher.UIThread.RunJobs();
         Assert.Throws<ObjectDisposedException>(() => _ = secondBitmap.PixelSize);
-    }
-
-    [AvaloniaFact]
-    public void DefaultState_DisposesRetiredThumbnailWithoutDispatcher()
-    {
-        using var source = new MagickImage(MagickColors.Red, 4, 3);
-        var bitmap = BitmapConversionService.ConvertToBitmap(source)!;
-        var image = new ImageFile("image.jpg");
-        var browse = new BrowseImageState();
-
-        browse.ReplaceThumbnail(image, bitmap);
-        browse.ReplaceThumbnail(image, null);
-
-        Assert.Throws<ObjectDisposedException>(() => _ = bitmap.PixelSize);
     }
 
     private static BrowseImageState CreateDeferredBrowse(

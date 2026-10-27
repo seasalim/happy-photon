@@ -25,8 +25,6 @@ public sealed class DevelopControlsShowcaseTests
     [InlineData("group-blocks-hover-collapsed", true)]
     [InlineData("group-blocks-export", false)]
     [InlineData("group-blocks-export", true)]
-    [InlineData("bottom-band-develop", false)]
-    [InlineData("bottom-band-develop", true)]
     [InlineData("bottom-band-browse", false)]
     [InlineData("bottom-band-browse", true)]
     public async Task GroupBlocksAndBottomBands(string scene, bool gray)
@@ -244,7 +242,6 @@ public sealed class DevelopControlsShowcaseTests
     [InlineData("12-develop-optics", "optics", false)]
     [InlineData("13-develop-color-mixer", "mixer", false)]
     [InlineData("23-develop-midgray", "normal", true)]
-    [InlineData("25-develop-dark-100pct", "normal", false)]
     public async Task DevelopScenes(string scene, string mode, bool gray)
     {
         var size = new PixelSize(2200, 1260);

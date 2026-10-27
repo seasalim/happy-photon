@@ -149,7 +149,7 @@ public sealed class BackupNoticeTests
     }
 
     [AvaloniaFact]
-    public async Task UndisplayedNotice_IsNotAcknowledged()
+    public async Task FailedBackup_RendersShowcase()
     {
         using var directory = new TemporaryDirectory();
         using var catalog = new CatalogService(directory.Path);
@@ -161,19 +161,6 @@ public sealed class BackupNoticeTests
         await vm.BackupNoticeLoad.WaitAsync(TestWaits.Condition);
         Assert.NotNull(vm.StatusMessage);
         Assert.Null(await catalog.GetAppSettingAsync(CatalogBackupService.PresentedOutcomeKey));
-    }
-
-    [AvaloniaFact]
-    public async Task FailedBackup_RendersShowcase()
-    {
-        using var directory = new TemporaryDirectory();
-        using var catalog = new CatalogService(directory.Path);
-        await catalog.InitializeAsync();
-        await catalog.SetAppSettingAsync(CatalogBackupService.OutcomeKey,
-            JsonSerializer.Serialize(new BackupOutcome(DateTimeOffset.UtcNow, "failed")));
-        await using var vm = new MainWindowViewModel(catalog);
-        vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        await vm.BackupNoticeLoad.WaitAsync(TestWaits.Condition);
         var window = new MainWindow();
         using var scope = TestUiScope.ForMainWindow(window, vm, show: false);
         ShowcaseTestHelper.Capture("status-line-backup-failed", scope, new PixelSize(1200, 700), ThemeVariant.Dark,

@@ -18,7 +18,7 @@ public sealed class CropAutoLayoutMeasurementTests(ITestOutputHelper output)
     public static IEnumerable<object[]> Cases =>
         from width in new[] { 250, 200 }
         from gray in new[] { false, true }
-        from sample in new[] { 1, 2, 3 }
+        from sample in new[] { 1 }
         select new object[] { width, gray, sample };
 
     [AvaloniaTheory]

@@ -1,0 +1,983 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "kind": "trimmed-cases",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.BrowseSourceSelectionTests.SyncHeader_NamesTheRing",
+      "reference": "The header depends on the ring and target count, not Grid/Loupe: keep one row for each repick/removeFirst state, both workspace modes, and all source/count outcomes; PointerRules_KeepTheFirstSelectedSource and CtrlSpace_ReanchorsInGridAndLoupe_AndDevelopOpensTheRing still cover both modes.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "method": "HappyPhoton.Tests.BrowseSourceSelectionTests.SyncHeader_NamesTheRing",
+      "removedCases": [
+        "HappyPhoton.Tests.BrowseSourceSelectionTests.SyncHeader_NamesTheRing(loupe: False, repick: True, removeFirst: False, source: 2)",
+        "HappyPhoton.Tests.BrowseSourceSelectionTests.SyncHeader_NamesTheRing(loupe: False, repick: True, removeFirst: True, source: 2)",
+        "HappyPhoton.Tests.BrowseSourceSelectionTests.SyncHeader_NamesTheRing(loupe: True, repick: False, removeFirst: False, source: 0)",
+        "HappyPhoton.Tests.BrowseSourceSelectionTests.SyncHeader_NamesTheRing(loupe: True, repick: False, removeFirst: True, source: 1)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.BrowseSourceSelectionTests.SyncHeader_NamesTheRing(loupe: False, repick: False, removeFirst: False, source: 0)",
+        "HappyPhoton.Tests.BrowseSourceSelectionTests.SyncHeader_NamesTheRing(loupe: False, repick: False, removeFirst: True, source: 1)",
+        "HappyPhoton.Tests.BrowseSourceSelectionTests.SyncHeader_NamesTheRing(loupe: True, repick: True, removeFirst: False, source: 2)",
+        "HappyPhoton.Tests.BrowseSourceSelectionTests.SyncHeader_NamesTheRing(loupe: True, repick: True, removeFirst: True, source: 2)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration",
+      "reference": "Iteration only labels a failure message: keep one representative of all four paste/sync x replaceAfterMetadata interleavings; each still pins persisted exposure, restored pixels/geometry and cache-generation consistency, with no kill point or journal phase removed.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "method": "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration",
+      "removedCases": [
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 10, paste: False, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 10, paste: False, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 10, paste: True, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 10, paste: True, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 2, paste: False, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 2, paste: False, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 2, paste: True, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 2, paste: True, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 3, paste: False, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 3, paste: False, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 3, paste: True, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 3, paste: True, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 4, paste: False, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 4, paste: False, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 4, paste: True, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 4, paste: True, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 5, paste: False, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 5, paste: False, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 5, paste: True, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 5, paste: True, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 6, paste: False, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 6, paste: False, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 6, paste: True, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 6, paste: True, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 7, paste: False, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 7, paste: False, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 7, paste: True, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 7, paste: True, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 8, paste: False, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 8, paste: False, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 8, paste: True, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 8, paste: True, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 9, paste: False, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 9, paste: False, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 9, paste: True, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 9, paste: True, replaceAfterMetadata: True)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 1, paste: False, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 1, paste: False, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 1, paste: True, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.BatchUndoViewModelTests.UndoReadsConsistentCacheGeneration(iteration: 1, paste: True, replaceAfterMetadata: True)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.CacheOffThreadTests.ByteSnapshotPreservesFormatAndAlphaAfterCallerDisposal",
+      "reference": "RGBA always takes BitmapSnapshot.ToMagickImage conversion; the mixed-alpha RGBA row includes both an opaque and a translucent pixel. Keep it plus both BGRA boundaries: all-opaque direct import and translucent conversion.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "method": "HappyPhoton.Tests.CacheOffThreadTests.ByteSnapshotPreservesFormatAndAlphaAfterCallerDisposal",
+      "removedCases": [
+        "HappyPhoton.Tests.CacheOffThreadTests.ByteSnapshotPreservesFormatAndAlphaAfterCallerDisposal(rgba: True, transparent: False)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.CacheOffThreadTests.ByteSnapshotPreservesFormatAndAlphaAfterCallerDisposal(rgba: False, transparent: False)",
+        "HappyPhoton.Tests.CacheOffThreadTests.ByteSnapshotPreservesFormatAndAlphaAfterCallerDisposal(rgba: False, transparent: True)",
+        "HappyPhoton.Tests.CacheOffThreadTests.ByteSnapshotPreservesFormatAndAlphaAfterCallerDisposal(rgba: True, transparent: True)"
+      ]
+    },
+    {
+      "kind": "duplicate",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.BrowseSelectionToneGateTests.G3_SelectionContrastRatios",
+      "reference": "\"TextPrimary on SelectionSurface >= 4.5; ActiveImageRing on SelectionSurface >= 3\" is asserted by Theme_ControlStatesAreDistinctAndReadable (which absorbed Theme_TextSelectionAndFocusPairsMeetContrastTargets) with the same contrast function and both Dark/MidGray resources.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": [
+        {
+          "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+          "test": "HappyPhoton.Tests.ThemeResourceTests.Theme_ControlStatesAreDistinctAndReadable"
+        }
+      ]
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.BrandMarkTests.WelcomeHeading_MeetsItsContrastOnTheCard",
+      "reference": "Both Dark/MidGray welcome scenes retain the heading/card contrast bounds and Brand resource equality in their existing rendered captures; both showcase scenes remain produced.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.BrandMarkTests.CaptureWelcome_HeadingInkIsTheBrandColour"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.BeforeAfterSplitHeadlessTests.BackslashBindingsShareTheEyeCommand",
+      "reference": "The existing ready MainWindow layout test also asserts that Oem5 and OemBackslash each bind the same ToggleBeforeAfterCommand; the survivor is unconditional and not quarantined.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.BeforeAfterSplitHeadlessTests.SplitToggleSitsBesideFullScreenInTheViewerBar"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.ColorLabelUiTests.AssessmentSwatches_MaterializeOneButtonPerEnumSlot",
+      "reference": "The same ImageAssessmentControl setup now checks the complete color-label button count and enum parameters before checking the renamed Red slot accessibility text.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.ColorLabelUiTests.AssessmentSwatches_FollowRenamedSlotsIntoAccessibilityText"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.ClippingOverlayViewModelTests.OverlayColorsArePinnedThemeIndependentInvariants",
+      "reference": "Both exact highlight/floor overlay color assertions run before the existing histogram triangle latch and pointer-exit interaction.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.ClippingOverlayViewModelTests.TrianglePress_LatchesAndPointerExitPreservesOverlay"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.BatchExportFormatTests.LosslessFormats_ReplaceQualityWithLosslessLabel",
+      "reference": "The same ExportSettingsPane now retains the shared parent assertion and both PNG/TIFF quality-hidden, lossless-label-visible transitions after its existing primary-action checks.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.BatchExportFormatTests.ExportPrimaryAction_IsFilledFullWidthBelowCountLine"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.BatchExportProgressTests",
+      "reference": "The existing rendered ExportQueueStrip also asserts determinate progress, 2px bar height, 10px label and zero tracking, preserving every assertion from the standalone strip test.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.BackgroundActivityStatusBarTests.SegmentIsStaticAccessibleDeterminateAndAbsentAtRest"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.BrowseThumbnailStyleTests",
+      "reference": "The realized tile tests at all three sizes retain square corners, 2px border, background, transitions and no check badge, alongside their existing worst-case label/chip layout assertions.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.BrowseTileColorLabelTests.MarkerAndCachedTooltipStayInTileAtEveryThumbnailSize"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.BackupNoticeTests.UndisplayedNotice_IsNotAcknowledged",
+      "reference": "The same failed-outcome catalog/VM now asserts non-null status and null PresentedOutcomeKey before any window is constructed, then captures the existing failure scene; restore staging, notice dismissal, journal phases and quit paths are untouched.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.BackupNoticeTests.FailedBackup_RendersShowcase"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.CompactSliderEntryTests.InvalidAndCancelledTextMakeNoChange",
+      "reference": "NaN and Infinity both parse successfully and fail the same double.IsFinite guard; keep NaN, empty text, unparseable text, and Escape with valid text.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "method": "HappyPhoton.Tests.CompactSliderEntryTests.InvalidAndCancelledTextMakeNoChange",
+      "removedCases": [
+        "HappyPhoton.Tests.CompactSliderEntryTests.InvalidAndCancelledTextMakeNoChange(text: \"Infinity\", escape: False)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.CompactSliderEntryTests.InvalidAndCancelledTextMakeNoChange(text: \"\", escape: False)",
+        "HappyPhoton.Tests.CompactSliderEntryTests.InvalidAndCancelledTextMakeNoChange(text: \"35\", escape: True)",
+        "HappyPhoton.Tests.CompactSliderEntryTests.InvalidAndCancelledTextMakeNoChange(text: \"NaN\", escape: False)",
+        "HappyPhoton.Tests.CompactSliderEntryTests.InvalidAndCancelledTextMakeNoChange(text: \"abc\", escape: False)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.DevelopControlsShowcaseTests.GroupBlocksAndBottomBands",
+      "reference": "bottom-band-develop and group-blocks-develop take the same normal scene with identical 1200x700 state, theme and callback; group-blocks-develop retains the complete frame, including the bottom band, in both themes.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "method": "HappyPhoton.Tests.DevelopControlsShowcaseTests.GroupBlocksAndBottomBands",
+      "removedCases": [
+        "HappyPhoton.Tests.DevelopControlsShowcaseTests.GroupBlocksAndBottomBands(scene: \"bottom-band-develop\", gray: False)",
+        "HappyPhoton.Tests.DevelopControlsShowcaseTests.GroupBlocksAndBottomBands(scene: \"bottom-band-develop\", gray: True)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.DevelopControlsShowcaseTests.GroupBlocksAndBottomBands(scene: \"bottom-band-browse\", gray: False)",
+        "HappyPhoton.Tests.DevelopControlsShowcaseTests.GroupBlocksAndBottomBands(scene: \"bottom-band-browse\", gray: True)",
+        "HappyPhoton.Tests.DevelopControlsShowcaseTests.GroupBlocksAndBottomBands(scene: \"group-blocks-develop\", gray: False)",
+        "HappyPhoton.Tests.DevelopControlsShowcaseTests.GroupBlocksAndBottomBands(scene: \"group-blocks-develop\", gray: True)",
+        "HappyPhoton.Tests.DevelopControlsShowcaseTests.GroupBlocksAndBottomBands(scene: \"group-blocks-export\", gray: False)",
+        "HappyPhoton.Tests.DevelopControlsShowcaseTests.GroupBlocksAndBottomBands(scene: \"group-blocks-export\", gray: True)",
+        "HappyPhoton.Tests.DevelopControlsShowcaseTests.GroupBlocksAndBottomBands(scene: \"group-blocks-hover-collapsed\", gray: False)",
+        "HappyPhoton.Tests.DevelopControlsShowcaseTests.GroupBlocksAndBottomBands(scene: \"group-blocks-hover-collapsed\", gray: True)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.DevelopControlsShowcaseTests.DevelopScenes",
+      "reference": "25-develop-dark-100pct and 05-develop-dark both render normal mode in Dark at 2200x1260 with the same callback; 05-develop-dark keeps the identical scene and every assertion.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "method": "HappyPhoton.Tests.DevelopControlsShowcaseTests.DevelopScenes",
+      "removedCases": [
+        "HappyPhoton.Tests.DevelopControlsShowcaseTests.DevelopScenes(scene: \"25-develop-dark-100pct\", mode: \"normal\", gray: False)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.DevelopControlsShowcaseTests.DevelopScenes(scene: \"05-develop-dark\", mode: \"normal\", gray: False)",
+        "HappyPhoton.Tests.DevelopControlsShowcaseTests.DevelopScenes(scene: \"06-develop-crop\", mode: \"crop\", gray: False)",
+        "HappyPhoton.Tests.DevelopControlsShowcaseTests.DevelopScenes(scene: \"07-develop-spots\", mode: \"spots\", gray: False)",
+        "HappyPhoton.Tests.DevelopControlsShowcaseTests.DevelopScenes(scene: \"08-develop-locals\", mode: \"locals\", gray: False)",
+        "HappyPhoton.Tests.DevelopControlsShowcaseTests.DevelopScenes(scene: \"09-develop-panel-mid\", mode: \"curve\", gray: False)",
+        "HappyPhoton.Tests.DevelopControlsShowcaseTests.DevelopScenes(scene: \"10-develop-panel-lower\", mode: \"lower\", gray: False)",
+        "HappyPhoton.Tests.DevelopControlsShowcaseTests.DevelopScenes(scene: \"11-develop-panel-bottom\", mode: \"collapsed\", gray: False)",
+        "HappyPhoton.Tests.DevelopControlsShowcaseTests.DevelopScenes(scene: \"12-develop-optics\", mode: \"optics\", gray: False)",
+        "HappyPhoton.Tests.DevelopControlsShowcaseTests.DevelopScenes(scene: \"13-develop-color-mixer\", mode: \"mixer\", gray: False)",
+        "HappyPhoton.Tests.DevelopControlsShowcaseTests.DevelopScenes(scene: \"23-develop-midgray\", mode: \"normal\", gray: True)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.CropAutoLayoutMeasurementTests.MeasureCropAutoLayout",
+      "reference": "sample only labels diagnostic output; keep sample 1 for all four width/theme combinations (200 and 250, Dark and MidGray), with unchanged viewport and Auto-button assertions.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "method": "HappyPhoton.Tests.CropAutoLayoutMeasurementTests.MeasureCropAutoLayout",
+      "removedCases": [
+        "HappyPhoton.Tests.CropAutoLayoutMeasurementTests.MeasureCropAutoLayout(width: 200, gray: False, sample: 2)",
+        "HappyPhoton.Tests.CropAutoLayoutMeasurementTests.MeasureCropAutoLayout(width: 200, gray: False, sample: 3)",
+        "HappyPhoton.Tests.CropAutoLayoutMeasurementTests.MeasureCropAutoLayout(width: 200, gray: True, sample: 2)",
+        "HappyPhoton.Tests.CropAutoLayoutMeasurementTests.MeasureCropAutoLayout(width: 200, gray: True, sample: 3)",
+        "HappyPhoton.Tests.CropAutoLayoutMeasurementTests.MeasureCropAutoLayout(width: 250, gray: False, sample: 2)",
+        "HappyPhoton.Tests.CropAutoLayoutMeasurementTests.MeasureCropAutoLayout(width: 250, gray: False, sample: 3)",
+        "HappyPhoton.Tests.CropAutoLayoutMeasurementTests.MeasureCropAutoLayout(width: 250, gray: True, sample: 2)",
+        "HappyPhoton.Tests.CropAutoLayoutMeasurementTests.MeasureCropAutoLayout(width: 250, gray: True, sample: 3)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.CropAutoLayoutMeasurementTests.MeasureCropAutoLayout(width: 200, gray: False, sample: 1)",
+        "HappyPhoton.Tests.CropAutoLayoutMeasurementTests.MeasureCropAutoLayout(width: 200, gray: True, sample: 1)",
+        "HappyPhoton.Tests.CropAutoLayoutMeasurementTests.MeasureCropAutoLayout(width: 250, gray: False, sample: 1)",
+        "HappyPhoton.Tests.CropAutoLayoutMeasurementTests.MeasureCropAutoLayout(width: 250, gray: True, sample: 1)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.ControlBarLayoutGateTests.ClustersShareBarCentre",
+      "reference": "run only labels diagnostic output; keep run 1 with the entire existing view/width/theme workload and every geometry assertion.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "method": "HappyPhoton.Tests.ControlBarLayoutGateTests.ClustersShareBarCentre",
+      "removedCases": [
+        "HappyPhoton.Tests.ControlBarLayoutGateTests.ClustersShareBarCentre(run: 2)",
+        "HappyPhoton.Tests.ControlBarLayoutGateTests.ClustersShareBarCentre(run: 3)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.ControlBarLayoutGateTests.ClustersShareBarCentre(run: 1)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.ControlBarLayoutGateTests.BarHeightsStayAtBaseline",
+      "reference": "run only labels diagnostic output; keep run 1 with the entire existing view/width/theme workload and every geometry assertion.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "method": "HappyPhoton.Tests.ControlBarLayoutGateTests.BarHeightsStayAtBaseline",
+      "removedCases": [
+        "HappyPhoton.Tests.ControlBarLayoutGateTests.BarHeightsStayAtBaseline(run: 2)",
+        "HappyPhoton.Tests.ControlBarLayoutGateTests.BarHeightsStayAtBaseline(run: 3)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.ControlBarLayoutGateTests.BarHeightsStayAtBaseline(run: 1)"
+      ]
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.CompactSliderValueBaselineTests",
+      "reference": "Carry Assert.NotNull(frame) into the existing Contrast/Exposure/Temperature editor geometry theory in the same 1200x700 MainWindow with LocalTestLoader; the deleted probe otherwise only printed readout and click diagnostics.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.CompactSliderEntryTests.EditorAndHoverPreserveRowAndDigitPositions"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.DevelopAssessmentBarTests.AllStatesMatchFooterAndCompactCluster",
+      "reference": "The existing width-tier test already checks AssertState for every flag/rating/label combination at every tier; retain Assert.Empty(full.Classes) and the other-photo AssertState in that same setup.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.DevelopAssessmentBarTests.WidthTiersKeepNeighboursFixedAcrossAllStatesAndResize"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "duplicate",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.DevelopEditDotBaselineTests.MeasureDeterministicBaseline",
+      "reference": "\"Assert.Equal(10, groups.Length)\" is retained by D2D5D6 on the same WithScene fixture across edited/unedited and expanded/collapsed states; MeasureUnifiedLayout remains an unconditional test and retains all assertions the baseline invoked directly.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": [
+        {
+          "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+          "test": "HappyPhoton.Tests.DevelopEditDotTests.D2D5D6TruthTableAccessibilityAndBounds"
+        },
+        {
+          "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+          "test": "HappyPhoton.Tests.DevelopHeaderBaselineTests.MeasureUnifiedLayout"
+        }
+      ]
+    },
+    {
+      "kind": "duplicate",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.DevelopEditDotBaselineTests.MeasureUpdateCanResetContext",
+      "reference": "\"Assert.True(vm.CanEditSelectedImage); Assert.True(vm.IsDevelopMode); Assert.Equal(10, ...OfType<DevelopGroup>().Count())\" are identical in D7 using WithScene(AllGroupsEdited()); the removed UpdateCanReset timing loop asserted no outcome.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": [
+        {
+          "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+          "test": "HappyPhoton.Tests.DevelopEditDotTests.D7SteadyAndTransitionRefreshCost"
+        }
+      ]
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.ControlBarLayoutBehaviorTests.DevelopHasMinimallyShiftedFullClusterWithSliderHidden",
+      "reference": "Both tests use the same Develop scene and 1400..600 width sweep; carry all off-centre minimum-shift, non-overlap and tier-presence assertions into the existing sweep.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.ControlBarLayoutBehaviorTests.DevelopHidesSliderBeforeClusterLeavesCentre"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.CompactSliderInputGateTests.CapturedPress_ChangesThumbColorUntilRelease",
+      "reference": "Both tests use ShowSlider and 100 identical track presses; retain every capture-feedback and release-hover assertion in the existing first-press loop, additionally exercising the ancestor-handled route.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.CompactSliderInputGateTests.FirstPress_CapturesWhenAnAncestorHandledTheRoutedEvent"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "duplicate",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.DevelopToolsBaselineTests.CensusAndScrollExtent",
+      "reference": "\"Assert.NotNull(frame)\" is subsumed by the survivor's frame PixelSize assertion for the same WithScene modes normal/crop/locals at both 1200x700 and 800x500 in Dark; census values are output only.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": [
+        {
+          "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+          "test": "HappyPhoton.Tests.DevelopToolsLayoutTests.FixedToolsRemainReachable"
+        }
+      ]
+    },
+    {
+      "kind": "duplicate",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.DevelopReviewStateTests.ExpandedLocalDisclosuresStayTransparent",
+      "reference": "\"Assert.Equal(0, ColorOf(presenter.Background).A)\" is also asserted for all three LocalsEditSection compact-chevron presenters in both themes, with additional hover, press and enabled states.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": [
+        {
+          "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+          "test": "HappyPhoton.Tests.DevelopReviewStateTests.EverySharedToggleKeepsItsCheckedPresenterWhileHovered"
+        }
+      ]
+    },
+    {
+      "kind": "duplicate",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.EditDebounceDisposalTests.DisposeWaitsForTheInFlightDebouncedEditUpdate",
+      "reference": "\"Assert.False(disposeTask.IsCompleted)\" and completed tracked updates at PreviewDebounceDrainCompleted are both asserted by the survivor with two parked updates; releasing the newest alone additionally proves the old update is drained.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": [
+        {
+          "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+          "test": "HappyPhoton.Tests.EditDebounceDisposalTests.DisposeWaitsForEverySupersededDebouncedEditUpdate"
+        }
+      ]
+    },
+    {
+      "kind": "low-value",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.DisplayChainTraceTests.RealizedControl_ReportsEveryMappingFieldAndCoalescesChanges",
+      "reference": "Asserts only formatted DisplayChain mapping diagnostic lines and their coalesced count; no rendered bounds or pixels are asserted.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "reason": "log-text"
+    },
+    {
+      "kind": "low-value",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.DisplayChainTraceTests.ActiveSurface_TracksDevelopAndFullscreenTransitionsExactly",
+      "reference": "Asserts only the number of DisplayChain mapping diagnostic lines after workspace/fullscreen toggles; no visible surface outcome is asserted.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "reason": "log-text"
+    },
+    {
+      "kind": "low-value",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.DisplayChainTraceTests.PreviewSwaps_ReportAllProductionProvenanceLabels",
+      "reference": "Asserts only DisplayChain paint diagnostic prefixes and decode/settings field wording for preview replacements.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "reason": "log-text"
+    },
+    {
+      "kind": "low-value",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.DisplayChainTraceTests.ProvisionalRotationHasExplicitTraceLabel",
+      "reference": "Asserts only the DisplayChain provisional-rotate diagnostic prefix and line count.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "reason": "log-text"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.HelpAboutDialogTests.Dialog_RequiredActionsHaveAccessibleNames"
+      ],
+      "reference": "The identical parameterless HelpAboutDialog setup now checks initial identity/selection and every required action's accessible name in one test.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.HelpAboutDialogTests.Dialog_ConstructsWithShortcutsSelectedAndIdentityPopulated"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.DevelopPaneWidthBaselineTests.MeasureViewerFloor",
+      "method": "HappyPhoton.Tests.DevelopPaneWidthBaselineTests.MeasureViewerFloor",
+      "removedCases": [
+        "HappyPhoton.Tests.DevelopPaneWidthBaselineTests.MeasureViewerFloor(width: 1440, height: 900, sample: 2)",
+        "HappyPhoton.Tests.DevelopPaneWidthBaselineTests.MeasureViewerFloor(width: 1440, height: 900, sample: 3)",
+        "HappyPhoton.Tests.DevelopPaneWidthBaselineTests.MeasureViewerFloor(width: 800, height: 600, sample: 2)",
+        "HappyPhoton.Tests.DevelopPaneWidthBaselineTests.MeasureViewerFloor(width: 800, height: 600, sample: 3)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.DevelopPaneWidthBaselineTests.MeasureViewerFloor(width: 1440, height: 900, sample: 1)",
+        "HappyPhoton.Tests.DevelopPaneWidthBaselineTests.MeasureViewerFloor(width: 800, height: 600, sample: 1)"
+      ],
+      "reference": "sample only labels diagnostic output; samples 2 and 3 repeat the identical pointer workload and assertions. Keep sample 1 at both 800x600 and 1440x900 layout boundaries.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26"
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.DevelopPaneWidthBaselineTests.MeasureExpandedPanesThenShrink",
+      "method": "HappyPhoton.Tests.DevelopPaneWidthBaselineTests.MeasureExpandedPanesThenShrink",
+      "removedCases": [
+        "HappyPhoton.Tests.DevelopPaneWidthBaselineTests.MeasureExpandedPanesThenShrink(sample: 2)",
+        "HappyPhoton.Tests.DevelopPaneWidthBaselineTests.MeasureExpandedPanesThenShrink(sample: 3)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.DevelopPaneWidthBaselineTests.MeasureExpandedPanesThenShrink(sample: 1)"
+      ],
+      "reference": "sample only labels diagnostic output; samples 2 and 3 repeat the same expanded-pane and window-shrink workload. Keep sample 1 as the single representative.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26"
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.DialogChromeBaselineTests.G4_InitialFocusKeyboardResults",
+      "method": "HappyPhoton.Tests.DialogChromeBaselineTests.G4_InitialFocusKeyboardResults",
+      "removedCases": [
+        "HappyPhoton.Tests.DialogChromeBaselineTests.G4_InitialFocusKeyboardResults(title: \"Restore catalog\", destructive: True, cancelLabel: \"Cancel\", confirmLabel: \"Restore\")"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.DialogChromeBaselineTests.G4_InitialFocusKeyboardResults(title: \"Move to Trash\", destructive: True, cancelLabel: \"Cancel\", confirmLabel: \"Move to Trash\")",
+        "HappyPhoton.Tests.DialogChromeBaselineTests.G4_InitialFocusKeyboardResults(title: \"Download originals for export?\", destructive: False, cancelLabel: \"Cancel\", confirmLabel: \"Download / Export\")"
+      ],
+      "reference": "Both destructive rows call ConfirmationDialog.ConfirmAsync with destructive=true, assert Cancel focus and reject Enter/Escape; titles and affirmative labels do not enter that branch. Keep Move to Trash and the non-destructive Download / Export case.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26"
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment",
+      "method": "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment",
+      "removedCases": [
+        "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment(profileName: \"softproof-p3-a2b1.icc\", acmValue: 2, expectedSupport: AcmManaged, srgbIdentity: True)",
+        "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment(profileName: \"softproof-p3-a2b1.icc\", acmValue: 3, expectedSupport: AcmQueryFailed, srgbIdentity: True)",
+        "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment(profileName: \"softproof-p3-d2b0.icc\", acmValue: 2, expectedSupport: AcmManaged, srgbIdentity: True)",
+        "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment(profileName: \"softproof-p3-d2b0.icc\", acmValue: 3, expectedSupport: AcmQueryFailed, srgbIdentity: True)",
+        "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment(profileName: \"softproof-p3-mhc2.icc\", acmValue: 2, expectedSupport: AcmManaged, srgbIdentity: True)",
+        "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment(profileName: \"softproof-p3-mhc2.icc\", acmValue: 3, expectedSupport: AcmQueryFailed, srgbIdentity: True)",
+        "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment(profileName: \"softproof-srgb.icc\", acmValue: 2, expectedSupport: AcmManaged, srgbIdentity: True)",
+        "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment(profileName: \"softproof-srgb.icc\", acmValue: 3, expectedSupport: AcmQueryFailed, srgbIdentity: True)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment(profileName: \"softproof-p3-a2b1.icc\", acmValue: 0, expectedSupport: LutBased, srgbIdentity: True)",
+        "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment(profileName: \"softproof-p3-a2b1.icc\", acmValue: 1, expectedSupport: LutBased, srgbIdentity: True)",
+        "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment(profileName: \"softproof-p3-d2b0.icc\", acmValue: 0, expectedSupport: LutBased, srgbIdentity: True)",
+        "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment(profileName: \"softproof-p3-d2b0.icc\", acmValue: 1, expectedSupport: LutBased, srgbIdentity: True)",
+        "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment(profileName: \"softproof-p3-gamma22.icc\", acmValue: 0, expectedSupport: MatrixTrc, srgbIdentity: False)",
+        "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment(profileName: \"softproof-p3-gamma22.icc\", acmValue: 1, expectedSupport: MatrixTrc, srgbIdentity: False)",
+        "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment(profileName: \"softproof-p3-gamma22.icc\", acmValue: 2, expectedSupport: AcmManaged, srgbIdentity: True)",
+        "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment(profileName: \"softproof-p3-gamma22.icc\", acmValue: 3, expectedSupport: AcmQueryFailed, srgbIdentity: True)",
+        "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment(profileName: \"softproof-p3-mhc2.icc\", acmValue: 0, expectedSupport: Mhc2, srgbIdentity: True)",
+        "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment(profileName: \"softproof-p3-mhc2.icc\", acmValue: 1, expectedSupport: Mhc2, srgbIdentity: True)",
+        "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment(profileName: \"softproof-srgb.icc\", acmValue: 0, expectedSupport: Srgb, srgbIdentity: True)",
+        "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment(profileName: \"softproof-srgb.icc\", acmValue: 1, expectedSupport: Srgb, srgbIdentity: True)",
+        "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment(profileName: null, acmValue: 0, expectedSupport: Absent, srgbIdentity: True)",
+        "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment(profileName: null, acmValue: 1, expectedSupport: Absent, srgbIdentity: True)",
+        "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment(profileName: null, acmValue: 2, expectedSupport: AcmManaged, srgbIdentity: True)",
+        "HappyPhoton.Tests.DisplayTransformTests.ResolutionPolicy_SelectsExpectedMonitorTreatment(profileName: null, acmValue: 3, expectedSupport: AcmQueryFailed, srgbIdentity: True)"
+      ],
+      "reference": "ACM On/Failed return before profile parsing in DisplayColorManagementService.Resolve; keep absent-profile and nonidentity matrix-profile boundaries for each override, and every profile under Off/Unavailable.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.LocalsViewModelTests.DisposalCancelsPendingBrushPreferenceSave"
+      ],
+      "reference": "The existing debounce test also changes a preference, disposes the VM, advances 250 ms and asserts no additional save; both debounce and disposal outcomes keep one clock and catalog.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.LocalsViewModelTests.BrushPreferenceBurstSavesOnceAfterTheLastChange"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.LocalsViewModelTests.MonochromeBrushIgnoresStoredHueWithoutAcquiringAMaskBase"
+      ],
+      "reference": "The existing monochrome VM also selects a brush with enabled stored hue, asserts the range is unrestricted and awaits a non-null mask with updating cleared.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.LocalsViewModelTests.RejectionKeepsPickerArmedAndMonochromePreservesDormantValues"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.LocalsViewModelTests.FullyFeatheredRadialCenterRemainsDraggable"
+      ],
+      "reference": "The same 800x600 overlay and radial Rx=.2/Ry=.1 geometry now also assert Center at offsets 0, 3 and 6 with feather=1; all three former theory assertions remain.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.LocalsViewModelTests.RadialKnobsWinOverRingAndPins"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.LensPickerControlTests.ManualWithoutDataReportsUnavailableCorrections"
+      ],
+      "reference": "After the narrow-pane scene, the existing VM receives a manual summary without correction data and retains all four text/capability assertions.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.LensPickerControlTests.PickerStaysInsideNarrowPaneAndTrimsLongNames"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.LoupePeekTests.ClickReleasedBelowThreshold_RemainsInert"
+      ],
+      "reference": "Before engaging the loupe, both retained DPI cases release at 149 ms, advance another second and assert no peek, unchanged image bounds and zero offset; the standalone test rendered no showcase.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.LoupePeekTests.HoldAndMoves_PeekAtOriginalOneToOneThenRestoreExactViewport"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.LoupePeekTests.MoveBeforeHoldThreshold_ContinuesAsOrdinaryPan"
+      ],
+      "reference": "The identical manual-zoom setup first moves (20,12) before the hold threshold, asserts no peek and exact pan offsets, then resets the viewport and runs every existing hold/restore assertion.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.LoupePeekTests.ManualZoomPeek_RestoresZoomAndViewportExactly"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.ImageFileThumbnailLifetimeTests.DefaultState_DisposesRetiredThumbnailWithoutDispatcher"
+      ],
+      "reference": "After deferred retirement, a fresh default BrowseImageState replaces and clears a thumbnail and asserts immediate ObjectDisposedException without dispatching between replacement and assertion.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.ImageFileThumbnailLifetimeTests.Replacement_DefersRetiredThumbnailDisposalUntilAfterRender"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.LocalsViewModelTests.RangeEntryTypingOwnsWindowShortcuts",
+      "reference": "Both endpoints are NumericEntryBox instances constructed by the same DualRangeTrack loop and use identical window shortcut routing; keep endpoint 0 for typing, while RangeEntryEnterCommitsExactlyOneHistoryStep retains both endpoint-specific commit/undo bindings.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "method": "HappyPhoton.Tests.LocalsViewModelTests.RangeEntryTypingOwnsWindowShortcuts",
+      "removedCases": [
+        "HappyPhoton.Tests.LocalsViewModelTests.RangeEntryTypingOwnsWindowShortcuts(endpoint: 1)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.LocalsViewModelTests.RangeEntryTypingOwnsWindowShortcuts(endpoint: 0)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.LocalsViewModelTests.RangeEntryPlatformKeyTypingCommitsAndShadowsShortcuts",
+      "reference": "NumericEntryKeyInput and NumericEntryBox use the same platform key/text path for both endpoints; keep endpoint 0, while RangeEntryEnterCommitsExactlyOneHistoryStep retains both Lower/Upper commit boundaries.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "method": "HappyPhoton.Tests.LocalsViewModelTests.RangeEntryPlatformKeyTypingCommitsAndShadowsShortcuts",
+      "removedCases": [
+        "HappyPhoton.Tests.LocalsViewModelTests.RangeEntryPlatformKeyTypingCommitsAndShadowsShortcuts(endpoint: 1)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.LocalsViewModelTests.RangeEntryPlatformKeyTypingCommitsAndShadowsShortcuts(endpoint: 0)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.LocalsViewModelTests.BrushShortcutShiftThenAltShowsEraseAndCommitsStraightErase",
+      "reference": "MainWindow.TryHandleLocalsKey maps LeftAlt and RightAlt to the same held flag and stroke input uses the Alt modifier; keep LeftAlt for Shift+Alt composition, while BrushShortcutAltOnlyChangesCursorAndClearsOnFocusLoss retains both key identities.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "method": "HappyPhoton.Tests.LocalsViewModelTests.BrushShortcutShiftThenAltShowsEraseAndCommitsStraightErase",
+      "removedCases": [
+        "HappyPhoton.Tests.LocalsViewModelTests.BrushShortcutShiftThenAltShowsEraseAndCommitsStraightErase(alt: RightAlt)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.LocalsViewModelTests.BrushShortcutShiftThenAltShowsEraseAndCommitsStraightErase(alt: LeftAlt)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.LocalsShowcaseTests.RenderScene",
+      "reference": "The locked row and kept develop-locals-linear-selected row have identical local data, mask=false, closed=false, geometry collapsed, loader, size and theme; the locked filename is redundant and its exact scene is still rendered by the linear-selected row.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26",
+      "method": "HappyPhoton.Tests.LocalsShowcaseTests.RenderScene",
+      "removedCases": [
+        "HappyPhoton.Tests.LocalsShowcaseTests.RenderScene(scene: \"develop-locals-locked\", hasLocal: True, mask: False, closed: False)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.LocalsShowcaseTests.RenderScene(scene: \"develop-locals-armed\", hasLocal: False, mask: False, closed: False)",
+        "HappyPhoton.Tests.LocalsShowcaseTests.RenderScene(scene: \"develop-locals-color\", hasLocal: True, mask: False, closed: False)",
+        "HappyPhoton.Tests.LocalsShowcaseTests.RenderScene(scene: \"develop-locals-empty\", hasLocal: False, mask: False, closed: False)",
+        "HappyPhoton.Tests.LocalsShowcaseTests.RenderScene(scene: \"develop-locals-exited\", hasLocal: True, mask: False, closed: True)",
+        "HappyPhoton.Tests.LocalsShowcaseTests.RenderScene(scene: \"develop-locals-geometry\", hasLocal: True, mask: False, closed: False)",
+        "HappyPhoton.Tests.LocalsShowcaseTests.RenderScene(scene: \"develop-locals-linear-selected\", hasLocal: True, mask: False, closed: False)",
+        "HappyPhoton.Tests.LocalsShowcaseTests.RenderScene(scene: \"develop-locals-mask-overlay\", hasLocal: True, mask: True, closed: False)",
+        "HappyPhoton.Tests.LocalsShowcaseTests.RenderScene(scene: \"develop-locals-mono\", hasLocal: True, mask: False, closed: False)",
+        "HappyPhoton.Tests.LocalsShowcaseTests.RenderScene(scene: \"develop-locals-radial-geometry\", hasLocal: True, mask: False, closed: False)",
+        "HappyPhoton.Tests.LocalsShowcaseTests.RenderScene(scene: \"develop-locals-radial-outside\", hasLocal: True, mask: True, closed: False)",
+        "HappyPhoton.Tests.LocalsShowcaseTests.RenderScene(scene: \"develop-locals-radial-selected\", hasLocal: True, mask: False, closed: False)"
+      ]
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.MaskListBaselineTests.UnrangedViewport"
+      ],
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.MaskListBaselineTests.ScrollingGutter"
+      },
+      "result": "existing",
+      "reference": "The identical six-unranged-row MainWindow setup now checks zero initial scroll offset and at least five fully visible rows before its gutter, hit-target and deletion assertions.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.SignedReadoutBaselineTests.MeasureGlobalReadoutsAndSignedTextAtMinimumPaneWidth"
+      ],
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.SliderAndFooterMetricTests.SignedGlobalReadouts_FitAtMinimumPaneWidth"
+      },
+      "result": "existing",
+      "reference": "The same dark 200x700 DevelopEditPanel and 20 global sliders now check positive/zero/negative formatted values and fixed signed-string widths alongside the existing min/max value and rendered-text fit assertions; all showcase scenes remain.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.RawHistogramUiTests.LitChannelWithTinyFraction_ShowsSubThresholdInsteadOfZero",
+        "HappyPhoton.Tests.RawHistogramUiTests.DisplayPresentation_KeepsLuminanceAndNeverShowsRawDots"
+      ],
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.RawHistogramUiTests.RawPresentation_HasNoLuminanceAndUsesSixteenDotBoundary"
+      },
+      "result": "existing",
+      "reference": "One 250x140 HistogramView retains the 15/16 raw clipping threshold, the lit <0.01% label, and display-domain four-curve/hidden-raw-dot assertions.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.ReplacementBaseRefreshStalenessTests.StaleRefreshCannotOverwriteNewerRenderGeneration",
+        "HappyPhoton.Tests.ReplacementBaseRefreshStalenessTests.GreaterThanReservedRefreshIsRejected"
+      ],
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.ReplacementBaseRefreshStalenessTests.ExactReservedRefreshIsApplied"
+      },
+      "result": "existing",
+      "reference": "One unchanged no-dispatcher-pump VM fixture retains lower/higher reserved-generation rejection, bitmap/mask disposal and unchanged-preview/clipping assertions before exact-generation bitmap/histogram acceptance.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26"
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds",
+      "method": "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds",
+      "removedCases": [
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"B-C-overlap\", outside: False, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"B-C-overlap\", outside: False, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"B-C-overlap\", outside: True, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"B-C-overlap\", outside: True, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"B-edge\", outside: False, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"B-edge\", outside: False, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"B-edge\", outside: True, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"B-edge\", outside: True, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"C-body\", outside: False, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"C-body\", outside: False, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"C-body\", outside: True, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"C-body\", outside: True, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"C-edge\", outside: False, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"C-edge\", outside: False, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"C-edge\", outside: True, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"C-edge\", outside: True, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"D-body-selected-edge-overlap\", outside: False, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"D-body-selected-edge-overlap\", outside: False, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"D-body-selected-edge-overlap\", outside: True, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"D-body-selected-edge-overlap\", outside: True, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"D-edge\", outside: False, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"D-edge\", outside: False, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"D-edge\", outside: True, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"D-edge\", outside: True, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-180\", outside: False, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-180\", outside: False, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-180\", outside: True, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-180\", outside: True, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-225\", outside: False, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-225\", outside: False, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-225\", outside: True, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-225\", outside: True, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-270\", outside: False, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-270\", outside: False, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-270\", outside: True, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-270\", outside: True, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-315\", outside: False, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-315\", outside: False, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-315\", outside: True, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-315\", outside: True, cancel: True)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"B-body\", outside: False, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"B-body\", outside: False, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"B-body\", outside: True, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"B-body\", outside: True, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-0\", outside: False, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-0\", outside: False, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-0\", outside: True, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-0\", outside: True, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-135\", outside: False, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-135\", outside: False, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-135\", outside: True, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-135\", outside: True, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-45\", outside: False, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-45\", outside: False, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-45\", outside: True, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-45\", outside: True, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-90\", outside: False, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-90\", outside: False, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-90\", outside: True, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"edge-90\", outside: True, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"empty\", outside: False, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"empty\", outside: False, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"empty\", outside: True, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"empty\", outside: True, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"selected-destination\", outside: False, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"selected-destination\", outside: False, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"selected-destination\", outside: True, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"selected-destination\", outside: True, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"selected-source\", outside: False, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"selected-source\", outside: False, cancel: True)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"selected-source\", outside: True, cancel: False)",
+        "HappyPhoton.Tests.SpotHoverBaselineTests.GestureFeedbackPersistsAndEnds(zone: \"selected-source\", outside: True, cancel: True)"
+      ],
+      "reference": "SpotsOverlayControl resolves all grid points in MeasureCurrentBehavior; captured feedback then depends only on gesture kind, initial selection and cursor. Keep Create, selected Destination, Source, unselected Destination and all four Edge cursor directions, each inside/outside and release/Escape; other unselected bodies/edges/overlaps and opposite resize rays repeat these classes.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26"
+    },
+    {
+      "kind": "duplicate",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.VisualsOrderGateTests.VisualsOrderGateG4StoredPasteChoice",
+      "survivor": [
+        {
+          "project": "Tests/HappyPhoton.Tests.csproj",
+          "test": "HappyPhoton.Tests.AppSettingsServiceTests.LegacyPasteChoiceMigratesEffectiveDefaultsWithoutWriting"
+        }
+      ],
+      "reference": "\"Adjustments and Presence are both effectively selected\" after AppSettingsService.LoadAsync reads legacy PasteGroups {\"Adjustments\":true,\"Presence\":false}; the unit survivor uses the same catalog setup, repeats the load and also verifies no write.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.TipsCopyTests.TipsDoNotSuppressEmptyStatesOrTakeFocus"
+      ],
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.TipsCopyTests.BrowseCopyPinsSyncSettingsAndSelectionHints"
+      },
+      "result": "existing",
+      "reference": "Retain every empty-state, focusability and underlined-link assertion after the Browse copy assertions in the same TipsTestScene, then switch that scene to Develop.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.WaveformScopeUiTests.ScopeSelector_UsesCompactDevelopActionPresentation"
+      ],
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.WaveformScopeUiTests.ScopeSelector_HasStableEntriesAndExactlyOneBody"
+      },
+      "result": "existing",
+      "reference": "Retain all three scope buttons' size, padding and border assertions in the existing no-selection DevelopEditPanel fixture before its scope state transitions.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": [
+        "HappyPhoton.Tests.ThemeResourceTests.Theme_TextSelectionAndFocusPairsMeetContrastTargets",
+        "HappyPhoton.Tests.ThemeResourceTests.Theme_ControlAndFluentAccentTokensAreAchromatic"
+      ],
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.ThemeResourceTests.Theme_ControlStatesAreDistinctAndReadable"
+      },
+      "result": "existing",
+      "reference": "Retain every text/selection/focus contrast and control/Fluent accent achromatic assertion in the existing control-state resource theory, for both Dark and MidGray variants.",
+      "wp": "TESTSUITE-WP3",
+      "date": "2026-10-26"
+    }
+  ]
+}

@@ -338,30 +338,6 @@ public sealed partial class BeforeAfterSplitHeadlessTests : IDisposable
         Assert.False(vm.IsBeforeAfterSplit);
     }
 
-    [AvaloniaFact]
-    public async Task BackslashBindingsShareTheEyeCommand()
-    {
-        using var catalog = _fx.CreateCatalog();
-        await using var vm = _fx.CreateViewModel(catalog);
-        vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        var window = new MainWindow();
-        using var windowScope = TestUiScope.ForMainWindow(window, vm);
-        try
-        {
-            foreach (var key in new[] { Key.Oem5, Key.OemBackslash })
-            {
-                var binding = Assert.Single(
-                    window.KeyBindings,
-                    item => item.Gesture.Key == key);
-                Assert.Same(vm.ToggleBeforeAfterCommand, binding.Command);
-            }
-        }
-        finally
-        {
-            windowScope.Dispose();
-        }
-    }
-
     public void Dispose() => _fx.Dispose();
 
     private static T Descendant<T>(

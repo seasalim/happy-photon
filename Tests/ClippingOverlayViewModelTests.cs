@@ -20,7 +20,7 @@ public sealed class ClippingOverlayViewModelTests : IDisposable
     private readonly CatalogVmFixture _fx = new("clipping-vm");
 
     [AvaloniaFact]
-    public void OverlayColorsArePinnedThemeIndependentInvariants()
+    public async Task TrianglePress_LatchesAndPointerExitPreservesOverlay()
     {
         Assert.Equal(
             Color.FromArgb(235, 0xff, 0x3b, 0x30),
@@ -28,11 +28,7 @@ public sealed class ClippingOverlayViewModelTests : IDisposable
         Assert.Equal(
             Color.FromArgb(235, 0x2f, 0x6f, 0xed),
             HappyPhotonColors.DisplayFloorClipColor);
-    }
 
-    [AvaloniaFact]
-    public async Task TrianglePress_LatchesAndPointerExitPreservesOverlay()
-    {
         using var catalog = _fx.CreateCatalog("triangle-latch");
         await using var vm = _fx.CreateViewModel(
             catalog,

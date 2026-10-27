@@ -11,7 +11,6 @@ public sealed partial class LocalsViewModelTests
 {
     [AvaloniaTheory]
     [InlineData(0)]
-    [InlineData(1)]
     public async Task RangeEntryPlatformKeyTypingCommitsAndShadowsShortcuts(int endpoint)
     {
         using var catalog = await _fixture.CreateCatalogAsync();

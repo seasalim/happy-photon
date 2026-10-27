@@ -154,6 +154,19 @@ public sealed class MaskListBaselineTests(ITestOutputHelper output)
     {
         var scroll = list.GetVisualDescendants().OfType<ScrollViewer>().Single();
         var viewport = scroll.GetVisualDescendants().OfType<ScrollContentPresenter>().Single();
+        Assert.Equal(default, scroll.Offset);
+        var items = list.GetVisualDescendants().OfType<ListBoxItem>().ToArray();
+        var fullyVisible = items.Count(item =>
+        {
+            var origin = item.TranslatePoint(default, viewport)!.Value;
+
+            return item.IsEffectivelyVisible && origin.Y >= 0 && origin.Y + item.Bounds.Height <= viewport.Bounds.Height;
+        });
+        Assert.True(fullyVisible >= 5, $"Only {fullyVisible} rows fit in the initial viewport.");
+        output.WriteLine($"W4 full={fullyVisible}; list={list.Bounds}; viewport={viewport.Bounds}; " +
+            $"offset={scroll.Offset}; extent={scroll.Extent}; realized={items.Length}; " +
+            $"items=[{string.Join(";", items.Select(i => $"{i.DataContext}:{i.TranslatePoint(default, viewport)}:{i.Bounds.Height}"))}]");
+
         var bar = scroll.GetVisualDescendants().OfType<ScrollBar>()
             .Single(b => b.Orientation == Avalonia.Layout.Orientation.Vertical);
         Assert.True(bar.IsEffectivelyVisible);
@@ -328,27 +341,6 @@ public sealed class MaskListBaselineTests(ITestOutputHelper output)
         Assert.True(focus.IsEffectivelyVisible);
         Assert.True(focus.Bounds.Width >= delete.Bounds.Width && focus.Bounds.Height >= delete.Bounds.Height);
         output.WriteLine("R1-2 hover/pressed brushes and keyboard focus passed");
-
-        return Task.CompletedTask;
-    });
-
-    [AvaloniaFact]
-    public Task UnrangedViewport() => WithList(false, (vm, window, list) =>
-    {
-        var scroll = list.GetVisualDescendants().OfType<ScrollViewer>().Single();
-        var viewport = scroll.GetVisualDescendants().OfType<ScrollContentPresenter>().Single();
-        Assert.Equal(default, scroll.Offset);
-        var items = list.GetVisualDescendants().OfType<ListBoxItem>().ToArray();
-        var fullyVisible = items.Count(item =>
-        {
-            var origin = item.TranslatePoint(default, viewport)!.Value;
-
-            return item.IsEffectivelyVisible && origin.Y >= 0 && origin.Y + item.Bounds.Height <= viewport.Bounds.Height;
-        });
-        Assert.True(fullyVisible >= 5, $"Only {fullyVisible} rows fit in the initial viewport.");
-        output.WriteLine($"W4 full={fullyVisible}; list={list.Bounds}; viewport={viewport.Bounds}; " +
-            $"offset={scroll.Offset}; extent={scroll.Extent}; realized={items.Length}; " +
-            $"items=[{string.Join(";", items.Select(i => $"{i.DataContext}:{i.TranslatePoint(default, viewport)}:{i.Bounds.Height}"))}]");
 
         return Task.CompletedTask;
     });

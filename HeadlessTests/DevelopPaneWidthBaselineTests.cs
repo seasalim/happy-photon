@@ -16,11 +16,7 @@ public sealed class DevelopPaneWidthBaselineTests(ITestOutputHelper output)
 {
     [AvaloniaTheory]
     [InlineData(1440, 900, 1)]
-    [InlineData(1440, 900, 2)]
-    [InlineData(1440, 900, 3)]
     [InlineData(800, 600, 1)]
-    [InlineData(800, 600, 2)]
-    [InlineData(800, 600, 3)]
     public async Task MeasureViewerFloor(int width, int height, int sample)
     {
         var rows = 0;
@@ -53,8 +49,6 @@ public sealed class DevelopPaneWidthBaselineTests(ITestOutputHelper output)
 
     [AvaloniaTheory]
     [InlineData(1)]
-    [InlineData(2)]
-    [InlineData(3)]
     public async Task MeasureExpandedPanesThenShrink(int sample)
     {
         var rows = 0;

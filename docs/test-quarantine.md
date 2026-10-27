@@ -15,6 +15,7 @@ introduction date, issue, and expiry no more than 90 days later.
 `verify.ps1` enforces registry/trait agreement, discovery floors and metadata validity;
 see `scripts/check-test-quarantine.ps1`. Standalone checks require prebuilt test
 projects; explicit discovery manifests may be reused with `-ManifestDirectory`.
+Discovery floors are raised when a pruning WP lands to 90 % of the discovered count, rounded down to the hundred.
 
 `verify.ps1` builds once unless `-NoBuild`, then runs tests with `--no-build
 --no-restore`. It always creates an isolated run directory beneath

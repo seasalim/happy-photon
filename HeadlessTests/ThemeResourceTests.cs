@@ -41,19 +41,6 @@ public sealed class ThemeResourceTests
         Assert.Same(dark, mid);
     }
 
-    [AvaloniaTheory]
-    [MemberData(nameof(Variants))]
-    public void Theme_TextSelectionAndFocusPairsMeetContrastTargets(
-        ThemeVariant variant)
-    {
-        AssertContrast(4.5, "TextPrimary", "SurfaceHigh", variant);
-        AssertContrast(4.5, "TextSecondary", "SurfaceLow", variant);
-        AssertContrast(4.5, "TextMuted", "SurfaceLowest", variant);
-        AssertContrast(4.5, "TextPrimary", "SelectionSurface", variant);
-        AssertContrast(3, "ControlActive", "SurfaceHigh", variant);
-        AssertContrast(3, "ActiveImageRing", "SelectionSurface", variant);
-    }
-
     [AvaloniaFact]
     public void RejectTreatment_IsInvariantNearBlackAndReadable()
     {
@@ -92,12 +79,14 @@ public sealed class ThemeResourceTests
             Brush("ControlHover", variant).Color);
         Assert.NotEqual(Brush("ControlHover", variant).Color,
             Brush("ControlSelected", variant).Color);
-    }
 
-    [AvaloniaTheory]
-    [MemberData(nameof(Variants))]
-    public void Theme_ControlAndFluentAccentTokensAreAchromatic(ThemeVariant variant)
-    {
+        AssertContrast(4.5, "TextPrimary", "SurfaceHigh", variant);
+        AssertContrast(4.5, "TextSecondary", "SurfaceLow", variant);
+        AssertContrast(4.5, "TextMuted", "SurfaceLowest", variant);
+        AssertContrast(4.5, "TextPrimary", "SelectionSurface", variant);
+        AssertContrast(3, "ControlActive", "SurfaceHigh", variant);
+        AssertContrast(3, "ActiveImageRing", "SelectionSurface", variant);
+
         foreach (var key in new[]
         {
             "ControlHover", "ControlSelected", "ControlActive", "OnControlActive"

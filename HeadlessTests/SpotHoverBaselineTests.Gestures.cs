@@ -16,7 +16,13 @@ public sealed partial class SpotHoverBaselineTests
 {
     public static IEnumerable<object[]> GestureCases()
     {
-        foreach (var zone in Grid(1200, 799).Select(p => p.Name))
+        // Keep each gesture kind, initial selection state and resize cursor direction.
+        // MeasureCurrentBehavior still checks hit precedence at every grid point.
+        foreach (var zone in new[]
+        {
+            "empty", "selected-destination", "selected-source", "B-body",
+            "edge-0", "edge-45", "edge-90", "edge-135"
+        })
         {
             foreach (var outside in new[] { false, true })
             {

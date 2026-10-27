@@ -12,8 +12,6 @@ public sealed class ControlBarLayoutGateTests(ITestOutputHelper output)
 {
     [AvaloniaTheory]
     [InlineData(1)]
-    [InlineData(2)]
-    [InlineData(3)]
     public async Task ClustersShareBarCentre(int run)
     {
         await ControlBarGateScene.WithScene(async (window, vm) =>
@@ -55,8 +53,6 @@ public sealed class ControlBarLayoutGateTests(ITestOutputHelper output)
 
     [AvaloniaTheory]
     [InlineData(1)]
-    [InlineData(2)]
-    [InlineData(3)]
     public async Task BarHeightsStayAtBaseline(int run)
     {
         await ControlBarGateScene.WithScene(async (window, vm) =>

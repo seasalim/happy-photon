@@ -58,19 +58,4 @@ public sealed partial class LocalsViewModelTests
             release.TrySetResult();
         }
     }
-
-    [AvaloniaFact]
-    public async Task DisposalCancelsPendingBrushPreferenceSave()
-    {
-        using var catalog = await _fixture.CreateCatalogAsync();
-        var clock = new TestTimeProvider();
-        var vm = CreateVm(catalog, clock);
-        var saves = 0;
-        vm.PersistAppSettingsAsync = () => { saves++; return Task.CompletedTask; };
-        try { vm.BrushSize = 80; }
-        finally { await vm.DisposeAsync(); }
-        clock.Advance(TimeSpan.FromMilliseconds(250));
-        Dispatcher.UIThread.RunJobs();
-        Assert.Equal(0, saves);
-    }
 }

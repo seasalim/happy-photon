@@ -87,15 +87,7 @@ public sealed class RawHistogramUiTests : IDisposable
         view.Histogram = RawHistogram(16);
         Assert.Equal(1, dot.Opacity);
         Assert.Equal("16.00%", text.Text);
-        window.Close();
-    }
 
-    [AvaloniaFact]
-    public void LitChannelWithTinyFraction_ShowsSubThresholdInsteadOfZero()
-    {
-        var view = new HistogramView();
-        using var windowScope = Show(view);
-        var window = windowScope.Window!;
         var histogram = new HistogramData
         {
             Domain = HistogramDomain.RawSensor,
@@ -106,20 +98,10 @@ public sealed class RawHistogramUiTests : IDisposable
         histogram.Normalize();
 
         view.Histogram = histogram;
-        var dot = view.FindControl<Ellipse>("RawRedClippingDot")!;
-        var text = view.FindControl<TextBlock>("RawRedClippingText")!;
 
         Assert.Equal(1, dot.Opacity);
         Assert.Equal("<0.01%", text.Text);
-        window.Close();
-    }
 
-    [AvaloniaFact]
-    public void DisplayPresentation_KeepsLuminanceAndNeverShowsRawDots()
-    {
-        var view = new HistogramView();
-        using var windowScope = Show(view);
-        var window = windowScope.Window!;
         var display = new HistogramData();
         display.Red[128] = display.Green[128] = display.Blue[128] = 1;
         display.Luminance[128] = 1;

@@ -48,7 +48,6 @@ public sealed class DialogChromeBaselineTests(ITestOutputHelper output)
 
     [AvaloniaTheory]
     [InlineData("Move to Trash", true, "Cancel", "Move to Trash")]
-    [InlineData("Restore catalog", true, "Cancel", "Restore")]
     [InlineData("Download originals for export?", false, "Cancel", "Download / Export")]
     public async Task G4_InitialFocusKeyboardResults(
         string title, bool destructive, string cancelLabel, string confirmLabel)

@@ -36,7 +36,7 @@ public sealed partial class DevelopAssessmentBarTests
     [AvaloniaFact]
     public async Task WidthTiersKeepNeighboursFixedAcrossAllStatesAndResize()
     {
-        await WithWindow(async (window, vm, _) =>
+        await WithWindow(async (window, vm, other) =>
         {
             var pane = window.FindControl<DevelopViewerPane>("DevelopViewerPane")!;
             var host = pane.FindControl<Border>("DevelopAssessmentHost")!;
@@ -106,6 +106,11 @@ public sealed partial class DevelopAssessmentBarTests
             window.Width = 800;
             Settle(window);
             AssertMode(pane, false, true);
+
+            Assert.Empty(pane.FindControl<ImageAssessmentControl>("DevelopImageAssessment")!.Classes);
+            vm.SelectedImage = other;
+            Settle(window);
+            AssertState(pane, footer, other);
 
             await Task.CompletedTask;
         });

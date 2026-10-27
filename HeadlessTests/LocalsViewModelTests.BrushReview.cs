@@ -115,33 +115,44 @@ public sealed partial class LocalsViewModelTests
     {
         using var catalog = await _fixture.CreateCatalogAsync();
         var clock = new TestTimeProvider();
-        await using var vm = CreateVm(catalog, clock);
         var saves = new List<AppSettings>();
-        vm.PersistAppSettingsAsync = () =>
+
+        await using (var vm = CreateVm(catalog, clock))
         {
-            var settings = new AppSettings();
-            vm.CaptureBrushPreferences(settings);
-            saves.Add(settings);
-            return Task.CompletedTask;
-        };
-        for (var i = 0; i < 12; i++)
-        {
-            vm.BrushSize = 70 + i;
-            vm.BrushFeather = 20 + i;
-            vm.BrushFlow = 40 + i;
-            clock.Advance(TimeSpan.FromMilliseconds(10));
+            vm.PersistAppSettingsAsync = () =>
+            {
+                var settings = new AppSettings();
+                vm.CaptureBrushPreferences(settings);
+                saves.Add(settings);
+
+                return Task.CompletedTask;
+            };
+
+            for (var i = 0; i < 12; i++)
+            {
+                vm.BrushSize = 70 + i;
+                vm.BrushFeather = 20 + i;
+                vm.BrushFlow = 40 + i;
+                clock.Advance(TimeSpan.FromMilliseconds(10));
+                Dispatcher.UIThread.RunJobs();
+            }
+
+            vm.BrushMode = "erase";
+            clock.Advance(TimeSpan.FromMilliseconds(249));
             Dispatcher.UIThread.RunJobs();
+            Assert.Empty(saves);
+            clock.Advance(TimeSpan.FromMilliseconds(1));
+            await TestWaits.UntilAsync(() => saves.Count == 1);
+            var saved = Assert.Single(saves);
+            Assert.Equal(81, saved.BrushSize);
+            Assert.Equal(31, saved.BrushFeather);
+            Assert.Equal(51, saved.BrushFlow);
+            Assert.Equal("erase", saved.BrushMode);
+            vm.BrushSize = 90;
         }
-        vm.BrushMode = "erase";
-        clock.Advance(TimeSpan.FromMilliseconds(249));
+
+        clock.Advance(TimeSpan.FromMilliseconds(250));
         Dispatcher.UIThread.RunJobs();
-        Assert.Empty(saves);
-        clock.Advance(TimeSpan.FromMilliseconds(1));
-        await TestWaits.UntilAsync(() => saves.Count == 1);
-        var saved = Assert.Single(saves);
-        Assert.Equal(81, saved.BrushSize);
-        Assert.Equal(31, saved.BrushFeather);
-        Assert.Equal(51, saved.BrushFlow);
-        Assert.Equal("erase", saved.BrushMode);
+        Assert.Single(saves);
     }
 }

@@ -47,22 +47,6 @@ public sealed partial class ColorLabelUiTests
     }
 
     [AvaloniaFact]
-    public void AssessmentSwatches_MaterializeOneButtonPerEnumSlot()
-    {
-        using var catalog = new CatalogService(NewRoot());
-        var vm = NewViewModel(catalog);
-        var control = new ImageAssessmentControl { DataContext = vm };
-        var window = new Window { Content = control };
-        using var windowScope = new TestUiScope(window);
-
-        var swatches = SwatchButtons(control);
-        Assert.Equal(vm.ColorLabelChoices.Count, swatches.Count);
-        Assert.Equal(
-            vm.ColorLabelChoices.Select(choice => choice.Value),
-            swatches.Select(button => Assert.IsType<ColorLabel>(button.CommandParameter)));
-    }
-
-    [AvaloniaFact]
     public void AssessmentSwatches_FollowRenamedSlotsIntoAccessibilityText()
     {
         using var catalog = new CatalogService(NewRoot());
@@ -75,8 +59,14 @@ public sealed partial class ColorLabelUiTests
         var window = new Window { Content = control };
         using var windowScope = new TestUiScope(window);
 
+        var swatches = SwatchButtons(control);
+        Assert.Equal(vm.ColorLabelChoices.Count, swatches.Count);
+        Assert.Equal(
+            vm.ColorLabelChoices.Select(choice => choice.Value),
+            swatches.Select(button => Assert.IsType<ColorLabel>(button.CommandParameter)));
+
         var red = Assert.Single(
-            SwatchButtons(control),
+            swatches,
             button => Equals(button.CommandParameter, ColorLabel.Red));
         Assert.Contains(
             "select",

@@ -17,11 +17,17 @@ public sealed class WaveformScopeUiTests : IDisposable
     private readonly TemporaryDirectory _root = new();
 
     [AvaloniaFact]
-    public async Task ScopeSelector_UsesCompactDevelopActionPresentation()
+    public async Task ScopeSelector_HasStableEntriesAndExactlyOneBody()
     {
-        using var catalog = new CatalogService(Path.Combine(_root.Path, "presentation"));
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "catalog"));
         await catalog.InitializeAsync();
-        await using var vm = new MainWindowViewModel(catalog)
+        var loader = new CountingLoader();
+        var vm = new MainWindowViewModel(
+            catalog,
+            loader,
+            loadMetadataAsync: _ => Task.CompletedTask,
+            availabilityService: new TestSourceAvailabilityService(
+                SourceAvailability.AvailableLocally))
         {
             IsDevelopMode = true
         };
@@ -49,29 +55,6 @@ public sealed class WaveformScopeUiTests : IDisposable
                 button.BorderThickness == new Thickness(0)),
             observed);
 
-        window.DataContext = null;
-    }
-
-    [AvaloniaFact]
-    public async Task ScopeSelector_HasStableEntriesAndExactlyOneBody()
-    {
-        using var catalog = new CatalogService(Path.Combine(_root.Path, "catalog"));
-        await catalog.InitializeAsync();
-        var loader = new CountingLoader();
-        var vm = new MainWindowViewModel(
-            catalog,
-            loader,
-            loadMetadataAsync: _ => Task.CompletedTask,
-            availabilityService: new TestSourceAvailabilityService(
-                SourceAvailability.AvailableLocally))
-        {
-            IsDevelopMode = true
-        };
-        var panel = new DevelopEditPanel { DataContext = vm };
-        var window = new Window { Width = 250, Height = 660, Content = panel };
-        using var windowScope = new TestUiScope(window);
-        Dispatcher.UIThread.RunJobs();
-        var scopeSelector = panel.FindControl<ScopeSelectorRow>("ScopeSelector")!;
         var title = scopeSelector.FindControl<TextBlock>("ScopeTitle")!;
         var histogramButton = scopeSelector.FindControl<ToggleButton>("HistogramScopeButton")!;
         var waveformButton = scopeSelector.FindControl<ToggleButton>("WaveformScopeButton")!;

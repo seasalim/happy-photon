@@ -7,7 +7,7 @@ param(
     [string] $ManifestDirectory,
     [hashtable] $MinimumTestCounts = @{
         "Tests/HappyPhoton.Tests.csproj" = 1300
-        "HeadlessTests/HappyPhoton.Headless.Tests.csproj" = 340
+        "HeadlessTests/HappyPhoton.Headless.Tests.csproj" = 900
     },
     [string] $ResultsDirectory,
     [string] $TestStepOutcome = ""

@@ -30,17 +30,11 @@ public sealed class TipsCopyTests
         Assert.Equal(10, keys.Count());
         Assert.All(keys, run => Assert.Equal(
             ThemeResourceTests.Resource<FontFamily>("FontLabel", ThemeVariant.Dark), run.FontFamily));
-    }
 
-    [AvaloniaFact]
-    public async Task TipsDoNotSuppressEmptyStatesOrTakeFocus()
-    {
-        await using var scene = new TipsTestScene();
-        var browseCard = TipsTestScene.Card(scene.Window, WorkspaceMode.Browse);
         Assert.True(TipsLayoutTests.Named(scene.Window, "EmptyState").IsEffectivelyVisible);
-        Assert.False(browseCard.Focusable);
-        Assert.All(browseCard.GetVisualDescendants().OfType<Button>(), button => Assert.False(button.Focusable));
-        var link = TipsTestScene.Action(browseCard, "Keyboard shortcuts");
+        Assert.False(card.Focusable);
+        Assert.All(card.GetVisualDescendants().OfType<Button>(), button => Assert.False(button.Focusable));
+        var link = TipsTestScene.Action(card, "Keyboard shortcuts");
         var label = Assert.Single(link.GetVisualDescendants().OfType<TextBlock>());
         Assert.Contains(label.TextDecorations!, decoration => decoration.Location == TextDecorationLocation.Underline);
         scene.Vm.IsDevelopMode = true;

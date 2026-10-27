@@ -79,6 +79,13 @@ public sealed class BrowseTileColorLabelTests
                 chips.Children.OfType<Border>(),
                 border => Equals(ToolTip.GetTip(border), "Rejected"));
 
+            Assert.Equal(new CornerRadius(0), tile.CornerRadius);
+            Assert.Equal(new Thickness(2), tile.BorderThickness);
+            Assert.NotNull(tile.Background);
+            Assert.NotNull(tile.Transitions);
+            Assert.DoesNotContain(
+                control.GetVisualDescendants().OfType<Button>(),
+                button => button.Classes.Contains("check-badge"));
             Assert.True(marker.IsVisible);
             Assert.False(marker.IsHitTestVisible);
             Assert.Equal("Color label", ToolTip.GetTip(marker));

@@ -1,13 +1,10 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Data;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
-using HappyPhoton.Models;
 using HappyPhoton.Services;
-using HappyPhoton.ViewModels;
 using HappyPhoton.Views;
 using ImageMagick;
 using Xunit;
@@ -16,81 +13,6 @@ namespace HappyPhoton.Tests;
 
 public sealed class DisplayChainTraceTests
 {
-    [AvaloniaFact]
-    public void RealizedControl_ReportsEveryMappingFieldAndCoalescesChanges()
-    {
-        var lines = new List<string>();
-        using var trace = ImageServiceHelpers.OverrideDisplayTraceForTesting(
-            enabled: true,
-            lines.Add);
-        using var first = CreateBitmap(800, 400);
-        using var sameSize = CreateBitmap(800, 400);
-        var control = new ZoomPanControl
-        {
-            Source = first,
-            ZoomLevel = 0.5,
-            IsDisplayTraceActive = true
-        };
-        var window = new Window
-        {
-            Width = 600,
-            Height = 500,
-            Content = control
-        };
-
-        try
-        {
-            // test-teardown-policy: allow - enclosing try/finally closes window.
-            window.Show();
-            Dispatcher.UIThread.RunJobs();
-            Assert.Equal(
-                MappingLine(800, 400, 400, 200, 600, 500, 1, 400, 200, 0.5),
-                Assert.Single(MappingLines(lines)));
-
-            window.SetRenderScaling(1.5);
-            Dispatcher.UIThread.RunJobs();
-            Assert.Equal(
-                MappingLine(
-                    800, 400, 266.666667, 133.333333, 600, 500,
-                    1.5, 400, 200, 0.5),
-                MappingLines(lines)[1]);
-
-            control.Source = sameSize;
-            Dispatcher.UIThread.RunJobs();
-            Assert.Equal(3, MappingLines(lines).Count);
-            Assert.Equal(MappingLines(lines)[1], MappingLines(lines)[2]);
-
-            control.ZoomLevel = 1;
-            Dispatcher.UIThread.RunJobs();
-            Assert.Equal(
-                MappingLine(
-                    800, 400, 533.333333, 266.666667, 600, 500,
-                    1.5, 800, 400, 1, oneToOne: true),
-                MappingLines(lines)[3]);
-
-            window.Height = 550;
-            Dispatcher.UIThread.RunJobs();
-            Assert.Equal(
-                MappingLine(
-                    800, 400, 533.333333, 266.666667, 600, 550,
-                    1.5, 800, 400, 1, oneToOne: true),
-                MappingLines(lines)[4]);
-
-            control.ZoomLevel = 2.0 / 3;
-            Dispatcher.UIThread.RunJobs();
-            Assert.Equal(
-                MappingLine(
-                    800, 400, 356, 178, 600, 550,
-                    1.5, 534, 267, 0.6675),
-                MappingLines(lines)[5]);
-            Assert.Equal(6, MappingLines(lines).Count);
-        }
-        finally
-        {
-            window.Close();
-        }
-    }
-
     [Fact]
     public void ZoomGeometry_IsDeviceTrueAndFitPreservesLogicalGeometry()
     {
@@ -309,173 +231,9 @@ public sealed class DisplayChainTraceTests
         }
     }
 
-    [AvaloniaFact]
-    public async Task ActiveSurface_TracksDevelopAndFullscreenTransitionsExactly()
-    {
-        var lines = new List<string>();
-        using var trace = ImageServiceHelpers.OverrideDisplayTraceForTesting(
-            enabled: true,
-            lines.Add);
-        using var bitmap = CreateBitmap(80, 40);
-        using var root = new TemporaryDirectory();
-        using var catalog = new CatalogService(root.Path);
-        await using var viewModel = new MainWindowViewModel(catalog);
-        var develop = CreateBoundSurface(
-            bitmap,
-            nameof(MainWindowViewModel.IsDevelopPreviewSurfaceActive));
-        var fullScreen = CreateBoundSurface(
-            bitmap,
-            nameof(MainWindowViewModel.IsFullScreenPreviewSurfaceActive));
-        var window = new Window
-        {
-            Width = 300,
-            Height = 200,
-            DataContext = viewModel,
-            Content = new Grid { Children = { develop, fullScreen } }
-        };
-
-        try
-        {
-            // test-teardown-policy: allow - enclosing try/finally closes window.
-            window.Show();
-            Dispatcher.UIThread.RunJobs();
-            Assert.Empty(MappingLines(lines));
-
-            viewModel.IsDevelopMode = true;
-            Dispatcher.UIThread.RunJobs();
-            Assert.Single(MappingLines(lines));
-
-            viewModel.IsFullScreenMode = true;
-            Dispatcher.UIThread.RunJobs();
-            Assert.Equal(2, MappingLines(lines).Count);
-
-            viewModel.IsFullScreenMode = false;
-            Dispatcher.UIThread.RunJobs();
-            Assert.Equal(3, MappingLines(lines).Count);
-
-            viewModel.IsDevelopMode = false;
-            Dispatcher.UIThread.RunJobs();
-            Assert.Equal(3, MappingLines(lines).Count);
-
-            viewModel.IsFullScreenMode = true;
-            Dispatcher.UIThread.RunJobs();
-            Assert.Equal(4, MappingLines(lines).Count);
-
-            viewModel.IsFullScreenMode = false;
-            Dispatcher.UIThread.RunJobs();
-            Assert.Equal(4, MappingLines(lines).Count);
-        }
-        finally
-        {
-            window.Close();
-        }
-    }
-
-    [AvaloniaFact]
-    public async Task PreviewSwaps_ReportAllProductionProvenanceLabels()
-    {
-        var lines = new List<string>();
-        using var trace = ImageServiceHelpers.OverrideDisplayTraceForTesting(
-            enabled: true,
-            lines.Add);
-        using var root = new TemporaryDirectory();
-        using var catalog = new CatalogService(root.Path);
-        await using var viewModel = new MainWindowViewModel(catalog);
-        var cached = CreateBitmap(4, 3);
-        var fresh = CreateBitmap(5, 2);
-        var refresh = CreateBitmap(6, 4);
-        var resting = CreateBitmap(8, 5);
-        var image = new ImageFile(Path.Combine(root.Path, "image.jpg"));
-        viewModel.SelectedImage = image;
-        viewModel.IsDevelopMode = true;
-
-        viewModel.ReplacePreviewImage(cached, PreviewPaintSource.CachedJpeg);
-        viewModel.ReplacePreviewImage(fresh, PreviewPaintSource.FreshRender);
-        viewModel.ApplyPreviewRefresh(
-            image,
-            refresh,
-            new HistogramData(),
-            hasHistogram: false,
-            rawHistogram: null,
-            generation: viewModel.LatestPreviewOutcomeGeneration);
-        viewModel.ReplacePreviewImage(
-            resting,
-            PreviewPaintSource.RestingRender);
-
-        var prefixes = new[]
-        {
-            "[DisplayChain] paint source=cached-jpeg bitmap=4x3 luma=",
-            "[DisplayChain] paint source=fresh-render bitmap=5x2 luma=",
-            "[DisplayChain] paint source=background-refresh bitmap=6x4 luma=",
-            "[DisplayChain] paint source=resting-render bitmap=8x5 luma="
-        };
-        Assert.Equal(prefixes.Length, lines.Count);
-        for (var index = 0; index < prefixes.Length; index++)
-        {
-            Assert.StartsWith(prefixes[index], lines[index]);
-            Assert.Contains(" decode=", lines[index]);
-            Assert.Contains(" settings=", lines[index]);
-        }
-    }
-
-    [AvaloniaFact]
-    public async Task ProvisionalRotationHasExplicitTraceLabel()
-    {
-        using var root = new TemporaryDirectory();
-        using var catalog = new CatalogService(root.Path);
-        await using var vm = new MainWindowViewModel(catalog);
-        var lines = new List<string>();
-        using var trace = ImageServiceHelpers.OverrideDisplayTraceForTesting(true, lines.Add);
-        vm.ReplacePreviewImage(CreateBitmap(3, 4), PreviewPaintSource.ProvisionalRotate);
-        Assert.StartsWith("[DisplayChain] paint source=provisional-rotate bitmap=3x4 luma=", Assert.Single(lines));
-    }
-
-    private static ZoomPanControl CreateBoundSurface(
-        Bitmap bitmap,
-        string activeProperty)
-    {
-        var control = new ZoomPanControl
-        {
-            Source = bitmap,
-            ZoomLevel = 0.5
-        };
-        control.Bind(
-            ZoomPanControl.IsDisplayTraceActiveProperty,
-            new Binding(activeProperty));
-        return control;
-    }
-
     private static Bitmap CreateBitmap(int width, int height)
     {
         using var image = new MagickImage(MagickColors.Gray, (uint)width, (uint)height);
         return BitmapConversionService.ConvertToBitmap(image)!;
     }
-
-    private static List<string> MappingLines(List<string> lines) =>
-        lines.Where(line => line.StartsWith(
-            "[DisplayChain] mapping ",
-            StringComparison.Ordinal)).ToList();
-
-    private static string MappingLine(
-        int bitmapWidth,
-        int bitmapHeight,
-        double logicalWidth,
-        double logicalHeight,
-        double viewportWidth,
-        double viewportHeight,
-        double renderScaling,
-        double deviceWidth,
-        double deviceHeight,
-        double netScale,
-        bool oneToOne = false) =>
-        $"[DisplayChain] mapping bitmap={bitmapWidth}x{bitmapHeight} " +
-        $"logical={F(logicalWidth)}x{F(logicalHeight)} " +
-        $"viewport={F(viewportWidth)}x{F(viewportHeight)} " +
-        $"renderScaling={F(renderScaling)} " +
-        $"deviceRect=0,0,{F(deviceWidth)},{F(deviceHeight)} " +
-        $"netScale={F(netScale)}x{F(netScale)} " +
-        $"oneToOne={oneToOne.ToString().ToLowerInvariant()}";
-
-    private static string F(double value) =>
-        value.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture);
 }

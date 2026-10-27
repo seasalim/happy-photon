@@ -20,33 +20,6 @@ public sealed class BatchExportFormatTests : IDisposable
     private readonly CatalogVmFixture _fixture = new("export-format");
 
     [AvaloniaFact]
-    public async Task LosslessFormats_ReplaceQualityWithLosslessLabel()
-    {
-        using var catalog = _fixture.CreateCatalog();
-        var viewModel = _fixture.CreateViewModel(
-            catalog,
-            loadMetadataAsync: _ => Task.CompletedTask);
-        viewModel.SwitchToExportCommand.Execute(null);
-        var pane = new ExportSettingsPane { DataContext = viewModel };
-        var slider = pane.FindControl<CompactSlider>("ExportQualitySlider")!;
-        var countLine = pane.FindControl<TextBlock>("ExportCountLineText")!;
-        var exportButton = pane.FindControl<Button>("RunExportButton")!;
-
-        Assert.Same(countLine.Parent, exportButton.Parent);
-
-        foreach (var format in new[] { ExportFormat.Png, ExportFormat.Tiff })
-        {
-            viewModel.ExportSettings.Format = format;
-            Dispatcher.UIThread.RunJobs();
-
-            Assert.False(slider.IsVisible);
-            Assert.True(pane.FindControl<TextBlock>("ExportLosslessLabel")!.IsVisible);
-        }
-
-        await viewModel.DisposeAsync();
-    }
-
-    [AvaloniaFact]
     public async Task ExportPrimaryAction_IsFilledFullWidthBelowCountLine()
     {
         using var catalog = _fixture.CreateCatalog();
@@ -94,6 +67,18 @@ public sealed class BatchExportFormatTests : IDisposable
         Assert.Equal(
             ThemeResourceTests.Brush("OnControlActive", ThemeVariant.Dark).Color,
             Assert.IsType<SolidColorBrush>(presenter.Foreground).Color);
+
+        var slider = pane.FindControl<CompactSlider>("ExportQualitySlider")!;
+        Assert.Same(countLine.Parent, exportButton.Parent);
+
+        foreach (var format in new[] { ExportFormat.Png, ExportFormat.Tiff })
+        {
+            viewModel.ExportSettings.Format = format;
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.False(slider.IsVisible);
+            Assert.True(pane.FindControl<TextBlock>("ExportLosslessLabel")!.IsVisible);
+        }
 
         window.Close();
         await viewModel.DisposeAsync();

@@ -24,6 +24,7 @@ public sealed partial class BrandMarkTests
     {
         await using var scene = new WelcomeScene();
         var name = $"brand-welcome-{(midgray ? "midgray" : "dark")}";
+        var variant = midgray ? HappyPhotonThemes.MidGray : ThemeVariant.Dark;
         Rect heading = default;
         Color card = default;
 
@@ -34,6 +35,14 @@ public sealed partial class BrandMarkTests
                 heading = new Rect(text.TranslatePoint(default, window)!.Value, text.Bounds.Size);
                 card = Assert.IsAssignableFrom<ISolidColorBrush>(text.GetLogicalAncestors().OfType<Border>()
                     .First(border => border.Background != null).Background).Color;
+                var ratio = ThemeResourceTests.Contrast(
+                    Assert.IsAssignableFrom<ISolidColorBrush>(text.Foreground).Color, card);
+                var expected = midgray ? MidGrayHeadingContrast : DarkHeadingContrast;
+                var minimum = midgray ? 3.0 : 4.5;
+
+                Assert.InRange(ratio, expected - 0.05, expected + 0.05);
+                Assert.True(ratio >= minimum, $"Welcome heading contrast {ratio:F2}:1 is under {minimum}:1.");
+                Assert.Equal(Color.Parse(BrandHex), ThemeResourceTests.Brush(BrandKey, variant).Color);
             });
 
         using var shot = Shot(name);

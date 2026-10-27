@@ -45,6 +45,15 @@ public sealed partial class LoupePeekTests
 
             window.MouseDown(pointer, MouseButton.Left, RawInputModifiers.None);
             clock.Advance(TimeSpan.FromMilliseconds(149));
+            window.MouseUp(pointer, MouseButton.Left, RawInputModifiers.None);
+            clock.Advance(TimeSpan.FromSeconds(1));
+            Drain();
+            Assert.False(viewer.IsLoupePeekActive);
+            Assert.Equal(fitSize, image.Bounds.Size);
+            Assert.Equal(default, scroll.Offset);
+
+            window.MouseDown(pointer, MouseButton.Left, RawInputModifiers.None);
+            clock.Advance(TimeSpan.FromMilliseconds(149));
             Drain();
             Assert.False(viewer.IsLoupePeekActive);
 
@@ -71,35 +80,6 @@ public sealed partial class LoupePeekTests
             Assert.Equal(fitSize, image.Bounds.Size);
             Assert.Equal(fitOffset, scroll.Offset);
             Assert.NotEqual(2400, requiredBounds[^1]);
-        }
-        finally
-        {
-            window.Close();
-        }
-    }
-
-    [AvaloniaFact]
-    public void ClickReleasedBelowThreshold_RemainsInert()
-    {
-        var clock = new TestTimeProvider();
-        using var bitmap = CreateBitmap(1200, 900);
-        var viewer = CreateViewer(clock, bitmap, new object());
-        using var windowScope = Show(viewer, 500, 400);
-        var window = windowScope.Window!;
-        try
-        {
-            var image = Image(viewer);
-            var size = image.Bounds.Size;
-            var pointer = Center(viewer, window);
-            window.MouseDown(pointer, MouseButton.Left, RawInputModifiers.None);
-            clock.Advance(TimeSpan.FromMilliseconds(149));
-            window.MouseUp(pointer, MouseButton.Left, RawInputModifiers.None);
-            clock.Advance(TimeSpan.FromSeconds(1));
-            Drain();
-
-            Assert.False(viewer.IsLoupePeekActive);
-            Assert.Equal(size, image.Bounds.Size);
-            Assert.Equal(default, Scroll(viewer).Offset);
         }
         finally
         {

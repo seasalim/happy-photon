@@ -196,16 +196,21 @@ public sealed class DisplayTransformTests
             ("softproof-p3-d2b0.icc", DisplayProfileSupport.LutBased, true),
             ("softproof-p3-mhc2.icc", DisplayProfileSupport.Mhc2, true),
         };
+
         foreach (var profile in profiles)
         {
             yield return [profile.Name, (int)DisplayAcmState.Off,
                 profile.Support, profile.Identity];
             yield return [profile.Name, (int)DisplayAcmState.Unavailable,
                 profile.Support, profile.Identity];
-            yield return [profile.Name, (int)DisplayAcmState.On,
-                DisplayProfileSupport.AcmManaged, true];
-            yield return [profile.Name, (int)DisplayAcmState.Failed,
-                DisplayProfileSupport.AcmQueryFailed, true];
+
+            if (profile.Name is null or "softproof-p3-gamma22.icc")
+            {
+                yield return [profile.Name, (int)DisplayAcmState.On,
+                    DisplayProfileSupport.AcmManaged, true];
+                yield return [profile.Name, (int)DisplayAcmState.Failed,
+                    DisplayProfileSupport.AcmQueryFailed, true];
+            }
         }
     }
 

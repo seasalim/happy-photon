@@ -19,26 +19,6 @@ namespace HappyPhoton.Tests;
 
 public sealed class DevelopReviewStateTests(ITestOutputHelper output)
 {
-    [AvaloniaTheory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void ExpandedLocalDisclosuresStayTransparent(bool gray)
-    {
-        var theme = gray ? HappyPhotonThemes.MidGray : ThemeVariant.Dark;
-        var view = new LocalsEditSection();
-        var window = new Window { Content = view, Width = 250, Height = 1600 };
-        using var scope = new TestUiScope(window, theme);
-
-        foreach (var name in new[] { "LocalGeometryDisclosure", "LocalLuminanceDisclosure", "LocalHueDisclosure" })
-        {
-            var button = view.FindControl<ToggleButton>(name)!;
-            button.IsChecked = true;
-            var presenter = button.GetVisualDescendants().OfType<ContentPresenter>().Single();
-            output.WriteLine($"{theme}/{name}: checked background={presenter.Background}");
-            Assert.Equal(0, ColorOf(presenter.Background).A);
-        }
-    }
-
     public static IEnumerable<object[]> ToggleOwners()
     {
         var ns = XNamespace.Get("https://github.com/avaloniaui");

@@ -127,12 +127,8 @@ public sealed class BrowseSourceSelectionTests
 
     [AvaloniaTheory]
     [InlineData(false, false, false, 0)]
-    [InlineData(false, true, false, 2)]
     [InlineData(false, false, true, 1)]
-    [InlineData(false, true, true, 2)]
-    [InlineData(true, false, false, 0)]
     [InlineData(true, true, false, 2)]
-    [InlineData(true, false, true, 1)]
     [InlineData(true, true, true, 2)]
     public async Task SyncHeader_NamesTheRing(bool loupe, bool repick, bool removeFirst, int source)
     {

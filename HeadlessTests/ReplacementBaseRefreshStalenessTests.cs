@@ -1,4 +1,3 @@
-using Avalonia.Threading;
 using Avalonia.Headless.XUnit;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
@@ -13,26 +12,16 @@ public sealed class ReplacementBaseRefreshStalenessTests : IDisposable
     private readonly TemporaryDirectory _root = new();
     private CatalogService? _catalog;
 
-    // A replacement-base refresh can finish rendering, then wait on its ready
-    // gate while a newer render generation settles for the same image. When the
-    // gate releases the stale refresh must not overwrite the newer preview.
-    //
-    // The view model is a live reactive system, so every step below runs with
-    // no dispatcher pump in between: that freezes the selection/histogram
-    // cascade and isolates the refresh-application decision under test.
     [AvaloniaFact]
-    public async Task StaleRefreshCannotOverwriteNewerRenderGeneration()
+    public async Task ExactReservedRefreshIsApplied()
     {
         var vm = CreateDevelopViewModel(out var image);
         using var source = new MagickImage(MagickColors.Red, 4, 3);
-
-        var newerPreview = BitmapConversionService.ConvertToBitmap(source)!;
-        vm.ReplacePreviewImage(newerPreview, PreviewPaintSource.FreshRender);
-
+        var previous = BitmapConversionService.ConvertToBitmap(source)!;
+        vm.ReplacePreviewImage(previous, PreviewPaintSource.FreshRender);
         var currentGeneration = vm.LatestPreviewOutcomeGeneration;
 
-        // A replacement-base refresh for an older generation is released late,
-        // after the newer render already won.
+        // Do not pump between checks: isolate refresh admission from the pending selection.
         var staleRefresh = BitmapConversionService.ConvertToBitmap(source)!;
         var staleMask = new ClippingMask(
             4,
@@ -55,50 +44,23 @@ public sealed class ReplacementBaseRefreshStalenessTests : IDisposable
             isRawSource: false,
             clippingMask: staleMask);
 
-        Assert.Same(newerPreview, vm.PreviewImage);
+        Assert.Same(previous, vm.PreviewImage);
         Assert.False(vm.IsClippingStatsAvailable);
         Assert.Throws<ObjectDisposedException>(() => _ = staleRefresh.PixelSize);
         Assert.Throws<ObjectDisposedException>(() => _ = staleMask.Flags.Length);
 
-        await vm.DisposeAsync();
-    }
-
-    // A service-manufactured generation has no authority to advance the VM
-    // surface. Only exact equality with the reserved generation is accepted.
-    [AvaloniaFact]
-    public async Task GreaterThanReservedRefreshIsRejected()
-    {
-        var vm = CreateDevelopViewModel(out var image);
-        using var source = new MagickImage(MagickColors.Red, 4, 3);
-
-        var olderPreview = BitmapConversionService.ConvertToBitmap(source)!;
-        vm.ReplacePreviewImage(olderPreview, PreviewPaintSource.FreshRender);
-
-        var currentGeneration = vm.LatestPreviewOutcomeGeneration;
-
-        var freshRefresh = BitmapConversionService.ConvertToBitmap(source)!;
+        var unreservedRefresh = BitmapConversionService.ConvertToBitmap(source)!;
         vm.ApplyPreviewRefresh(
             image,
-            freshRefresh,
+            unreservedRefresh,
             new HistogramData(),
             hasHistogram: false,
             rawHistogram: null,
             generation: currentGeneration + 1);
 
-        Assert.Same(olderPreview, vm.PreviewImage);
-        Assert.Throws<ObjectDisposedException>(() => _ = freshRefresh.PixelSize);
+        Assert.Same(previous, vm.PreviewImage);
+        Assert.Throws<ObjectDisposedException>(() => _ = unreservedRefresh.PixelSize);
 
-        await vm.DisposeAsync();
-    }
-
-    [AvaloniaFact]
-    public async Task ExactReservedRefreshIsApplied()
-    {
-        var vm = CreateDevelopViewModel(out var image);
-        using var source = new MagickImage(MagickColors.Red, 4, 3);
-
-        var previous = BitmapConversionService.ConvertToBitmap(source)!;
-        vm.ReplacePreviewImage(previous, PreviewPaintSource.FreshRender);
         var fresh = BitmapConversionService.ConvertToBitmap(source)!;
         vm.ApplyPreviewRefresh(
             image,

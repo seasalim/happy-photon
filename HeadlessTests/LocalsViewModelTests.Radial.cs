@@ -69,21 +69,6 @@ public sealed partial class LocalsViewModelTests
         }
     }
 
-    [AvaloniaTheory]
-    [InlineData(0)]
-    [InlineData(3)]
-    [InlineData(6)]
-    public void FullyFeatheredRadialCenterRemainsDraggable(double offset)
-    {
-        var overlay = new LocalsOverlayControl();
-        overlay.Measure(new Size(800, 600));
-        overlay.Arrange(new Rect(0, 0, 800, 600));
-        var frame = new HappyPhoton.Models.LocalsFrame(800, 600, 0, 0, 1, 1);
-        var local = new HappyPhoton.Models.LocalAdjustment
-            { Type = "radial", Rx = .2, Ry = .1, Feather = 1 };
-        Assert.Equal(LocalHandle.Center, overlay.HitHandle(new(400 + offset, 300), local, frame));
-    }
-
     [AvaloniaFact]
     public async Task PolarityButtonsAlwaysKeepExactlyOneStateChecked()
     {
@@ -237,5 +222,12 @@ public sealed partial class LocalsViewModelTests
         Assert.Equal(LocalHandle.Center, overlay.HitHandle(new(400, 300), local, frame));
         local.Feather = .5;
         Assert.Equal(LocalHandle.FeatherRing, overlay.HitHandle(new(480, 300), local, frame));
+        local.Feather = 1;
+        local.Angle = 90;
+
+        foreach (var offset in new[] { 0, 3, 6 })
+        {
+            Assert.Equal(LocalHandle.Center, overlay.HitHandle(new(400 + offset, 300), local, frame));
+        }
     }
 }

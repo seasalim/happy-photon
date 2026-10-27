@@ -31,14 +31,6 @@ public sealed class HelpAboutDialogTests
         Assert.False(string.IsNullOrWhiteSpace(revision.Text));
         Assert.False(string.IsNullOrWhiteSpace(date.Text));
 
-        dialog.Close();
-    }
-
-    [AvaloniaFact]
-    public void Dialog_RequiredActionsHaveAccessibleNames()
-    {
-        var dialog = new HelpAboutDialog();
-
         Assert.Equal(
             "Copy version info",
             AutomationProperties.GetName(

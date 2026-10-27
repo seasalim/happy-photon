@@ -153,5 +153,17 @@ public sealed partial class LocalsViewModelTests
         Assert.False(mono.CanEditLocalHue); Assert.False(mono.CanPickLocalHue);
         Assert.Equal("Monochrome RAW — color controls unavailable", mono.LocalHuePickAvailability);
         await mono.ToggleLocalHueCommand.ExecuteAsync(null); Assert.Equal(350, mono.LocalHueCenter);
+
+        mono.SelectedImage!.EditSettings.Locals = [new()
+        {
+            Type = "brush",
+            Hue = new() { Enabled = true },
+            Strokes = [new() { Points = [new(8192, 8192)] }]
+        }];
+        mono.SelectedLocal = mono.Locals[0];
+        Assert.False(mono.IsSelectedLocalRangeRestricted);
+        await mono.PendingLocalMaskTask;
+        Assert.NotNull(mono.LocalRangeMask);
+        Assert.False(mono.IsLocalRangeMaskUpdating);
     }
 }
