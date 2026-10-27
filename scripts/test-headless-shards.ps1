@@ -51,28 +51,42 @@ function Get-HeadlessTestShards([string] $ManifestPath, [int] $Count) {
     foreach ($case in $manifest.tests) {
         if ([string]::IsNullOrWhiteSpace($case.Class)) { throw "Manifest test has no class: $($case.DisplayName)." }
 
+        $weight = 1.0
+
+        if ($null -ne $case.PSObject.Properties["Traits"] -and $null -ne $case.Traits -and
+            $null -ne $case.Traits.PSObject.Properties["ShardCost"]) {
+            $values = @($case.Traits.ShardCost)
+
+            if ($values.Count -ne 1 -or
+                -not [double]::TryParse([string]$values[0], [Globalization.NumberStyles]::Float,
+                    [Globalization.CultureInfo]::InvariantCulture, [ref]$weight) -or
+                -not [double]::IsFinite($weight) -or $weight -le 0) {
+                throw "Invalid ShardCost for $($case.DisplayName): $($values -join ',')."
+            }
+        }
+
         if (-not $classes.ContainsKey($case.Class)) {
             $classes.Add($case.Class, [pscustomobject]@{
                 Name = $case.Class
                 MethodCount = 0
-                Own = $false
+                Weight = $weight
+                EstimatedCost = 0.0
                 OrdinalIndex = 0
             })
         }
 
         $class = $classes[$case.Class]
-        $class.MethodCount++
 
-        if ($null -ne $case.PSObject.Properties["Traits"] -and $null -ne $case.Traits -and
-            $null -ne $case.Traits.PSObject.Properties["Shard"] -and "Own" -in @($case.Traits.Shard)) {
-            $class.Own = $true
+        if ($class.Weight -ne $weight) {
+            throw "Inconsistent ShardCost for class $($case.Class)."
         }
+
+        $class.MethodCount++
+        $class.EstimatedCost += $weight
     }
 
-    $own = @($classes.Values | Where-Object Own)
-
-    if ($own.Count -gt 3 -or $own.Count -ge $Count -or $Count -gt $classes.Count) {
-        throw "Cannot partition $($classes.Count) headless classes into $Count shards with $($own.Count) Own classes (maximum three; reserve a shared shard)."
+    if ($Count -lt 1 -or $Count -gt $classes.Count) {
+        throw "Cannot partition $($classes.Count) headless classes into $Count shards."
     }
 
     $shards = @(for ($index = 0; $index -lt $Count; $index++) {
@@ -80,14 +94,10 @@ function Get-HeadlessTestShards([string] $ManifestPath, [int] $Count) {
             Index = $index + 1
             Classes = [Collections.Generic.List[string]]::new()
             MethodCount = 0
+            EstimatedCost = 0.0
             Filter = ""
         }
     })
-
-    for ($index = 0; $index -lt $own.Count; $index++) {
-        $shards[$index].Classes.Add($own[$index].Name)
-        $shards[$index].MethodCount = $own[$index].MethodCount
-    }
 
     $index = 0
 
@@ -95,14 +105,14 @@ function Get-HeadlessTestShards([string] $ManifestPath, [int] $Count) {
         $class.OrdinalIndex = $index++
     }
 
-    $shared = @($shards | Select-Object -Skip $own.Count)
-    $remaining = @($classes.Values | Where-Object { -not $_.Own } |
-        Sort-Object @{ Expression = "MethodCount"; Descending = $true }, OrdinalIndex)
+    $ordered = @($classes.Values |
+        Sort-Object @{ Expression = "EstimatedCost"; Descending = $true }, OrdinalIndex)
 
-    foreach ($class in $remaining) {
-        $shard = $shared | Sort-Object MethodCount, Index | Select-Object -First 1
+    foreach ($class in $ordered) {
+        $shard = $shards | Sort-Object EstimatedCost, Index | Select-Object -First 1
         $shard.Classes.Add($class.Name)
         $shard.MethodCount += $class.MethodCount
+        $shard.EstimatedCost += $class.EstimatedCost
     }
 
     Assert-HeadlessTestShards $manifest.tests $shards
@@ -113,7 +123,7 @@ function Get-HeadlessTestShards([string] $ManifestPath, [int] $Count) {
         $shard.Classes.Sort([StringComparer]::Ordinal)
         $clauses = @($shard.Classes | ForEach-Object { "FullyQualifiedName~$_." })
         $shard.Filter = "(Category!=Quarantined)&($($clauses -join '|'))"
-        Write-Host "Headless shard $($shard.Index): $($shard.Classes.Count) classes, $($shard.MethodCount) discovered methods."
+        Write-Host "Headless shard $($shard.Index): $($shard.Classes.Count) classes, $($shard.MethodCount) discovered cases, $($shard.EstimatedCost) estimated cost."
     }
 
     return $shards

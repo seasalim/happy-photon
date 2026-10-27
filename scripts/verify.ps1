@@ -57,6 +57,7 @@ try {
         & (Join-Path $PSScriptRoot "check-test-ledger.ps1") -Mode Policy
         & (Join-Path $PSScriptRoot "check-test-ledger-fixtures.ps1")
         & (Join-Path $PSScriptRoot "check-test-abort-fixtures.ps1")
+        & (Join-Path $PSScriptRoot "check-headless-shards-fixtures.ps1")
     }
     if ($PolicyOnly) { return }
 

@@ -13,7 +13,9 @@ assembly sets the budget before native loading, including `MAGICK_THREAD_LIMIT`,
 so the default host uses eight native workers. Explicit environment limits win.
 `verify.ps1 -ProcessorCount <n>` overrides the cap for unsharded test hosts.
 Full `verify.ps1` runs use four headless shards at two processors each with isolated
-temporary roots; `-HeadlessShards <n>` changes the count, while `-Filter`,
+temporary roots. Classes are assigned largest estimated cost first (discovered case
+count × `ShardCost`, default 1) to the least-loaded shard, with ordinal ties.
+`-HeadlessShards <n>` changes the count, while `-Filter`,
 `-SerialProjects` or `-HeadlessShards 1` keeps one headless host.
 Opt-in performance measurements use `HAPPY_PHOTON_FULL_CPU=1` in a fresh process,
 which switches to `HappyPhoton.FullCpu.runsettings` with the same quarantine filter
@@ -231,6 +233,7 @@ protocols live in the listed code. Report-only diagnostics are not acceptance ga
 
 | Gate / diagnostic | Additional environment | What it measures or gates |
 |---|---|---|
+| Headless `RestoreCrash*Tests` | `HAPPY_PHOTON_RESTORE_FULL_MATRIX=1` (no performance markers needed) | Kill every discovered restore boundary and prove literal whole-root equivalence, including empty directories and cache tiers; run when `CatalogRestoreExecutor`, `CatalogLocationMigrator` or the restore UI path changes. Fingerprint tables: `artifacts/restore-crash/`. |
 | `AgxPerformanceGateTests` | `HAPPY_PHOTON_AGX_PERF_TARGET=srgb` or `display-p3`; `HAPPY_PHOTON_AGX_PERF_REPORT=<path>` | Integrated preview tick ≤150 ms, export and memory |
 | `AgxCrossingPerformanceTests` | None | Fused crossing cost |
 | `PerceptualChromaPerformanceTests` | None | Mixer/chroma cost including pixel-cache traffic; identity has no pixel access |
