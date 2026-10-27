@@ -13,7 +13,6 @@ public class BuildInfoTests
     [Theory]
     [InlineData("0.2.0-beta.1", "0.2.0-beta.1")]
     [InlineData("0.2.0-beta.1+abcdef", "0.2.0-beta.1")]
-    [InlineData("0.1.0+local", "0.1.0")]
     public void FriendlyVersion_PreservesPrereleaseAndOmitsBuildMetadata(
         string informationalVersion,
         string expected)
@@ -46,6 +45,8 @@ public class BuildInfoTests
             new DateTimeOffset(2026, 8, 4, 18, 42, 0, TimeSpan.Zero),
             identity.CommitTimestampUtc);
         Assert.Equal("Commit date (UTC) · 2026-08-04 18:42", identity.DateDisplayText);
+        Assert.Equal("Commit date (UTC)", identity.DateLabel);
+        Assert.Equal("Local build", Create(null, null).DateLabel);
     }
 
     [Theory]
@@ -62,13 +63,6 @@ public class BuildInfoTests
 
         Assert.Equal(expected, identity.Provenance);
         Assert.Contains("file date 2026-08-04 18:42 UTC", identity.DateDisplayText);
-    }
-
-    [Fact]
-    public void StampedAndLocalBuilds_UseDistinctDateLabels()
-    {
-        Assert.Equal("Commit date (UTC)", CreateStamped().DateLabel);
-        Assert.Equal("Local build", Create(null, null).DateLabel);
     }
 
     [Theory]
@@ -91,6 +85,12 @@ public class BuildInfoTests
         Assert.Contains("Commit timestamp: 2026-08-04T18:42:00.0000000+00:00", identity.SupportText);
         Assert.Contains("Operating system: Test OS", identity.SupportText);
         Assert.Contains("Process architecture: Arm64", identity.SupportText);
+        Assert.Equal(Repository, identity.RepositoryRoot);
+        Assert.Equal($"{Repository}/tree/{Revision}", identity.ProjectUrl);
+        Assert.Equal($"{Repository}/blob/{Revision}/LICENSE", identity.LicenseUrl);
+        Assert.Equal(
+            $"{Repository}/blob/{Revision}/THIRD_PARTY_NOTICES.md",
+            identity.ThirdPartyNoticesUrl);
     }
 
     [Fact]
@@ -103,26 +103,6 @@ public class BuildInfoTests
             "Local executable file timestamp: 2026-08-04T18:42:00.0000000+00:00",
             identity.SupportText);
         Assert.DoesNotContain("Source revision:", identity.SupportText);
-    }
-
-    [Fact]
-    public void StampedUrls_ArePinnedToExplicitRevision()
-    {
-        var identity = CreateStamped();
-
-        Assert.Equal(Repository, identity.RepositoryRoot);
-        Assert.Equal($"{Repository}/tree/{Revision}", identity.ProjectUrl);
-        Assert.Equal($"{Repository}/blob/{Revision}/LICENSE", identity.LicenseUrl);
-        Assert.Equal(
-            $"{Repository}/blob/{Revision}/THIRD_PARTY_NOTICES.md",
-            identity.ThirdPartyNoticesUrl);
-    }
-
-    [Fact]
-    public void UnstampedUrls_UseDefaultBranchDocuments()
-    {
-        var identity = Create(null, null);
-
         Assert.Equal(Repository, identity.ProjectUrl);
         Assert.Equal($"{Repository}/blob/main/LICENSE", identity.LicenseUrl);
         Assert.Equal(

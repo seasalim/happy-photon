@@ -9,11 +9,10 @@ namespace HappyPhoton.Tests;
 public sealed class PreviewCacheSnapshotTests(ITestOutputHelper output)
 {
     public static IEnumerable<object[]> Cases =>
-        Enumerable.Range(1, 20).SelectMany(iteration => new[]
-        {
-            new object[] { iteration, false },
-            new object[] { iteration, true }
-        });
+    [
+        new object[] { 1, false },
+        new object[] { 1, true }
+    ];
 
     [Theory]
     [MemberData(nameof(Cases))]

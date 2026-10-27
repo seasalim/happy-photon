@@ -11,30 +11,6 @@ public sealed partial class RawProfileViewModelTests : IDisposable
     private readonly CatalogVmFixture _fx = new("profile-vm");
 
     [Fact]
-    public async Task SelectionResetAndUndoPreserveProfileHistoryPolicy()
-    {
-        using var catalog = await _fx.CreateCatalogAsync("catalog");
-        await using var vm = CreateViewModel(catalog);
-        var image = new ImageFile(_fx.Path("image.dng"));
-        vm.SelectedImage = image;
-        var option = Option('a');
-
-        await vm.SelectRawProfileAsync(option);
-
-        Assert.Equal(option.Selection?.ContentHash,
-            image.EditSettings.RawProfile?.ContentHash);
-        Assert.True(image.HasEdits);
-        Assert.True(vm.CanReset);
-
-        await vm.ResetEditsCommand.ExecuteAsync(null);
-        Assert.Null(image.EditSettings.RawProfile);
-
-        await vm.UndoCommand.ExecuteAsync(null);
-        Assert.Equal(option.Selection?.ContentHash,
-            image.EditSettings.RawProfile?.ContentHash);
-    }
-
-    [Fact]
     public async Task RapidSelectionLeavesNewestProfileInstalled()
     {
         using var catalog = await _fx.CreateCatalogAsync("rapid");

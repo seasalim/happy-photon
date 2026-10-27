@@ -978,6 +978,1540 @@
       "reference": "Retain every text/selection/focus contrast and control/Fluent accent achromatic assertion in the existing control-state resource theory, for both Dark and MidGray variants.",
       "wp": "TESTSUITE-WP3",
       "date": "2026-10-26"
+    },
+    {
+      "kind": "low-value",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.BackupCrashLockDiagnosticsTests.PoolSnapshot_DistinguishesIdleFromCheckedOutAndCleared",
+      "reference": "Checks only the test harness's SQLite pool diagnostic wording after open, close and ClearPool; no product backup, restore, cleanup, journal phase or guard branch executes.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "reason": "log-text"
+    },
+    {
+      "kind": "low-value",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.BackupCrashLockDiagnosticsTests.ReleasedLock_ReportsImmediateSuccessWithoutInventingAnOwner",
+      "reference": "Checks only the test harness's released-lock diagnostic wording; File.Delete creates a framework sharing violation for the sample and no product backup, restore, cleanup, journal phase or guard branch executes.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "reason": "log-text"
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.AppSettingsServiceTests.LoadAsync_ParsesThemeCaseInsensitively",
+      "reference": "One initialized catalog and LoadAsync now check both lowercase large and midgray keys with the original expected enum assertions. LoadAsync parses each key independently; all invalid/missing values, legacy migration and write-safety tests remain, so no distinct safety guard, kill point or journal phase is removed.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.AppSettingsServiceTests.LoadAsync_ParsesThumbnailSizeCaseInsensitively"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.BuildInfoTests.StampedUrls_ArePinnedToExplicitRevision",
+      "reference": "The identical CreateStamped input now serves the original support-text assertions and all four repository/revision-pinned URL assertions.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.BuildInfoTests.ClipboardSupportText_ContainsStampedRuntimeIdentity"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.BuildInfoTests.UnstampedUrls_UseDefaultBranchDocuments",
+      "reference": "The identical Create(null, null) input now serves both the original fallback support-text assertions and all three default-branch URL assertions.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.BuildInfoTests.ClipboardSupportText_LabelsUnstampedLocalBuild"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.BuildInfoTests.StampedAndLocalBuilds_UseDistinctDateLabels",
+      "reference": "The existing normalized stamped identity also checks its Commit date (UTC) label; the same Create(null, null) fallback still checks Local build. Both original date-label assertions are retained.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.BuildInfoTests.OffsetCommitTimestamp_NormalizesToUtc"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.BrowseImageStateTests.MinimumRatingZero_ShowsAll",
+      "reference": "Before setting the threshold, the existing stronger four-photo fixture now asserts that all four ratings (0, 2, 3 and 5) are visible; it then retains both original filtered-count and rating-bound assertions.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.BrowseImageStateTests.MinimumRating_ShowsRatingAndUp"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.BrowseImageStateTests.ClearFilters_WhenAlreadyClear_DoesNotNotify",
+      "reference": "After the existing reset assertions, reset both event counters and clear the already-clear filters again; retain both zero-notification assertions using the same two-photo fixture.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.BrowseImageStateTests.ClearFilters_ResetsEveryAxisInOneBatch"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.CatalogBatchUndoTests.EligibilityRequiresTheUnchangedBatchState",
+      "reference": "The jump and undo-twice rows execute the same switch section with position = 0, new default settings and no redo: identical catalog/history bytes enter UndoEditSettingsBatchAsync and the same eligibility guard rejects them. Keep undo-twice plus every other distinct history/settings/deletion guard; no kill point or journal phase is removed.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.CatalogBatchUndoTests.EligibilityRequiresTheUnchangedBatchState",
+      "removedCases": [
+        "HappyPhoton.Tests.CatalogBatchUndoTests.EligibilityRequiresTheUnchangedBatchState(action: \"jump\", eligible: False)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.CatalogBatchUndoTests.EligibilityRequiresTheUnchangedBatchState(action: \"changed-original\", eligible: False)",
+        "HappyPhoton.Tests.CatalogBatchUndoTests.EligibilityRequiresTheUnchangedBatchState(action: \"clear\", eligible: False)",
+        "HappyPhoton.Tests.CatalogBatchUndoTests.EligibilityRequiresTheUnchangedBatchState(action: \"deleted\", eligible: False)",
+        "HappyPhoton.Tests.CatalogBatchUndoTests.EligibilityRequiresTheUnchangedBatchState(action: \"edit\", eligible: False)",
+        "HappyPhoton.Tests.CatalogBatchUndoTests.EligibilityRequiresTheUnchangedBatchState(action: \"redo\", eligible: True)",
+        "HappyPhoton.Tests.CatalogBatchUndoTests.EligibilityRequiresTheUnchangedBatchState(action: \"reused-same-settings\", eligible: False)",
+        "HappyPhoton.Tests.CatalogBatchUndoTests.EligibilityRequiresTheUnchangedBatchState(action: \"reused-sequence\", eligible: False)",
+        "HappyPhoton.Tests.CatalogBatchUndoTests.EligibilityRequiresTheUnchangedBatchState(action: \"settings-only-write\", eligible: False)",
+        "HappyPhoton.Tests.CatalogBatchUndoTests.EligibilityRequiresTheUnchangedBatchState(action: \"undo\", eligible: False)",
+        "HappyPhoton.Tests.CatalogBatchUndoTests.EligibilityRequiresTheUnchangedBatchState(action: \"undo-twice\", eligible: False)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.BackupFolderSourceGuardTests.GuardDetectsFolderReferences",
+      "reference": "RefersToBackupFolder applies only a case-insensitive word-boundary Backups regex; the two capitalized Backups strings are equivalent regardless of surrounding C# syntax. Keep Path.Combine's uppercase token and File.OpenRead's lowercase token as the case boundaries.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.BackupFolderSourceGuardTests.GuardDetectsFolderReferences",
+      "removedCases": [
+        "HappyPhoton.Tests.BackupFolderSourceGuardTests.GuardDetectsFolderReferences(source: \"Directory.Exists(@\\\"C:\\\\catalog\\\\Backups\\\")\")"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.BackupFolderSourceGuardTests.GuardDetectsFolderReferences(source: \"File.OpenRead(\\\"/catalog/backups/one.zip\\\")\")",
+        "HappyPhoton.Tests.BackupFolderSourceGuardTests.GuardDetectsFolderReferences(source: \"Path.Combine(root, \\\"Backups\\\")\")"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.BuildInfoTests.FriendlyVersion_PreservesPrereleaseAndOmitsBuildMetadata",
+      "reference": "FormatFriendlyVersion only slices at the first plus sign; stable and prerelease prefixes take the same metadata-present path. Keep the prerelease row with metadata and the metadata-absent boundary, preserving the prefix verbatim.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.BuildInfoTests.FriendlyVersion_PreservesPrereleaseAndOmitsBuildMetadata",
+      "removedCases": [
+        "HappyPhoton.Tests.BuildInfoTests.FriendlyVersion_PreservesPrereleaseAndOmitsBuildMetadata(informationalVersion: \"0.1.0+local\", expected: \"0.1.0\")"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.BuildInfoTests.FriendlyVersion_PreservesPrereleaseAndOmitsBuildMetadata(informationalVersion: \"0.2.0-beta.1\", expected: \"0.2.0-beta.1\")",
+        "HappyPhoton.Tests.BuildInfoTests.FriendlyVersion_PreservesPrereleaseAndOmitsBuildMetadata(informationalVersion: \"0.2.0-beta.1+abcdef\", expected: \"0.2.0-beta.1\")"
+      ]
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.ColorCheckerGroundTruthTests.ColorChecker_EveryPatchDeltaE00_IsWithinMeasuredBudget",
+      "reference": "The existing mean-budget test now also asserts the unchanged maximum-patch DeltaE budget against the same Lazy measurement, with one ReportPatches call. The frozen characterization and rendered-look measurements remain unchanged.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.ColorCheckerGroundTruthTests.ColorChecker_MeanDeltaE00_IsWithinMeasuredBudget"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "duplicate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.CatalogSchemaTests.NewCatalog_HasOnlyCanonicalImageColumns",
+      "reference": "\"The newly created images table has exactly id, file_path, version, version_label, file_name, edit_settings, edit_version, flag_state, rating, color_label, history_position, updated_utc.\" The survivor asserts the identical ordered list after moving aside the rejected database and initializing its absent replacement. CatalogService.InitializeAsync reaches the same CatalogSchema.InitializeAsync/CreateTablesAsync path for both absent databases; the survivor also retains rejection, preserved old assets and successful retry. No migration guard, journal phase or kill point is removed.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": [
+        {
+          "project": "Tests/HappyPhoton.Tests.csproj",
+          "test": "HappyPhoton.Tests.CatalogSchemaTests.Initialize_RejectsOldSchemaAndSucceedsAfterDatabaseIsMoved"
+        }
+      ]
+    },
+    {
+      "kind": "duplicate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.CatalogServiceImageStateTests.LoadImageStatesAsync_HandlesEmptyPathCollection",
+      "reference": "\"LoadImageStatesAsync(Array.Empty<string>()) returns an empty dictionary.\" The survivor uses the same initialized catalog and adds an empty edit batch before the identical empty-path load; CatalogService.LoadImageStatesAsync skips its query loop in both. No catalog identity or write guard branch is removed.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": [
+        {
+          "project": "Tests/HappyPhoton.Tests.csproj",
+          "test": "HappyPhoton.Tests.CatalogServiceBatchEditTests.SaveEditSettingsBatchAsync_EmptyBatchIsNoOp"
+        }
+      ]
+    },
+    {
+      "kind": "duplicate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.CatalogServiceRatingTests.SaveAndLoadRating_RoundTrips",
+      "reference": "\"Saving rating 4 and loading the requested image state returns rating 4.\" The survivor invokes the same SaveRatingAsync and LoadImageStatesAsync path with additional saved edit, flag and label state and an unrelated fresh row; the rating write/read assertion is identical. No distinct persistence or guard path is removed.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": [
+        {
+          "project": "Tests/HappyPhoton.Tests.csproj",
+          "test": "HappyPhoton.Tests.CatalogServiceImageStateTests.LoadImageStatesAsync_ReturnsSavedStateForRequestedPaths"
+        }
+      ]
+    },
+    {
+      "kind": "duplicate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.CatalogServiceRatingTests.LoadRating_ReturnsZeroForMissingRow",
+      "reference": "\"A requested path absent from the catalog contributes no loaded image state.\" The survivor requests two existing paths plus missing.jpg, asserts exactly two states and retrieves both existing IDs. CatalogService.LoadImageStatesAsync uses the same single-batch SELECT for one or three paths and only adds returned rows; no separate missing-row fallback, journal phase or guard is lost.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": [
+        {
+          "project": "Tests/HappyPhoton.Tests.csproj",
+          "test": "HappyPhoton.Tests.CatalogServiceImageStateTests.LoadImageStatesAsync_ReturnsSavedStateForRequestedPaths"
+        }
+      ]
+    },
+    {
+      "kind": "low-value",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.CullPerfRecorderTests.DisabledPathAllocatesNothing",
+      "reference": "The local recorder is null for the entire test: recorder?.Record never invokes CullPerfRecorder. The zero-allocation assertion only pins the language-guaranteed null-conditional no-op, not the recorder or any product call site.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "reason": "constant"
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.ColorAssessmentGeometryTests.ModeOff_FitBoxIsBitIdenticalToViewport",
+      "reference": "ColorAssessmentGeometry.Calculate returns the supplied viewport directly after the positive-finite guard when the mode is off. Keep the fractional positive viewport as the representative, which also detects rounding; the removed integer viewport takes the same branch.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.ColorAssessmentGeometryTests.ModeOff_FitBoxIsBitIdenticalToViewport",
+      "removedCases": [
+        "HappyPhoton.Tests.ColorAssessmentGeometryTests.ModeOff_FitBoxIsBitIdenticalToViewport(width: 800, height: 600)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.ColorAssessmentGeometryTests.ModeOff_FitBoxIsBitIdenticalToViewport(width: 1279.5, height: 719.5)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.CropGeometryTests.PresetConversionUsesCorrectedFrame",
+      "reference": "Keep one unrotated landscape representative plus both 90- and 270-degree corrected-frame paths. The removed 4:3 landscape and kept 3:2 landscape both exercise preset ratios below, equal to and above the frame ratio through NormalizedRatio/Fit/DraftPixelRatio; all ratio assertions remain unchanged.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.CropGeometryTests.PresetConversionUsesCorrectedFrame",
+      "removedCases": [
+        "HappyPhoton.Tests.CropGeometryTests.PresetConversionUsesCorrectedFrame(width: 4000, height: 3000, rotation: 0)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.CropGeometryTests.PresetConversionUsesCorrectedFrame(width: 4000, height: 3000, rotation: 270)",
+        "HappyPhoton.Tests.CropGeometryTests.PresetConversionUsesCorrectedFrame(width: 6000, height: 4000, rotation: 0)",
+        "HappyPhoton.Tests.CropGeometryTests.PresetConversionUsesCorrectedFrame(width: 6000, height: 4000, rotation: 90)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.CropGeometryTests.LabelIsDerivedWithoutOrientation",
+      "reference": "Keep one landscape ratio equal to its frame, one portrait equal-frame ratio, and the reciprocal Original case, plus every preset/tolerance/custom boundary. Both equal landscape rows normalize to the frame ratio and DeriveRatio selects Original before the matching named preset.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.CropGeometryTests.LabelIsDerivedWithoutOrientation",
+      "removedCases": [
+        "HappyPhoton.Tests.CropGeometryTests.LabelIsDerivedWithoutOrientation(frame: 1.5, ratio: 1.5, expected: \"Original\")"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.CropGeometryTests.LabelIsDerivedWithoutOrientation(frame: 0.75, ratio: 0.75, expected: \"Original\")",
+        "HappyPhoton.Tests.CropGeometryTests.LabelIsDerivedWithoutOrientation(frame: 1.3333333333333333, ratio: 0.66666666666666663, expected: \"3:2\")",
+        "HappyPhoton.Tests.CropGeometryTests.LabelIsDerivedWithoutOrientation(frame: 1.3333333333333333, ratio: 1, expected: \"1:1\")",
+        "HappyPhoton.Tests.CropGeometryTests.LabelIsDerivedWithoutOrientation(frame: 1.3333333333333333, ratio: 1.3333333333333333, expected: \"Original\")",
+        "HappyPhoton.Tests.CropGeometryTests.LabelIsDerivedWithoutOrientation(frame: 1.3333333333333333, ratio: 1.494, expected: \"3:2\")",
+        "HappyPhoton.Tests.CropGeometryTests.LabelIsDerivedWithoutOrientation(frame: 1.3333333333333333, ratio: 1.506, expected: \"3:2\")",
+        "HappyPhoton.Tests.CropGeometryTests.LabelIsDerivedWithoutOrientation(frame: 1.3333333333333333, ratio: 1.51, expected: \"Custom\")",
+        "HappyPhoton.Tests.CropGeometryTests.LabelIsDerivedWithoutOrientation(frame: 1.5, ratio: 0.66666666666666663, expected: \"Original\")"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.DcpAdobeProfileProbeTests.ProbeFindsMalformedAndPlaceholderCandidates",
+      "reference": "The placeholder parameter only configures a local availability fake that is never passed to ProbeAsync. Both rows otherwise create the same exclusively locked malformed .dcp and assert Found with zero fake calls; keep the false row as the sole representative, preserving the proof that candidate detection does not read file contents.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.DcpAdobeProfileProbeTests.ProbeFindsMalformedAndPlaceholderCandidates",
+      "removedCases": [
+        "HappyPhoton.Tests.DcpAdobeProfileProbeTests.ProbeFindsMalformedAndPlaceholderCandidates(placeholder: True)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.DcpAdobeProfileProbeTests.ProbeFindsMalformedAndPlaceholderCandidates(placeholder: False)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.FusedPreviewAnalysisTests.Fixtures_MatchMagickAtPreviewSizeAndAcrossAllOptions",
+      "reference": "Keep Bayer RAW, X-Trans RAW and generated JPEG fixtures plus opaque/alpha representatives in both RAW and standard tone regimes. Alpha is added after decode by the same AddAlpha helper; the X-Trans alpha row repeats the RAW alpha analysis path already exercised by the Canon alpha row. Each fixture still exercises every output target and option combination.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.FusedPreviewAnalysisTests.Fixtures_MatchMagickAtPreviewSizeAndAcrossAllOptions",
+      "removedCases": [
+        "HappyPhoton.Tests.FusedPreviewAnalysisTests.Fixtures_MatchMagickAtPreviewSizeAndAcrossAllOptions(fixture: \"fujifilm-x30.raf\", alpha: True)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.FusedPreviewAnalysisTests.Fixtures_MatchMagickAtPreviewSizeAndAcrossAllOptions(fixture: \"canon-eos-6d-iso-6400.cr2\", alpha: False)",
+        "HappyPhoton.Tests.FusedPreviewAnalysisTests.Fixtures_MatchMagickAtPreviewSizeAndAcrossAllOptions(fixture: \"canon-eos-6d-iso-6400.cr2\", alpha: True)",
+        "HappyPhoton.Tests.FusedPreviewAnalysisTests.Fixtures_MatchMagickAtPreviewSizeAndAcrossAllOptions(fixture: \"fujifilm-x30.raf\", alpha: False)",
+        "HappyPhoton.Tests.FusedPreviewAnalysisTests.Fixtures_MatchMagickAtPreviewSizeAndAcrossAllOptions(fixture: \"generated-jpeg\", alpha: False)",
+        "HappyPhoton.Tests.FusedPreviewAnalysisTests.Fixtures_MatchMagickAtPreviewSizeAndAcrossAllOptions(fixture: \"generated-jpeg\", alpha: True)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.EditSettingsGroupTests.CoverageRejectsAnUnassignedField",
+      "reference": "Both strings enter the same flat assigned-versus-serialized name comparison in AssertCoverage; no path parsing or different guard is exercised. Keep lens.futureField as the representative unknown field; RegistryAssignsEverySerializedFieldExactlyOnce still enumerates every top-level and nested serialized field.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.EditSettingsGroupTests.CoverageRejectsAnUnassignedField",
+      "removedCases": [
+        "HappyPhoton.Tests.EditSettingsGroupTests.CoverageRejectsAnUnassignedField(field: \"futureField\")"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.EditSettingsGroupTests.CoverageRejectsAnUnassignedField(field: \"lens.futureField\")"
+      ]
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.EditSettingsJsonTests.Deserialize_Current_DoesNotMaterializeOptionalChannels",
+      "reference": "Fold the same default-document Deserialize null-channel assertions and canonical reserialization equality into Serialize_AlwaysWritesLensToggles; both used EditSettingsJson.Serialize(new EditSettings()), preserving the same serialize/deserialize path and every assertion.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.EditSettingsJsonTests.Serialize_AlwaysWritesLensToggles"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.EditSettingsJsonTests.BuiltInProfile_OmitsFieldAndPreservesLegacyCanonicalJson",
+      "reference": "Fold the default document's rawProfile omission and null deserialization assertions into Serialize_AlwaysWritesLensToggles; identical settings and serializer calls keep the default-profile omission/read branches covered without another setup.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.EditSettingsJsonTests.Serialize_AlwaysWritesLensToggles"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.EditSettingsJsonTests.Serialize_RejectsUnsupportedVersions",
+      "reference": "EditSettingsJson.Serialize rejects every Version unequal to CurrentVersion through one guard before cloning; retain 0 (unversioned), 3 (legacy immediately below current) and 99 (future), removing the equivalent positive obsolete version 1. No serialization or migration branch is lost.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.EditSettingsJsonTests.Serialize_RejectsUnsupportedVersions",
+      "removedCases": [
+        "HappyPhoton.Tests.EditSettingsJsonTests.Serialize_RejectsUnsupportedVersions(version: 1)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.EditSettingsJsonTests.Serialize_RejectsUnsupportedVersions(version: 0)",
+        "HappyPhoton.Tests.EditSettingsJsonTests.Serialize_RejectsUnsupportedVersions(version: 3)",
+        "HappyPhoton.Tests.EditSettingsJsonTests.Serialize_RejectsUnsupportedVersions(version: 99)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.EditSettingsJsonTests.LegacyNoiseReduction_IsIgnoredWithoutMigration",
+      "reference": "DetailSettings has no noiseReduction member, so JsonSerializer skips the same unknown property without inspecting any mode value. Retain the off/full legacy endpoints; light repeats that guard-free ignored-member path, with canonical JSON, hash and wasClamped assertions unchanged.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.EditSettingsJsonTests.LegacyNoiseReduction_IsIgnoredWithoutMigration",
+      "removedCases": [
+        "HappyPhoton.Tests.EditSettingsJsonTests.LegacyNoiseReduction_IsIgnoredWithoutMigration(mode: \"light\")"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.EditSettingsJsonTests.LegacyNoiseReduction_IsIgnoredWithoutMigration(mode: \"full\")",
+        "HappyPhoton.Tests.EditSettingsJsonTests.LegacyNoiseReduction_IsIgnoredWithoutMigration(mode: \"off\")"
+      ]
+    },
+    {
+      "kind": "duplicate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.ExportWorkspaceTests.EnteringExport_InitializesAutomaticDestination",
+      "reference": "\"SwitchToExportCommand sets ExportSettings.OutputFolder to Path.Combine(CurrentFolderPath, \"export\")\" is asserted by the survivor on its first entry with the same fresh VM/NullBaseLoader setup, before additionally testing folder-following and custom-destination preservation.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": [
+        {
+          "project": "Tests/HappyPhoton.Tests.csproj",
+          "test": "HappyPhoton.Tests.ExportWorkspaceTests.ExportWorkspaceCommand_FollowsAutomaticDestinationUntilCustomized"
+        }
+      ]
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.ExportWorkspaceTests.ThumbnailEntry_LeavesDevelopActive",
+      "reference": "Reuse the same selected-image VM after its first develop entry, then explicitly SwitchToDevelop and execute EnterDevelopMode again; retain both IsDevelopMode and null ExportReport assertions for the repeated-entry path.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.ExportWorkspaceTests.ThumbnailEntry_SwitchesBrowseToDevelop"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.EditHistoryLabelTests.OperationLabelIsFinalizedAtCommit",
+      "reference": "Every row supplies a nonblank operation label to EditHistoryLabel.Derive, which returns that string before examining settings; retain Preset: Classic Chrome as one representative of that equivalence class. Automatic labels and rotation/crop boundaries remain in their existing tests.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.EditHistoryLabelTests.OperationLabelIsFinalizedAtCommit",
+      "removedCases": [
+        "HappyPhoton.Tests.EditHistoryLabelTests.OperationLabelIsFinalizedAtCommit(label: \"Paste settings\")",
+        "HappyPhoton.Tests.EditHistoryLabelTests.OperationLabelIsFinalizedAtCommit(label: \"Reset\")",
+        "HappyPhoton.Tests.EditHistoryLabelTests.OperationLabelIsFinalizedAtCommit(label: \"Profile: Adobe Standard\")",
+        "HappyPhoton.Tests.EditHistoryLabelTests.OperationLabelIsFinalizedAtCommit(label: \"Auto white balance\")"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.EditHistoryLabelTests.OperationLabelIsFinalizedAtCommit(label: \"Preset: Classic Chrome\")"
+      ]
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.EditHistoryTests.EditAfterMiddleJumpDoesNotInsertOriginal",
+      "reference": "Both load exposures 0/1/2, jump to position 1 and append a different exposure; retain the removed count-of-three and single-Original-label assertions in the existing redo-truncation scenario, preserving the same PrepareAppend/Publish branch.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.EditHistoryTests.PositionMovesPreserveRedoAndNextAppendTruncatesIt"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.EditSettingsTransferTests.ApplySubset_AppliedCurveHasRebuiltLookupTable",
+      "reference": "Fold both curve LookupTable[128] > 140 assertions into the existing CopyGroups(CreateFullSettings()) then ApplyGroups test; both start with default target curves and traverse the same default-group clone/application path, while the survivor also preserves nondefault target geometry.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.EditSettingsTransferTests.ApplySubset_PreservesTargetGeometry"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "duplicate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.ExportSafetyTests.SelfCollision_Detected",
+      "reference": "\"IsOriginalPath(IMG_1.jpg, originals) is true when originals contains IMG_1.jpg\" is asserted by the sibling-collision survivor with an additional valid RAW path. BuildOriginalPathSet and IsOriginalPath use the same normalized-set membership path, with no self/sibling branch; case, dot-segment and invalid-input guards retain their separate tests.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": [
+        {
+          "project": "Tests/HappyPhoton.Tests.csproj",
+          "test": "HappyPhoton.Tests.ExportSafetyTests.SiblingCollision_RawExportHitsJpegOriginal"
+        }
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns",
+      "reference": "Isolated edges use the same fit path at interior tilts: retain zero, both rotation-limit boundaries (+/-5), smallest nonzero tilts (+/-0.2), and one interior representative per sign (+/-3), crossed with both edge axes; remove only the other interior angles. All fitted-line count, angle/spread and tracing assertions stay unchanged.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns",
+      "removedCases": [
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: -0.5, vertical: False)",
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: -0.5, vertical: True)",
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: -1.5, vertical: False)",
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: -1.5, vertical: True)",
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: -4.5, vertical: False)",
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: -4.5, vertical: True)",
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: 0.5, vertical: False)",
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: 0.5, vertical: True)",
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: 1.5, vertical: False)",
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: 1.5, vertical: True)",
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: 4.5, vertical: False)",
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: 4.5, vertical: True)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: -0.20000000000000001, vertical: False)",
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: -0.20000000000000001, vertical: True)",
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: -3, vertical: False)",
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: -3, vertical: True)",
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: -5, vertical: False)",
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: -5, vertical: True)",
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: 0, vertical: False)",
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: 0, vertical: True)",
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: 0.20000000000000001, vertical: False)",
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: 0.20000000000000001, vertical: True)",
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: 3, vertical: False)",
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: 3, vertical: True)",
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: 5, vertical: False)",
+        "HappyPhoton.Tests.HorizonDetectionEdgeTests.IsolatedEdgeSurvivesBothSigns(tilt: 5, vertical: True)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.HorizonDetectionRobustnessTests.DiffuseMinorityLowersConfidenceWithoutVeto",
+      "reference": "The diffuse-minority scene retains its zero-roll boundary and one representative of each roll sign (-3 and +3); +/-0.5 repeat the same minority-cluster assertions at interior angles. Other robustness scenes and all surviving assertions are unchanged.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.HorizonDetectionRobustnessTests.DiffuseMinorityLowersConfidenceWithoutVeto",
+      "removedCases": [
+        "HappyPhoton.Tests.HorizonDetectionRobustnessTests.DiffuseMinorityLowersConfidenceWithoutVeto(roll: -0.5)",
+        "HappyPhoton.Tests.HorizonDetectionRobustnessTests.DiffuseMinorityLowersConfidenceWithoutVeto(roll: 0.5)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.HorizonDetectionRobustnessTests.DiffuseMinorityLowersConfidenceWithoutVeto(roll: -3)",
+        "HappyPhoton.Tests.HorizonDetectionRobustnessTests.DiffuseMinorityLowersConfidenceWithoutVeto(roll: 0)",
+        "HappyPhoton.Tests.HorizonDetectionRobustnessTests.DiffuseMinorityLowersConfidenceWithoutVeto(roll: 3)"
+      ]
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.ImageExportServiceVariantTests.ExportBatch_PngOutputIsEightBit",
+      "reference": "Fold the PNG-depth assertion into ExportBatch_SinglePngVariantStaysFlat: both export the same untagged 400x200 source through default PNG settings; the existing result still checks flat placement and dimensions and now reads that same output to assert eight-bit depth. The temporary PNG remains produced by the folded result.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.ImageExportServiceVariantTests.ExportBatch_SinglePngVariantStaysFlat"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.ImageExportServiceVariantTests.ExportBatch_TaggedStandardSourceEmbedsSrgbProfile",
+      "reference": "Tagged standard sources normalize before the export encoder; preserve Display P3 across all four codecs and Adobe RGB through PNG as the second input-profile representative. The removed Adobe RGB JPEG/WebP/TIFF combinations repeat the same exact sRGB-profile assertion after normalization; all codecs and both input profiles still produce output in kept rows.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.ImageExportServiceVariantTests.ExportBatch_TaggedStandardSourceEmbedsSrgbProfile",
+      "removedCases": [
+        "HappyPhoton.Tests.ImageExportServiceVariantTests.ExportBatch_TaggedStandardSourceEmbedsSrgbProfile(assetName: \"adobe-rgb-reference.jpg\", format: Jpeg, extension: \".jpg\")",
+        "HappyPhoton.Tests.ImageExportServiceVariantTests.ExportBatch_TaggedStandardSourceEmbedsSrgbProfile(assetName: \"adobe-rgb-reference.jpg\", format: Tiff, extension: \".tif\")",
+        "HappyPhoton.Tests.ImageExportServiceVariantTests.ExportBatch_TaggedStandardSourceEmbedsSrgbProfile(assetName: \"adobe-rgb-reference.jpg\", format: Webp, extension: \".webp\")"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.ImageExportServiceVariantTests.ExportBatch_TaggedStandardSourceEmbedsSrgbProfile(assetName: \"adobe-rgb-reference.jpg\", format: Png, extension: \".png\")",
+        "HappyPhoton.Tests.ImageExportServiceVariantTests.ExportBatch_TaggedStandardSourceEmbedsSrgbProfile(assetName: \"display-p3-reference.jpg\", format: Jpeg, extension: \".jpg\")",
+        "HappyPhoton.Tests.ImageExportServiceVariantTests.ExportBatch_TaggedStandardSourceEmbedsSrgbProfile(assetName: \"display-p3-reference.jpg\", format: Png, extension: \".png\")",
+        "HappyPhoton.Tests.ImageExportServiceVariantTests.ExportBatch_TaggedStandardSourceEmbedsSrgbProfile(assetName: \"display-p3-reference.jpg\", format: Tiff, extension: \".tif\")",
+        "HappyPhoton.Tests.ImageExportServiceVariantTests.ExportBatch_TaggedStandardSourceEmbedsSrgbProfile(assetName: \"display-p3-reference.jpg\", format: Webp, extension: \".webp\")"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.ImageStatsServiceTests.RawSourcePath_IsRejectedBeforeMagickDecode",
+      "reference": "ImageStatsService.Compute(string) rejects all RAW suffixes through one RawExtensions.Contains guard before any content read. Keep lower-case DNG and upper-case NEF representatives; RAF follows that same guard. Cloud-path availability and caller-owned-byte coverage remain separately intact.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.ImageStatsServiceTests.RawSourcePath_IsRejectedBeforeMagickDecode",
+      "removedCases": [
+        "HappyPhoton.Tests.ImageStatsServiceTests.RawSourcePath_IsRejectedBeforeMagickDecode(fileName: \"source.raf\")"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.ImageStatsServiceTests.RawSourcePath_IsRejectedBeforeMagickDecode(fileName: \"source.NEF\")",
+        "HappyPhoton.Tests.ImageStatsServiceTests.RawSourcePath_IsRejectedBeforeMagickDecode(fileName: \"source.dng\")"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.HealContractTests.PanoramicMaximumRadiusClampsSourceAndAllowsDestinationEdgeCrossing",
+      "reference": "Both sizes describe the same 10:1 maximum-radius clamp with even dimensions; retain 200x20 and 20x200 as one representative of each landscape/portrait branch. Both destination edges, both source-edge clamps, clone/heal oracles and input immutability remain asserted for each kept orientation.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.HealContractTests.PanoramicMaximumRadiusClampsSourceAndAllowsDestinationEdgeCrossing",
+      "removedCases": [
+        "HappyPhoton.Tests.HealContractTests.PanoramicMaximumRadiusClampsSourceAndAllowsDestinationEdgeCrossing(width: 40, height: 400)",
+        "HappyPhoton.Tests.HealContractTests.PanoramicMaximumRadiusClampsSourceAndAllowsDestinationEdgeCrossing(width: 400, height: 40)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.HealContractTests.PanoramicMaximumRadiusClampsSourceAndAllowsDestinationEdgeCrossing(width: 20, height: 200)",
+        "HappyPhoton.Tests.HealContractTests.PanoramicMaximumRadiusClampsSourceAndAllowsDestinationEdgeCrossing(width: 200, height: 20)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.LensfunPrescriptionReaderTests.NonEnglishCameraAndLensAliasesDoNotMatch",
+      "reference": "LensfunDatabase accepts aliases only when lang equals en; de, ru and fr all take the same non-English exclusion branch. Keep de for both camera and lens rejection, with English alias acceptance and all identity tiers still tested separately.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.LensfunPrescriptionReaderTests.NonEnglishCameraAndLensAliasesDoNotMatch",
+      "removedCases": [
+        "HappyPhoton.Tests.LensfunPrescriptionReaderTests.NonEnglishCameraAndLensAliasesDoNotMatch(language: \"fr\")",
+        "HappyPhoton.Tests.LensfunPrescriptionReaderTests.NonEnglishCameraAndLensAliasesDoNotMatch(language: \"ru\")"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.LensfunPrescriptionReaderTests.NonEnglishCameraAndLensAliasesDoNotMatch(language: \"de\")"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference",
+      "reference": "With waveform disabled, both odd near-threshold shapes take the same per-pixel histogram accumulation and merge paths. Keep small, immediately-below-threshold 511x513, exact-threshold 512x512 and large uneven-row 1600x1067 cases for each worker policy. Keep both removed shapes with waveform enabled, where their narrow/wide column mappings are distinct.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference",
+      "removedCases": [
+        "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(width: 251, height: 1049, includeWaveform: False, scaleWorkersWithFrame: False)",
+        "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(width: 251, height: 1049, includeWaveform: False, scaleWorkersWithFrame: True)",
+        "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(width: 521, height: 509, includeWaveform: False, scaleWorkersWithFrame: False)",
+        "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(width: 521, height: 509, includeWaveform: False, scaleWorkersWithFrame: True)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(width: 1600, height: 1067, includeWaveform: False, scaleWorkersWithFrame: False)",
+        "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(width: 1600, height: 1067, includeWaveform: False, scaleWorkersWithFrame: True)",
+        "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(width: 1600, height: 1067, includeWaveform: True, scaleWorkersWithFrame: False)",
+        "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(width: 1600, height: 1067, includeWaveform: True, scaleWorkersWithFrame: True)",
+        "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(width: 17, height: 13, includeWaveform: False, scaleWorkersWithFrame: False)",
+        "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(width: 17, height: 13, includeWaveform: False, scaleWorkersWithFrame: True)",
+        "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(width: 17, height: 13, includeWaveform: True, scaleWorkersWithFrame: False)",
+        "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(width: 17, height: 13, includeWaveform: True, scaleWorkersWithFrame: True)",
+        "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(width: 251, height: 1049, includeWaveform: True, scaleWorkersWithFrame: False)",
+        "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(width: 251, height: 1049, includeWaveform: True, scaleWorkersWithFrame: True)",
+        "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(width: 511, height: 513, includeWaveform: False, scaleWorkersWithFrame: False)",
+        "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(width: 511, height: 513, includeWaveform: False, scaleWorkersWithFrame: True)",
+        "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(width: 511, height: 513, includeWaveform: True, scaleWorkersWithFrame: False)",
+        "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(width: 511, height: 513, includeWaveform: True, scaleWorkersWithFrame: True)",
+        "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(width: 512, height: 512, includeWaveform: False, scaleWorkersWithFrame: False)",
+        "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(width: 512, height: 512, includeWaveform: False, scaleWorkersWithFrame: True)",
+        "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(width: 512, height: 512, includeWaveform: True, scaleWorkersWithFrame: False)",
+        "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(width: 512, height: 512, includeWaveform: True, scaleWorkersWithFrame: True)",
+        "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(width: 521, height: 509, includeWaveform: True, scaleWorkersWithFrame: False)",
+        "HappyPhoton.Tests.HistogramServiceTests.CalculatePreviewHistogram_ParallelPathMatchesSequentialReference(width: 521, height: 509, includeWaveform: True, scaleWorkersWithFrame: True)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.HealBoundaryTests.NormalizedBilinearFieldHasSameBoundaryMeanAtEveryResolution",
+      "reference": "Scale 2 repeats the same normalized bilinear-field boundary integration between the retained scale 1 and scale 4 endpoints; both kept resolutions still exercise all 32 angular samples against the independent analytic field.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.HealBoundaryTests.NormalizedBilinearFieldHasSameBoundaryMeanAtEveryResolution",
+      "removedCases": [
+        "HappyPhoton.Tests.HealBoundaryTests.NormalizedBilinearFieldHasSameBoundaryMeanAtEveryResolution(scale: 2)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.HealBoundaryTests.NormalizedBilinearFieldHasSameBoundaryMeanAtEveryResolution(scale: 1)",
+        "HappyPhoton.Tests.HealBoundaryTests.NormalizedBilinearFieldHasSameBoundaryMeanAtEveryResolution(scale: 4)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.HealKernelTests.AreaLimitAdmitsExactDiscCount",
+      "reference": "The fixture cap uses the same area-limit loop for intermediate counts. Retain the production six-disc boundary and predecessor (5, 6), one above-boundary representative (8), and the 64-item maximum; every kept row still tests the exact area and its immediate BitDecrement predecessor, prefix identity and zero-area rejection.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.HealKernelTests.AreaLimitAdmitsExactDiscCount",
+      "removedCases": [
+        "HappyPhoton.Tests.HealKernelTests.AreaLimitAdmitsExactDiscCount(count: 12)",
+        "HappyPhoton.Tests.HealKernelTests.AreaLimitAdmitsExactDiscCount(count: 16)",
+        "HappyPhoton.Tests.HealKernelTests.AreaLimitAdmitsExactDiscCount(count: 24)",
+        "HappyPhoton.Tests.HealKernelTests.AreaLimitAdmitsExactDiscCount(count: 32)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.HealKernelTests.AreaLimitAdmitsExactDiscCount(count: 5)",
+        "HappyPhoton.Tests.HealKernelTests.AreaLimitAdmitsExactDiscCount(count: 6)",
+        "HappyPhoton.Tests.HealKernelTests.AreaLimitAdmitsExactDiscCount(count: 64)",
+        "HappyPhoton.Tests.HealKernelTests.AreaLimitAdmitsExactDiscCount(count: 8)"
+      ]
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.LensPrescriptionReaderTests.DngReaderRejectsTrimBeforeGeometryButAcceptsGeometryBeforeTrim",
+      "reference": "Both tests build the identical accepted warp/vignette/trim opcode sequence. Fold the reversed trim-before-warp rejection and its Unsupported/TrimBounds assertions into DngReaderParsesWarpVignetteCropAndTrim, preserving the accepted status and detailed prescription assertions.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.LensPrescriptionReaderTests.DngReaderParsesWarpVignetteCropAndTrim"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "low-value",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.LibRawRuntimeHealthTests.ProcessHealth_EmitsOneDiagnosticAcrossRepeatedConsumers",
+      "reference": "The test reads an injected Lazy three times and asserts only the fake probe count and fake logger message list; it never asserts a decoded result or displayed state. All five actual RAW-disable rejection cases and the UI-exposed rejection diagnostic remain covered in this class.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "reason": "interaction-only"
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.HealDecodeFramingTests.X30PackingAlsoLeavesAChromaHoleForPreInterpolation",
+      "reference": "Fold the chroma-hole and all-green-cell assertions into X30HalfSizeGreenCentroidDependsOnRowWriteOrder: both use exactly Pack(X30Pattern(), 6, reverseRows: false), which the existing result already retains as forward. All centroid and row-order assertions remain.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.HealDecodeFramingTests.X30HalfSizeGreenCentroidDependsOnRowWriteOrder"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.ImageFileBurstTests.DefaultsToNoBurst",
+      "reference": "Fold the initial HasBurstGroup=false and BurstSize=0 assertions into ChipTextAndColorIndex before applying the same burst values; preserve its computed group, chip text and color assertions.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.ImageFileBurstTests.ChipTextAndColorIndex"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.ImageFileRatingTests.RatingDefaultsToZeroUnrated",
+      "reference": "Fold the initial Rating=0, HasRating=false and empty RatingStars assertions into RatingStarsShowsFilledStarsOnly before its existing 3-star and 5-star transitions.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.ImageFileRatingTests.RatingStarsShowsFilledStarsOnly"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "duplicate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.ImageFileMetadataDisplayTests.ExposureDisplay_FocalLengthOnly",
+      "reference": "\"ExposureDisplay equals 24mm when only focal length is present\" is asserted by ExposureDisplay_FractionalFocalLength_Rounds through the same unconditional F0 formatting path, with fractional 23.7 additionally exercising rounding.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": [
+        {
+          "project": "Tests/HappyPhoton.Tests.csproj",
+          "test": "HappyPhoton.Tests.ImageFileMetadataDisplayTests.ExposureDisplay_FractionalFocalLength_Rounds"
+        }
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.ImageFileRoutingTests.HeicExtension_IsStandard",
+      "reference": "HEIC and HEIF both remain standard sources through the case-insensitive RAW-extension membership check. Keep lower-case .heic and upper-case .HEIF, covering both suffix identities and both casing representatives; omit their duplicate casing combinations.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.ImageFileRoutingTests.HeicExtension_IsStandard",
+      "removedCases": [
+        "HappyPhoton.Tests.ImageFileRoutingTests.HeicExtension_IsStandard(filePath: \"image.HEIC\")",
+        "HappyPhoton.Tests.ImageFileRoutingTests.HeicExtension_IsStandard(filePath: \"image.heif\")"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.ImageFileRoutingTests.HeicExtension_IsStandard(filePath: \"image.HEIF\")",
+        "HappyPhoton.Tests.ImageFileRoutingTests.HeicExtension_IsStandard(filePath: \"image.heic\")"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.LensIdentityIntegrationTests.CommittedNikonFixturesReachLensfunThroughMakerNoteIdentity",
+      "reference": "The two D70 burst frames resolve the same Nikon F maker-note identity to Nikon AF Nikkor 50mm f/1.8D. Keep burst-1 for that camera/lens equivalence class and D300 for the distinct 70-200mm calibration-suffix identity; all native identity, mount and resolved-prescription assertions remain.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.LensIdentityIntegrationTests.CommittedNikonFixturesReachLensfunThroughMakerNoteIdentity",
+      "removedCases": [
+        "HappyPhoton.Tests.LensIdentityIntegrationTests.CommittedNikonFixturesReachLensfunThroughMakerNoteIdentity(fixture: \"nikon-d70-burst-2.nef\", expectedLens: \"Nikon AF Nikkor 50mm f/1.8D\")"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.LensIdentityIntegrationTests.CommittedNikonFixturesReachLensfunThroughMakerNoteIdentity(fixture: \"nikon-d300-colorchecker.nef\", expectedLens: \"Nikon AF-S Nikkor 70-200mm f/2.8G ED VR II 162\")",
+        "HappyPhoton.Tests.LensIdentityIntegrationTests.CommittedNikonFixturesReachLensfunThroughMakerNoteIdentity(fixture: \"nikon-d70-burst-1.nef\", expectedLens: \"Nikon AF Nikkor 50mm f/1.8D\")"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.LocalsContractPrototypeTests.UndersizedBrushBudgetTerminatesAtOneCell",
+      "reference": "LocalBrushEvaluator clamps every budget below MinimumBudget to that minimum; keep zero and minimum-minus-one (requestedBudget -1), removing the redundant interior budget 1. Both kept rows retain one-cell, allocation and independent brush-oracle assertions.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.LocalsContractPrototypeTests.UndersizedBrushBudgetTerminatesAtOneCell",
+      "removedCases": [
+        "HappyPhoton.Tests.LocalsContractPrototypeTests.UndersizedBrushBudgetTerminatesAtOneCell(requestedBudget: 1)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.LocalsContractPrototypeTests.UndersizedBrushBudgetTerminatesAtOneCell(requestedBudget: -1)",
+        "HappyPhoton.Tests.LocalsContractPrototypeTests.UndersizedBrushBudgetTerminatesAtOneCell(requestedBudget: 0)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.LocalsContractPrototypeTests.ProductionColorOrderHalfWeightAndContinuity",
+      "reference": "Keep raw=True as the representative of RenderLocals.ApplyColor with temperature/saturation only: CreateBase supplies the same 6504 K, tint, exposure bias and monochrome facts for both rows, and RenderLocals only reads IsRawSource for inactive Whites/Blacks operators here; no tone kernel is invoked. Order, half-weight and continuity assertions remain unchanged.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.LocalsContractPrototypeTests.ProductionColorOrderHalfWeightAndContinuity",
+      "removedCases": [
+        "HappyPhoton.Tests.LocalsContractPrototypeTests.ProductionColorOrderHalfWeightAndContinuity(raw: False)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.LocalsContractPrototypeTests.ProductionColorOrderHalfWeightAndContinuity(raw: True)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.LoadingMessageGraceStartupTests.LeavingInitializingCancelsProgress",
+      "reference": "All non-initializing states use the same OnStartupGateStateChanged progress cancellation and MarkFirstFramePainted gate. Keep each of Ready/Welcome/Error/PointerRecovery with a pending timer, plus Ready before the first frame as the no-timer representative; only redundant pre-frame state combinations are removed.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.LoadingMessageGraceStartupTests.LeavingInitializingCancelsProgress",
+      "removedCases": [
+        "HappyPhoton.Tests.LoadingMessageGraceStartupTests.LeavingInitializingCancelsProgress(state: Error, beforeFirstFrame: True)",
+        "HappyPhoton.Tests.LoadingMessageGraceStartupTests.LeavingInitializingCancelsProgress(state: PointerRecovery, beforeFirstFrame: True)",
+        "HappyPhoton.Tests.LoadingMessageGraceStartupTests.LeavingInitializingCancelsProgress(state: Welcome, beforeFirstFrame: True)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.LoadingMessageGraceStartupTests.LeavingInitializingCancelsProgress(state: Error, beforeFirstFrame: False)",
+        "HappyPhoton.Tests.LoadingMessageGraceStartupTests.LeavingInitializingCancelsProgress(state: PointerRecovery, beforeFirstFrame: False)",
+        "HappyPhoton.Tests.LoadingMessageGraceStartupTests.LeavingInitializingCancelsProgress(state: Ready, beforeFirstFrame: False)",
+        "HappyPhoton.Tests.LoadingMessageGraceStartupTests.LeavingInitializingCancelsProgress(state: Ready, beforeFirstFrame: True)",
+        "HappyPhoton.Tests.LoadingMessageGraceStartupTests.LeavingInitializingCancelsProgress(state: Welcome, beforeFirstFrame: False)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.MetadataServiceTests.FormatExposureTime_KeepsNonUnitFractionsExact",
+      "reference": "FormatExposureTime sends both 0.4 and 0.8 seconds through the same subsecond non-unit-fraction decimal branch; keep 0.4 as its representative, 0.5 and 1/60 for exact reciprocals, 0.0031250001 for float-noise tolerance, and 2.5 for the seconds branch.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.MetadataServiceTests.FormatExposureTime_KeepsNonUnitFractionsExact",
+      "removedCases": [
+        "HappyPhoton.Tests.MetadataServiceTests.FormatExposureTime_KeepsNonUnitFractionsExact(seconds: 0.80000000000000004, expected: \"0.8\")"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.MetadataServiceTests.FormatExposureTime_KeepsNonUnitFractionsExact(seconds: 0.0031250001000000002, expected: \"1/320\")",
+        "HappyPhoton.Tests.MetadataServiceTests.FormatExposureTime_KeepsNonUnitFractionsExact(seconds: 0.016666666666666666, expected: \"1/60\")",
+        "HappyPhoton.Tests.MetadataServiceTests.FormatExposureTime_KeepsNonUnitFractionsExact(seconds: 0.40000000000000002, expected: \"0.4\")",
+        "HappyPhoton.Tests.MetadataServiceTests.FormatExposureTime_KeepsNonUnitFractionsExact(seconds: 0.5, expected: \"1/2\")",
+        "HappyPhoton.Tests.MetadataServiceTests.FormatExposureTime_KeepsNonUnitFractionsExact(seconds: 2.5, expected: \"2.5\")"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Interop/HappyPhoton.LibRaw.Interop.Tests/HappyPhoton.LibRaw.Interop.Tests.csproj",
+      "removed": "HappyPhoton.LibRaw.Interop.Tests.NativeContractTests.OpenMpDefault_BoundsDecoderScratchWorkers",
+      "reference": "GetDefaultOpenMpThreadCount is Math.Clamp(processorCount, 1, 16): keep 0 and 24 outside the bounds, endpoints 1 and 16, and 8 as the interior representative; 4 exercises the same unchanged-value branch as 8.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.LibRaw.Interop.Tests.NativeContractTests.OpenMpDefault_BoundsDecoderScratchWorkers",
+      "removedCases": [
+        "HappyPhoton.LibRaw.Interop.Tests.NativeContractTests.OpenMpDefault_BoundsDecoderScratchWorkers(processorCount: 4, expected: 4)"
+      ],
+      "keptCases": [
+        "HappyPhoton.LibRaw.Interop.Tests.NativeContractTests.OpenMpDefault_BoundsDecoderScratchWorkers(processorCount: 0, expected: 1)",
+        "HappyPhoton.LibRaw.Interop.Tests.NativeContractTests.OpenMpDefault_BoundsDecoderScratchWorkers(processorCount: 1, expected: 1)",
+        "HappyPhoton.LibRaw.Interop.Tests.NativeContractTests.OpenMpDefault_BoundsDecoderScratchWorkers(processorCount: 16, expected: 16)",
+        "HappyPhoton.LibRaw.Interop.Tests.NativeContractTests.OpenMpDefault_BoundsDecoderScratchWorkers(processorCount: 24, expected: 16)",
+        "HappyPhoton.LibRaw.Interop.Tests.NativeContractTests.OpenMpDefault_BoundsDecoderScratchWorkers(processorCount: 8, expected: 8)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Interop/HappyPhoton.LibRaw.Interop.Tests/HappyPhoton.LibRaw.Interop.Tests.csproj",
+      "removed": "HappyPhoton.LibRaw.Interop.Tests.OutputConfigurationTests.Linear_PinsDeterministicParameters",
+      "reference": "Linear independently assigns the highlight and noise-reduction enum values and halfSize flag, without combination branches. Keep Blend/Off/True, Blend/Light/False and Clip/Full/False: both highlight mappings, all three noise levels and both preview values remain asserted, along with every fixed decode parameter.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.LibRaw.Interop.Tests.OutputConfigurationTests.Linear_PinsDeterministicParameters",
+      "removedCases": [
+        "HappyPhoton.LibRaw.Interop.Tests.OutputConfigurationTests.Linear_PinsDeterministicParameters(highlight: Blend, noiseReduction: Full, preview: True, expectedHighlight: 2, expectedFbdd: 2)",
+        "HappyPhoton.LibRaw.Interop.Tests.OutputConfigurationTests.Linear_PinsDeterministicParameters(highlight: Clip, noiseReduction: Light, preview: True, expectedHighlight: 0, expectedFbdd: 1)",
+        "HappyPhoton.LibRaw.Interop.Tests.OutputConfigurationTests.Linear_PinsDeterministicParameters(highlight: Clip, noiseReduction: Off, preview: False, expectedHighlight: 0, expectedFbdd: 0)"
+      ],
+      "keptCases": [
+        "HappyPhoton.LibRaw.Interop.Tests.OutputConfigurationTests.Linear_PinsDeterministicParameters(highlight: Blend, noiseReduction: Light, preview: False, expectedHighlight: 2, expectedFbdd: 1)",
+        "HappyPhoton.LibRaw.Interop.Tests.OutputConfigurationTests.Linear_PinsDeterministicParameters(highlight: Blend, noiseReduction: Off, preview: True, expectedHighlight: 2, expectedFbdd: 0)",
+        "HappyPhoton.LibRaw.Interop.Tests.OutputConfigurationTests.Linear_PinsDeterministicParameters(highlight: Clip, noiseReduction: Full, preview: False, expectedHighlight: 0, expectedFbdd: 2)"
+      ]
+    },
+    {
+      "kind": "duplicate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.PackagedDataRootTests.MacBundleResolvesDataBesideMacOSDirectory",
+      "reference": "\"Resolve(Contents/MacOS, isMacOS: true) equals Contents/Resources\" survives with an added trailing separator; DirectoryInfo normalizes both inputs before the same MacOS/Contents branch and the survivor asserts the identical resource path.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": [
+        {
+          "project": "Tests/HappyPhoton.Tests.csproj",
+          "test": "HappyPhoton.Tests.PackagedDataRootTests.MacBundleWithTrailingSeparatorResolvesDataBesideMacOSDirectory"
+        }
+      ]
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.MonochromeRawLoaderTests.GrayImport_ReplicatesEveryQ16SampleExactly",
+      "reference": "Fold the RGB color-space assertion into the existing multi-band import test, whose exact per-channel comparisons cover all 65,536 Q16 values (including the small test vectors), full bands and the partial final band through the same ImportGray16 loop. No rendered file or golden is removed.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.MonochromeRawLoaderTests.GrayImport_ReplicatesEveryQ16SampleAcrossMultipleBands"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.MetadataServiceTests.ExtractMetadata_ReadsDimensionsWithoutMutatingImageFile",
+      "reference": "Fold dimension extraction, nonzero file size and unchanged ImageFile metadata state into the existing JPEG/extended-EXIF extraction setup; the survivor retains all EXIF and modified-date assertions and now checks its own 600x400 fixture dimensions and unmodified caller object.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.MetadataServiceTests.ExtractMetadata_ReadsExtendedExifAndFileModifiedDate"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.PasteTargetingTests.OnePhotoBrowseSelection_UsesPasteDialog",
+      "reference": "Fold the \"Applied to 1 photo\" status assertion into the existing single-local-target Browse paste with an outside cloud active photo; it already asserts dialog TargetCount=1 and target Exposure=2. CopyPaste resolves the same Browse selection, performs both target availability guards, opens the same dialog and calls PasteToSelectionAsync; the survivor also proves the outside cloud photo is untouched, with no distinct write or guard branch removed.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.PasteTargetingTests.LocalBrowseSelection_IsNotVetoedByOutsideCloudActivePhoto"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.RawBaseLoaderTests.ConfigureOutput_PinsDeterministicLinearParameters",
+      "reference": "RawBaseLoader.PreviewPair.ConfigureOutput selects Clip/Blend independently of the preview HalfSize flag and forwards both to LinearCameraNative; retain one row per highlight branch and both preview values (Blend/preview and Clip/full), removing only the repeated cross-product combinations.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.RawBaseLoaderTests.ConfigureOutput_PinsDeterministicLinearParameters",
+      "removedCases": [
+        "HappyPhoton.Tests.RawBaseLoaderTests.ConfigureOutput_PinsDeterministicLinearParameters(highlight: Blend, preview: False, expectedHighlight: 2)",
+        "HappyPhoton.Tests.RawBaseLoaderTests.ConfigureOutput_PinsDeterministicLinearParameters(highlight: Clip, preview: True, expectedHighlight: 0)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.RawBaseLoaderTests.ConfigureOutput_PinsDeterministicLinearParameters(highlight: Blend, preview: True, expectedHighlight: 2)",
+        "HappyPhoton.Tests.RawBaseLoaderTests.ConfigureOutput_PinsDeterministicLinearParameters(highlight: Clip, preview: False, expectedHighlight: 0)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.RawBaseLoaderTests.Orientation_IsAlreadyAppliedWithoutDependingOnDimensions",
+      "reference": "RawBaseLoader.Helpers.ResolveOrientation returns the same already-applied/loader-1 tuple and NormalizeOrientation passes every value in [1,8] through one branch; retain both valid boundaries 1/8 and interior representative 4. RawProcessedOrientationTests.DocumentedTable_MatchesRealHeadersAndSampledBasePixels still checks every actual EXIF/native pixel transform.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.RawBaseLoaderTests.Orientation_IsAlreadyAppliedWithoutDependingOnDimensions",
+      "removedCases": [
+        "HappyPhoton.Tests.RawBaseLoaderTests.Orientation_IsAlreadyAppliedWithoutDependingOnDimensions(orientation: 2)",
+        "HappyPhoton.Tests.RawBaseLoaderTests.Orientation_IsAlreadyAppliedWithoutDependingOnDimensions(orientation: 3)",
+        "HappyPhoton.Tests.RawBaseLoaderTests.Orientation_IsAlreadyAppliedWithoutDependingOnDimensions(orientation: 5)",
+        "HappyPhoton.Tests.RawBaseLoaderTests.Orientation_IsAlreadyAppliedWithoutDependingOnDimensions(orientation: 6)",
+        "HappyPhoton.Tests.RawBaseLoaderTests.Orientation_IsAlreadyAppliedWithoutDependingOnDimensions(orientation: 7)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.RawBaseLoaderTests.Orientation_IsAlreadyAppliedWithoutDependingOnDimensions(orientation: 1)",
+        "HappyPhoton.Tests.RawBaseLoaderTests.Orientation_IsAlreadyAppliedWithoutDependingOnDimensions(orientation: 4)",
+        "HappyPhoton.Tests.RawBaseLoaderTests.Orientation_IsAlreadyAppliedWithoutDependingOnDimensions(orientation: 8)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.PreviewQ16ConversionBaselineTests.FinalizedFixturePreview_MatchesMagickBgraAndFloorCounts",
+      "reference": "After finalization both RAW fixtures reach the same encoded RGB/RGBA Q16 conversion seam; retain Canon as the RAW representative and generated JPEG as the standard-source representative, each with native and varying-alpha output. EveryQuantum_MatchesMagickBgraAndFloorCounts still compares all 65,536 quantum values; no golden or PNG is produced by the removed row.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.PreviewQ16ConversionBaselineTests.FinalizedFixturePreview_MatchesMagickBgraAndFloorCounts",
+      "removedCases": [
+        "HappyPhoton.Tests.PreviewQ16ConversionBaselineTests.FinalizedFixturePreview_MatchesMagickBgraAndFloorCounts(fixture: \"fujifilm-x30.raf\")"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.PreviewQ16ConversionBaselineTests.FinalizedFixturePreview_MatchesMagickBgraAndFloorCounts(fixture: \"canon-eos-6d-iso-6400.cr2\")",
+        "HappyPhoton.Tests.PreviewQ16ConversionBaselineTests.FinalizedFixturePreview_MatchesMagickBgraAndFloorCounts(fixture: \"generated-jpeg\")"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.RawSensorFrameTests.ShippedRuntime_FrameMatchesRecordedOracle",
+      "reference": "The two Nikon burst fixtures are byte-identical (SHA-256 DD6405AEB33B0CD5BF66C98BA98CCBB478A765450CFD130810E470DAB8D1F4B4) and have identical recorded frame fields; retain burst-1 as their representative plus both Canon layouts, Fuji X-Trans and Pentax DNG. The remaining rows still compare the native pitch/margins/CFA/black-level oracle.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.RawSensorFrameTests.ShippedRuntime_FrameMatchesRecordedOracle",
+      "removedCases": [
+        "HappyPhoton.Tests.RawSensorFrameTests.ShippedRuntime_FrameMatchesRecordedOracle(fixtureName: \"nikon-d70-burst-2.nef\")"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.RawSensorFrameTests.ShippedRuntime_FrameMatchesRecordedOracle(fixtureName: \"canon-eos-350d.cr2\")",
+        "HappyPhoton.Tests.RawSensorFrameTests.ShippedRuntime_FrameMatchesRecordedOracle(fixtureName: \"canon-eos-6d-iso-6400.cr2\")",
+        "HappyPhoton.Tests.RawSensorFrameTests.ShippedRuntime_FrameMatchesRecordedOracle(fixtureName: \"fujifilm-x30.raf\")",
+        "HappyPhoton.Tests.RawSensorFrameTests.ShippedRuntime_FrameMatchesRecordedOracle(fixtureName: \"nikon-d70-burst-1.nef\")",
+        "HappyPhoton.Tests.RawSensorFrameTests.ShippedRuntime_FrameMatchesRecordedOracle(fixtureName: \"pentax-k-r.dng\")"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration",
+      "reference": "Iteration is used only in diagnostic output; retain iteration 1 for both replaceAfterMetadata values, preserving the unchanged complete-generation pixels/hash/geometry assertions and the forced replacement hook. PreviewCacheService.LoadRenderedPreview still reaches the same metadata-before/after generation guard; no source/catalog write guard, journal phase or kill point is removed.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration",
+      "removedCases": [
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 10, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 10, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 11, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 11, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 12, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 12, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 13, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 13, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 14, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 14, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 15, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 15, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 16, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 16, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 17, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 17, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 18, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 18, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 19, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 19, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 2, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 2, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 20, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 20, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 3, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 3, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 4, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 4, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 5, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 5, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 6, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 6, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 7, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 7, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 8, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 8, replaceAfterMetadata: True)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 9, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 9, replaceAfterMetadata: True)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 1, replaceAfterMetadata: False)",
+        "HappyPhoton.Tests.PreviewCacheSnapshotTests.ReadReturnsOneCompleteGeneration(iteration: 1, replaceAfterMetadata: True)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.PreviewExposureEstimatorTests.Solve_RecoversKnownExposure",
+      "reference": "All rows exercise the same finite, reachable interior exposure inversion; retain one negative and one positive representative at -1.25/+1.25, removing the second positive sample. Solve_ClampsTargetsOutsideReachableRange separately retains both -3/+3 saturation boundaries.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.PreviewExposureEstimatorTests.Solve_RecoversKnownExposure",
+      "removedCases": [
+        "HappyPhoton.Tests.PreviewExposureEstimatorTests.Solve_RecoversKnownExposure(expectedEv: 0.75)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.PreviewExposureEstimatorTests.Solve_RecoversKnownExposure(expectedEv: -1.25)",
+        "HappyPhoton.Tests.PreviewExposureEstimatorTests.Solve_RecoversKnownExposure(expectedEv: 1.25)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.PreviewExposureEstimatorTests.DefaultResponse_UsesPostGainMiddleGreyAnchor",
+      "reference": "The rows all test the same post-gain middle-grey invariant with finite nonsaturating source codes; retain the tested -2/+2 extremes and 0.625 as the fractional interior representative, removing only the repeated interior sample.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.PreviewExposureEstimatorTests.DefaultResponse_UsesPostGainMiddleGreyAnchor",
+      "removedCases": [
+        "HappyPhoton.Tests.PreviewExposureEstimatorTests.DefaultResponse_UsesPostGainMiddleGreyAnchor(sourceEv: -0.75)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.PreviewExposureEstimatorTests.DefaultResponse_UsesPostGainMiddleGreyAnchor(sourceEv: -2)",
+        "HappyPhoton.Tests.PreviewExposureEstimatorTests.DefaultResponse_UsesPostGainMiddleGreyAnchor(sourceEv: 0.625)",
+        "HappyPhoton.Tests.PreviewExposureEstimatorTests.DefaultResponse_UsesPostGainMiddleGreyAnchor(sourceEv: 2)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.RenderChromaStageTests.ActiveChroma_AchromaticCodesAndAlphaAreBitExact",
+      "reference": "RenderChromaStage.TransformBand skips each equal-channel pixel before saturation/vibrance math, so mixed-sign interior settings exercise the same branch as the retained -100/-100 and +100/+100 boundaries. Both retained rows include black, near-black, mid-gray, white and distinct alpha codes.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.RenderChromaStageTests.ActiveChroma_AchromaticCodesAndAlphaAreBitExact",
+      "removedCases": [
+        "HappyPhoton.Tests.RenderChromaStageTests.ActiveChroma_AchromaticCodesAndAlphaAreBitExact(saturation: -50, vibrance: 100)",
+        "HappyPhoton.Tests.RenderChromaStageTests.ActiveChroma_AchromaticCodesAndAlphaAreBitExact(saturation: 50, vibrance: -100)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.RenderChromaStageTests.ActiveChroma_AchromaticCodesAndAlphaAreBitExact(saturation: -100, vibrance: -100)",
+        "HappyPhoton.Tests.RenderChromaStageTests.ActiveChroma_AchromaticCodesAndAlphaAreBitExact(saturation: 100, vibrance: 100)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.RenderChromaStageTests.ActiveRgba_OrdinaryAndRestingPreserveAlphaAndMatch",
+      "reference": "The two-pixel fixture makes RenderChromaStage.TransformBand choose one worker before CapWorkers, so caps 1/2 cannot exercise different chroma worker paths here; retain standard/cap-1 and RAW/cap-2 representatives, each preserving alpha and ordinary/resting pixel parity.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.RenderChromaStageTests.ActiveRgba_OrdinaryAndRestingPreserveAlphaAndMatch",
+      "removedCases": [
+        "HappyPhoton.Tests.RenderChromaStageTests.ActiveRgba_OrdinaryAndRestingPreserveAlphaAndMatch(isRaw: False, workerCap: 2)",
+        "HappyPhoton.Tests.RenderChromaStageTests.ActiveRgba_OrdinaryAndRestingPreserveAlphaAndMatch(isRaw: True, workerCap: 1)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.RenderChromaStageTests.ActiveRgba_OrdinaryAndRestingPreserveAlphaAndMatch(isRaw: False, workerCap: 1)",
+        "HappyPhoton.Tests.RenderChromaStageTests.ActiveRgba_OrdinaryAndRestingPreserveAlphaAndMatch(isRaw: True, workerCap: 2)"
+      ]
+    },
+    {
+      "kind": "duplicate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.RawCameraFactsTests.DaylightRaw_EstimatesNearD65InsteadOfFallback",
+      "reference": "\"Pentax as-shot Kelvin is in [6000,7000] and is not 5500\" is implied by the surviving Pentax row asserting exactly 6057.3439482282884 K on the same RawBaseLoader preview; its canonical-base assertions also reject the 5500 fallback.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": [
+        {
+          "project": "Tests/HappyPhoton.Tests.csproj",
+          "test": "HappyPhoton.Tests.RawBaseLoaderTests.PreviewAndFull_AreCanonicalAndAgreeWithSnapshots"
+        }
+      ]
+    },
+    {
+      "kind": "duplicate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.RawProfilePickerProjectorTests.ModuleLabelSurvivesRenderRelabelAndRediscoveryMerge",
+      "reference": "\"SelectedOption.Label remains Adobe Standard · Ultrawide Camera through render relabel and rediscovery, and the Adobe menu retains its module labels\" is asserted by the surviving view-model test through the same Project/MergeOptions path with three modules, selection, rendering, reopening and rediscovery instead of two modules.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": [
+        {
+          "project": "Tests/HappyPhoton.Tests.csproj",
+          "test": "HappyPhoton.Tests.RawProfileViewModelTests.ModuleLabelHoldsThroughSelectionRenderRelabelReopenAndRediscovery"
+        }
+      ]
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.RawProfileViewModelTests.SelectionResetAndUndoPreserveProfileHistoryPolicy",
+      "reference": "The existing reset/history scenario now also asserts the selected profile hash, HasEdits and CanReset immediately after selection; it already checks null selection after reset and the original hash after undo. Both exercise SelectRawProfileAsync -> SaveEditSettingsAsync and the same reset/undo entry points; the survivor additionally blocks discovery at both transitions. No rollback/write guard, journal phase or kill point is removed; RejectionSurvivesNonProfileUndoAndSaveRollback retains save-failure rollback.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.RawProfileTransitionTests.ResetAndHistorySupersedeBlockedDiscovery"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.PresetServiceTests.PresetsChanged_FiresAfterInitializeSaveRenameAndDelete",
+      "reference": "The existing exact event/snapshot sequence now subscribes before InitializeAsync and expects the initial empty snapshot plus each save/rename/delete snapshot; this preserves one event per successful operation while checking published state. PresetService emits after RefreshPresetSnapshot in all four paths; the survivor still executes WritePresetAsync create/move and rename/replace plus DeleteUserPresetCoreAsync. The removed test injected no WriteStep failure or crash; all write/cleanup/guard tests stay.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.PresetServiceTests.Mutations_PublishSortedStableReadOnlySnapshots"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "duplicate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.StraightenGateSyntheticTests.G1BlurredBefore",
+      "reference": "\"Oracle error <= .02 and matching tilt sign for facade-blurred at every tilt in both orientations\" is asserted by G1Before through the identical MeasureG1 helper, whose scenes already append facade-blurred.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": [
+        {
+          "project": "Tests/HappyPhoton.Tests.csproj",
+          "test": "HappyPhoton.Tests.StraightenGateSyntheticTests.G1Before"
+        }
+      ]
+    },
+    {
+      "kind": "duplicate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.SyncTransferBatchBaselineTests.BatchWorkloadTransfersDocumentsAndSeedsHistory",
+      "reference": "\"All 500 targets have the expected serialized settings and Original/Paste settings history, in memory and catalog\" is asserted in the identical RunAsync helper before undo in the surviving false/true rows; the sync row also keeps the source unchanged and clipboard empty. The undo flag only adds pre-state capture and subsequent undo assertions; all transfer guards and persistence checks remain on both paths.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": [
+        {
+          "project": "Tests/HappyPhoton.Tests.csproj",
+          "test": "HappyPhoton.Tests.SyncTransferBatchBaselineTests.G1_UndoRestoresFiveHundredDocumentsAndHistories"
+        }
+      ]
+    },
+    {
+      "kind": "duplicate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.SyncTransferBatchBaselineTests.SyncWorkloadTransfersDocumentsAndSeedsHistory",
+      "reference": "\"All 500 targets have the expected serialized settings and Original/Paste settings history, in memory and catalog\" is asserted in the identical RunAsync helper before undo in the surviving false/true rows; the sync row also keeps the source unchanged and clipboard empty. The undo flag only adds pre-state capture and subsequent undo assertions; all transfer guards and persistence checks remain on both paths.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": [
+        {
+          "project": "Tests/HappyPhoton.Tests.csproj",
+          "test": "HappyPhoton.Tests.SyncTransferBatchBaselineTests.G1_UndoRestoresFiveHundredDocumentsAndHistories"
+        }
+      ]
+    },
+    {
+      "kind": "duplicate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.RestingRenderExecutionTests.RestingExecution_ReportsNoiseReductionBeforeCaptureSharpen",
+      "reference": "\"noise-reduction precedes capture-sharpen and no detail stage is reported\" follows from the exact ExpectedStages sequence asserted for every RenderResting worker cap, including standard Preview with active luminance NR and capture sharpening; the survivor additionally checks frozen output pixels.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": [
+        {
+          "project": "Tests/HappyPhoton.Tests.csproj",
+          "test": "HappyPhoton.Tests.RenderSequenceGoldenTests.PixelsAndStagesMatchFrozenBase"
+        }
+      ]
+    },
+    {
+      "kind": "duplicate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.SingleInstanceGuardTests.DefaultMutexName_DoesNotCollideWithLegacyPhotoEdit",
+      "reference": "\"The application mutex name differs from PhotoEdit.Application.SingleInstance\" is implied by the survivor asserting the exact name HappyPhoton.Application.SingleInstance. Both read the same ApplicationMutexName constant.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": [
+        {
+          "project": "Tests/HappyPhoton.Tests.csproj",
+          "test": "HappyPhoton.Tests.SingleInstanceGuardTests.DefaultMutexName_IsStableAcrossReleases"
+        }
+      ]
+    },
+    {
+      "kind": "low-value",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.StraightenGateWp3HarnessTests.SharedLinePredicateKeepsFrozenBaselineConstants",
+      "reference": "The method compares seven compile-time HorizonDetection constants with literals without executing detection or a predicate. CandidateAndAnswerFloorsRemainDistinct, SoftRivalBoundaryIsStrictAndIndependentOfMergedConfidence and DisagreeingFamiliesUseRivalGapThenEvidenceStrength retain executable predicate behavior.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "reason": "constant"
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.SyncProfileTransferTests.AC5_ReaderIdentityEqualsDecoderAcrossFixtureMakers",
+      "reference": "The two Nikon D70 burst frames exercise the same camera model, NEF header/decoder identity and one-open cache contract. Keep burst-1 as its representative and every other camera model (including Nikon D300) for distinct maker/model paths.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.SyncProfileTransferTests.AC5_ReaderIdentityEqualsDecoderAcrossFixtureMakers",
+      "removedCases": [
+        "HappyPhoton.Tests.SyncProfileTransferTests.AC5_ReaderIdentityEqualsDecoderAcrossFixtureMakers(name: \"nikon-d70-burst-2.nef\")"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.SyncProfileTransferTests.AC5_ReaderIdentityEqualsDecoderAcrossFixtureMakers(name: \"pentax-k-r.dng\")",
+        "HappyPhoton.Tests.SyncProfileTransferTests.AC5_ReaderIdentityEqualsDecoderAcrossFixtureMakers(name: \"nikon-d70-burst-1.nef\")",
+        "HappyPhoton.Tests.SyncProfileTransferTests.AC5_ReaderIdentityEqualsDecoderAcrossFixtureMakers(name: \"canon-eos-6d-iso-6400.cr2\")",
+        "HappyPhoton.Tests.SyncProfileTransferTests.AC5_ReaderIdentityEqualsDecoderAcrossFixtureMakers(name: \"fujifilm-x30.raf\")",
+        "HappyPhoton.Tests.SyncProfileTransferTests.AC5_ReaderIdentityEqualsDecoderAcrossFixtureMakers(name: \"canon-eos-350d.cr2\")",
+        "HappyPhoton.Tests.SyncProfileTransferTests.AC5_ReaderIdentityEqualsDecoderAcrossFixtureMakers(name: \"nikon-d300-colorchecker.nef\")"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.ThemeSourceGuardTests.TypeBaselineRejectsAdditionsAndAllowsRemoval",
+      "reference": "FindIncreases compares normalized (path,text) counts. Keep increased existing text (FontSize 11), a new text key (FontSize 12) and removal. The eight Setter forms are equivalent new-key additions; TypeMatcherRecognizesSourceForms independently retains every corresponding attribute/element, qualified property and whitespace form.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.ThemeSourceGuardTests.TypeBaselineRejectsAdditionsAndAllowsRemoval",
+      "removedCases": [
+        "HappyPhoton.Tests.ThemeSourceGuardTests.TypeBaselineRejectsAdditionsAndAllowsRemoval(addition: \"<Setter Property='FontSize'><Setter.Value>9</Sette\"···, passes: False)",
+        "HappyPhoton.Tests.ThemeSourceGuardTests.TypeBaselineRejectsAdditionsAndAllowsRemoval(addition: \"<Setter Property='Owner.FontSize'>\\n<Setter.Value>\"···, passes: False)",
+        "HappyPhoton.Tests.ThemeSourceGuardTests.TypeBaselineRejectsAdditionsAndAllowsRemoval(addition: \"<Setter Value='1' Property='TextBlock.LetterSpacin\"···, passes: False)",
+        "HappyPhoton.Tests.ThemeSourceGuardTests.TypeBaselineRejectsAdditionsAndAllowsRemoval(addition: \"<Setter Property='local:Owner.FontSize' Value='11'\"···, passes: False)",
+        "HappyPhoton.Tests.ThemeSourceGuardTests.TypeBaselineRejectsAdditionsAndAllowsRemoval(addition: \"<Setter Property='local:Owner.LetterSpacing'><Sett\"···, passes: False)",
+        "HappyPhoton.Tests.ThemeSourceGuardTests.TypeBaselineRejectsAdditionsAndAllowsRemoval(addition: \"<Setter Property='LetterSpacing'><Setter.Value>1</\"···, passes: False)",
+        "HappyPhoton.Tests.ThemeSourceGuardTests.TypeBaselineRejectsAdditionsAndAllowsRemoval(addition: \"<Setter Property='Owner.LetterSpacing' Value='.5'/\"···, passes: False)",
+        "HappyPhoton.Tests.ThemeSourceGuardTests.TypeBaselineRejectsAdditionsAndAllowsRemoval(addition: \"<Setter Property=\\\"TextBlock.FontSize\\\" Value=\\\"9\\\"···, passes: False)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.ThemeSourceGuardTests.TypeBaselineRejectsAdditionsAndAllowsRemoval(addition: \"<TextBlock FontSize=\\\"11\\\"/>\", passes: False)",
+        "HappyPhoton.Tests.ThemeSourceGuardTests.TypeBaselineRejectsAdditionsAndAllowsRemoval(addition: \"\", passes: True)",
+        "HappyPhoton.Tests.ThemeSourceGuardTests.TypeBaselineRejectsAdditionsAndAllowsRemoval(addition: \"<TextBlock FontSize=\\\"12\\\"/>\", passes: False)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.RenderNoiseReductionTests.Apply_ChangesOnlyLuminanceIncludingAtGamutBoundaries",
+      "reference": "Positive luminance amounts use the same luma-only filtering and gamut-preserving reconstruction. Keep the minimum active value 1, maximum 100 and one interior representative 50; remove the second interior amount 25. Every kept row still checks all pixels and alpha at both gamut boundaries.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.RenderNoiseReductionTests.Apply_ChangesOnlyLuminanceIncludingAtGamutBoundaries",
+      "removedCases": [
+        "HappyPhoton.Tests.RenderNoiseReductionTests.Apply_ChangesOnlyLuminanceIncludingAtGamutBoundaries(value: 25)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.RenderNoiseReductionTests.Apply_ChangesOnlyLuminanceIncludingAtGamutBoundaries(value: 1)",
+        "HappyPhoton.Tests.RenderNoiseReductionTests.Apply_ChangesOnlyLuminanceIncludingAtGamutBoundaries(value: 100)",
+        "HappyPhoton.Tests.RenderNoiseReductionTests.Apply_ChangesOnlyLuminanceIncludingAtGamutBoundaries(value: 50)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.SourceAvailabilityServiceTests.WindowsRecallAttributes_RequireHydration",
+      "reference": "SourceAvailabilityService.ClassifyWindowsAttributes has one guard, (attributes & HydrationAttributes) != 0, with no per-combination branches. Keep each of Offline, RecallOnOpen and RecallOnDataAccess alone to prove every bit, plus all three as the multi-bit representative. WindowsLocalAttributes_AreAvailable retains the opposite branch. Pairwise nonzero masks add no distinct guard or source-read path.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.SourceAvailabilityServiceTests.WindowsRecallAttributes_RequireHydration",
+      "removedCases": [
+        "HappyPhoton.Tests.SourceAvailabilityServiceTests.WindowsRecallAttributes_RequireHydration(attributes: 4198400)",
+        "HappyPhoton.Tests.SourceAvailabilityServiceTests.WindowsRecallAttributes_RequireHydration(attributes: 4456448)",
+        "HappyPhoton.Tests.SourceAvailabilityServiceTests.WindowsRecallAttributes_RequireHydration(attributes: 266240)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.SourceAvailabilityServiceTests.WindowsRecallAttributes_RequireHydration(attributes: 262144)",
+        "HappyPhoton.Tests.SourceAvailabilityServiceTests.WindowsRecallAttributes_RequireHydration(attributes: Offline)",
+        "HappyPhoton.Tests.SourceAvailabilityServiceTests.WindowsRecallAttributes_RequireHydration(attributes: 4460544)",
+        "HappyPhoton.Tests.SourceAvailabilityServiceTests.WindowsRecallAttributes_RequireHydration(attributes: 4194304)"
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference",
+      "reference": "WatermarkRenderer.Apply rotates only Left/Right and bypasses alignment for Center: keep all six aligned positions for each vertical edge, all three alignments for Top/Bottom without ignored rotation, and one centered row; every distinct layout branch still compares every Q16 pixel and alpha against the full-image oracle.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference",
+      "removedCases": [
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Bottom, alignment: End, rotate: True)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Bottom, alignment: Middle, rotate: True)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Bottom, alignment: Start, rotate: True)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Center, alignment: End, rotate: False)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Center, alignment: End, rotate: True)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Center, alignment: Middle, rotate: True)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Center, alignment: Start, rotate: False)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Center, alignment: Start, rotate: True)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Top, alignment: End, rotate: True)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Top, alignment: Middle, rotate: True)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Top, alignment: Start, rotate: True)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Bottom, alignment: End, rotate: False)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Bottom, alignment: Middle, rotate: False)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Bottom, alignment: Start, rotate: False)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Center, alignment: Middle, rotate: False)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Left, alignment: End, rotate: False)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Left, alignment: End, rotate: True)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Left, alignment: Middle, rotate: False)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Left, alignment: Middle, rotate: True)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Left, alignment: Start, rotate: False)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Left, alignment: Start, rotate: True)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Right, alignment: End, rotate: False)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Right, alignment: End, rotate: True)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Right, alignment: Middle, rotate: False)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Right, alignment: Middle, rotate: True)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Right, alignment: Start, rotate: False)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Right, alignment: Start, rotate: True)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Top, alignment: End, rotate: False)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Top, alignment: Middle, rotate: False)",
+        "HappyPhoton.Tests.WatermarkRendererTests.ChangedPixelsMatchUnclippedFullImageReference(edge: Top, alignment: Start, rotate: False)"
+      ]
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.ToneLutTests.Compose_UsesTheRequired65536EntryAnalyticShape",
+      "reference": "The existing identity-LUT test now retains the five exact length/analytic-endpoint/range assertions before checking every entry against the analytic evaluator and sRGB encoding, sharing the identical ToneLut.Compose(Identity()).Red setup.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.ToneLutTests.Compose_IdentityReproducesSrgbEncodeWithinOneEightBitLsb"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "duplicate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.WorkingSpaceColorConversionTests.ManagedKernel_ChangesNonTrivialSrgbSamples",
+      "reference": "\"The nontrivial 19x17 RGBA fixture is converted to linear Rec.2020 pixels and tagged RGB\": the survivor passes the identical fixture/sample formula through Compare, requiring every Q16 value to equal the independently converted Magick oracle (stronger than merely differing from input), and also checks RGB tagging and source-cache immutability.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": [
+        {
+          "project": "Tests/HappyPhoton.Tests.csproj",
+          "test": "HappyPhoton.Tests.WorkingSpaceColorConversionTests.ManagedKernel_MatchesMagickExactly"
+        }
+      ]
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.WaveformAccumulatorTests.Data_UsesCanonicalGridDimensions",
+      "reference": "The populated-grid test now retains all four dimension and allocated-array-length assertions on the WaveformData returned by accumulation before its unchanged exact cell and column-count assertions.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.WaveformAccumulatorTests.Accumulate_PlacesSamplesInExactColumnsAndLevels"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "low-value",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.WaveformAccumulatorTests.ProductionDimensionCannotOverflowUshortCells",
+      "reference": "Asserts only arithmetic over the compile-time constants BaseImage.InteractivePreviewMaxDimension, WaveformData.ColumnCount and ushort.MaxValue; it never accumulates samples or observes overflow behavior.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "reason": "constant"
+    },
+    {
+      "kind": "folded",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.WaveformPainterTests.Intensity_IsSquareRootNormalizedPerColumn",
+      "reference": "The existing paint test uses the identical column-7/level-42 fixture with one hit in 200 samples and now retains the direct intensity=0.5 assertion at precision 12 before its unchanged BGRA and opaque-premultiplication assertions; no saved PNG or showcase is removed.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": {
+        "project": "Tests/HappyPhoton.Tests.csproj",
+        "test": "HappyPhoton.Tests.WaveformPainterTests.Paint_WritesOpaquePremultipliedBgraWithThemeColors"
+      },
+      "result": "existing"
+    },
+    {
+      "kind": "low-value",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.WhiteBalanceModelTests.CanonCameraFacts_RecordAbiV2Reference",
+      "reference": "Checks only sums and ratios of literal camera-fact arrays declared inside the test; no production white-balance, decoder or ABI code is called.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "reason": "constant"
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.WhiteBalanceModelTests.MatchingTargetAndAnchor_IsExactIdentity",
+      "reference": "WhiteBalanceModel.CreateMatrix validates finiteness then returns exact identity when target and anchor match, before any locus/clamp branch. Keep the finite equal-anchor representative with nonzero tint (4250/-40); all four former rows take that same branch, with no numeric boundary crossed.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.WhiteBalanceModelTests.MatchingTargetAndAnchor_IsExactIdentity",
+      "removedCases": [
+        "HappyPhoton.Tests.WhiteBalanceModelTests.MatchingTargetAndAnchor_IsExactIdentity(kelvin: 10000, tint: 75)",
+        "HappyPhoton.Tests.WhiteBalanceModelTests.MatchingTargetAndAnchor_IsExactIdentity(kelvin: 2850, tint: 0)",
+        "HappyPhoton.Tests.WhiteBalanceModelTests.MatchingTargetAndAnchor_IsExactIdentity(kelvin: 6504, tint: 0)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.WhiteBalanceModelTests.MatchingTargetAndAnchor_IsExactIdentity(kelvin: 4250, tint: -40)"
+      ]
+    },
+    {
+      "kind": "duplicate",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.WorkspaceModeTests.WorkspaceMode_DrivesCompatibilityShims",
+      "reference": "\"Develop yields IsDevelopMode=true/IsBrowseMode=false and Browse yields the inverse\": the survivor asserts both pairs and WorkspaceMode itself; the IsDevelopMode setter directly assigns WorkspaceMode, so it exercises the same setter/getter path and additionally the compatibility setter.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "survivor": [
+        {
+          "project": "Tests/HappyPhoton.Tests.csproj",
+          "test": "HappyPhoton.Tests.WorkspaceModeTests.IsDevelopMode_SetterMapsToBrowseAndDevelop"
+        }
+      ]
+    },
+    {
+      "kind": "trimmed-cases",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.XmpCropDocumentTests.LightroomFixture_HasPinnedCropFact",
+      "reference": "Keep the camera-crop baseline as the matched-tuple representative and every empty/angle/rotation/warp/reset fixture. PlainFixture_ReadsOnlyLiveDescriptionCrop still opens the exact removed plain fixture and asserts Matched plus all four coordinates through the same ReadFacts path; no crop guard, merge path or foreign-XML preservation assertion is removed.",
+      "wp": "TESTSUITE-WP4",
+      "date": "2026-10-27",
+      "method": "HappyPhoton.Tests.XmpCropDocumentTests.LightroomFixture_HasPinnedCropFact",
+      "removedCases": [
+        "HappyPhoton.Tests.XmpCropDocumentTests.LightroomFixture_HasPinnedCropFact(fixture: \"lightroom-crop-plain.xmp\", expected: Matched)"
+      ],
+      "keptCases": [
+        "HappyPhoton.Tests.XmpCropDocumentTests.LightroomFixture_HasPinnedCropFact(fixture: \"lightroom-baseline-nocrop.xmp\", expected: Empty)",
+        "HappyPhoton.Tests.XmpCropDocumentTests.LightroomFixture_HasPinnedCropFact(fixture: \"lightroom-camera-crop-baseline.xmp\", expected: Matched)",
+        "HappyPhoton.Tests.XmpCropDocumentTests.LightroomFixture_HasPinnedCropFact(fixture: \"lightroom-camera-crop-reset.xmp\", expected: Empty)",
+        "HappyPhoton.Tests.XmpCropDocumentTests.LightroomFixture_HasPinnedCropFact(fixture: \"lightroom-cleared-reject.xmp\", expected: Empty)",
+        "HappyPhoton.Tests.XmpCropDocumentTests.LightroomFixture_HasPinnedCropFact(fixture: \"lightroom-crop-angled.xmp\", expected: Unsupported)",
+        "HappyPhoton.Tests.XmpCropDocumentTests.LightroomFixture_HasPinnedCropFact(fixture: \"lightroom-crop-rotated.xmp\", expected: Unsupported)",
+        "HappyPhoton.Tests.XmpCropDocumentTests.LightroomFixture_HasPinnedCropFact(fixture: \"lightroom-crop-warp.xmp\", expected: Unsupported)"
+      ]
     }
   ]
 }

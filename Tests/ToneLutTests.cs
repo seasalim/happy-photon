@@ -9,7 +9,7 @@ public class ToneLutTests
     private static readonly CurveData IdentityCurve = new();
 
     [Fact]
-    public void Compose_UsesTheRequired65536EntryAnalyticShape()
+    public void Compose_IdentityReproducesSrgbEncodeWithinOneEightBitLsb()
     {
         var lut = ToneLut.Compose(Identity()).Red;
 
@@ -18,12 +18,6 @@ public class ToneLutTests
         Assert.Equal(ToneLut.Evaluate(Identity(), 1), lut[^1]);
         Assert.InRange(Math.Abs(lut[0]), 0, 1e-15);
         Assert.InRange(Math.Abs(1 - lut[^1]), 0, 1e-15);
-    }
-
-    [Fact]
-    public void Compose_IdentityReproducesSrgbEncodeWithinOneEightBitLsb()
-    {
-        var lut = ToneLut.Compose(Identity()).Red;
 
         for (var i = 0; i < lut.Length; i++)
         {

@@ -85,7 +85,6 @@ public sealed class FusedPreviewAnalysisTests
     [InlineData("canon-eos-6d-iso-6400.cr2", false)]
     [InlineData("canon-eos-6d-iso-6400.cr2", true)]
     [InlineData("fujifilm-x30.raf", false)]
-    [InlineData("fujifilm-x30.raf", true)]
     [InlineData("generated-jpeg", false)]
     [InlineData("generated-jpeg", true)]
     public void Fixtures_MatchMagickAtPreviewSizeAndAcrossAllOptions(string fixture, bool alpha)

@@ -57,36 +57,6 @@ public sealed class CatalogSchemaTests : IDisposable
     }
 
     [Fact]
-    public async Task NewCatalog_HasOnlyCanonicalImageColumns()
-    {
-        using (var service = new CatalogService(_tempDirectory))
-        {
-            await service.InitializeAsync();
-        }
-        await using var connection = new SqliteConnection(
-            $"Data Source={Path.Combine(_tempDirectory, "catalog.db")};Pooling=False");
-        await connection.OpenAsync();
-        var columns = await ReadImageColumnsAsync(connection);
-
-        Assert.Equal(
-        [
-            "id",
-            "file_path",
-            "version",
-            "version_label",
-            "file_name",
-            "edit_settings",
-            "edit_version",
-            "flag_state",
-            "rating",
-            "color_label",
-            "history_position",
-            "updated_utc"
-        ],
-        columns);
-    }
-
-    [Fact]
     public async Task Initialize_AcceptsRequiredColumnsWithHarmlessExtras()
     {
         using (var service = new CatalogService(_tempDirectory))

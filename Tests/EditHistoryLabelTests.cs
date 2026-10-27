@@ -122,11 +122,7 @@ public sealed class EditHistoryLabelTests
     }
 
     [Theory]
-    [InlineData("Paste settings")]
     [InlineData("Preset: Classic Chrome")]
-    [InlineData("Reset")]
-    [InlineData("Profile: Adobe Standard")]
-    [InlineData("Auto white balance")]
     public void OperationLabelIsFinalizedAtCommit(string label)
     {
         Assert.Equal(label, EditHistoryLabel.Derive(

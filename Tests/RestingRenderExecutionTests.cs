@@ -75,33 +75,6 @@ public sealed class RestingRenderExecutionTests
     }
 
     [Fact]
-    public void RestingExecution_ReportsNoiseReductionBeforeCaptureSharpen()
-    {
-        using var baseImage = CreatePatternBase(isRaw: false);
-        var stages = new List<string>();
-        var request = CreateRequest(
-            baseImage,
-            new EditSettings
-            {
-                Detail = new DetailSettings
-                {
-                    LuminanceNr = 70,
-                    CaptureSharpen = 80
-                }
-            });
-
-        using var result = new RenderPipeline().RenderResting(
-            request,
-            RenderExecutionOptions.Resting(
-                CancellationToken.None,
-                stageStarted: stages.Add));
-
-        Assert.True(stages.IndexOf("noise-reduction") <
-            stages.IndexOf("capture-sharpen"));
-        Assert.DoesNotContain("detail", stages);
-    }
-
-    [Fact]
     public void StandardRender_AppliesHueSatProfileAndMatchesResting()
     {
         var table = DcpProfileReaderTests.CreateTable(6, 3, 2, 8, 1.1f, 0.92f);

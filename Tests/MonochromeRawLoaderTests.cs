@@ -72,33 +72,19 @@ public sealed class MonochromeRawLoaderTests
     }
 
     [Fact]
-    public void GrayImport_ReplicatesEveryQ16SampleExactly()
-    {
-        ushort[] gray = [0, 1, 0x1234, 0xFEDC, ushort.MaxValue, 42];
-
-        using var image = MonochromeRawImporter.ImportGray16(gray, 3, 2);
-        var rgb = image.GetPixelsUnsafe().ToShortArray(PixelMapping.RGB)!;
-
-        Assert.Equal(ColorSpace.RGB, image.ColorSpace);
-        for (var pixel = 0; pixel < gray.Length; pixel++)
-        {
-            Assert.Equal(gray[pixel], rgb[pixel * 3]);
-            Assert.Equal(gray[pixel], rgb[pixel * 3 + 1]);
-            Assert.Equal(gray[pixel], rgb[pixel * 3 + 2]);
-        }
-    }
-
-    [Fact]
     public void GrayImport_ReplicatesEveryQ16SampleAcrossMultipleBands()
     {
         const int width = 8;
         const int height = 70_000;
         var gray = new ushort[width * height];
+
         for (var pixel = 0; pixel < gray.Length; pixel++)
             gray[pixel] = (ushort)((pixel * 251 + pixel / width) & ushort.MaxValue);
 
         using var image = MonochromeRawImporter.ImportGray16(gray, width, height);
         var rgb = image.GetPixelsUnsafe().ToShortArray(PixelMapping.RGB)!;
+
+        Assert.Equal(ColorSpace.RGB, image.ColorSpace);
 
         for (var pixel = 0; pixel < gray.Length; pixel++)
         {

@@ -17,18 +17,6 @@ public sealed class CatalogServiceRatingTests : IDisposable
     }
 
     [Fact]
-    public async Task SaveAndLoadRating_RoundTrips()
-    {
-        var service = await CreateServiceAsync();
-        const string path = @"C:\photos\a.jpg";
-        var id = await service.GetOrCreateImageAsync(path);
-
-        await service.SaveRatingAsync(id, 4);
-
-        Assert.Equal(4, await LoadRatingAsync(service, path));
-    }
-
-    [Fact]
     public async Task LoadRating_DefaultsToZeroForFreshRow()
     {
         var service = await CreateServiceAsync();
@@ -36,15 +24,6 @@ public sealed class CatalogServiceRatingTests : IDisposable
         await service.GetOrCreateImageAsync(path);
 
         Assert.Equal(0, await LoadRatingAsync(service, path));
-    }
-
-    [Fact]
-    public async Task LoadRating_ReturnsZeroForMissingRow()
-    {
-        var service = await CreateServiceAsync();
-
-        var states = await service.LoadImageStatesAsync(new[] { @"C:\photos\missing.jpg" });
-        Assert.Empty(states);
     }
 
     [Fact]

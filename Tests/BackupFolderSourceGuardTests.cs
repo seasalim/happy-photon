@@ -22,7 +22,6 @@ public sealed class BackupFolderSourceGuardTests
 
     [Theory]
     [InlineData("Path.Combine(root, \"Backups\")")]
-    [InlineData("Directory.Exists(@\"C:\\catalog\\Backups\")")]
     [InlineData("File.OpenRead(\"/catalog/backups/one.zip\")")]
     public void GuardDetectsFolderReferences(string source) =>
         Assert.True(RefersToBackupFolder(source));

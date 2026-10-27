@@ -13,7 +13,6 @@ public sealed class RawSensorFrameTests
         "canon-eos-6d-iso-6400.cr2",
         "fujifilm-x30.raf",
         "nikon-d70-burst-1.nef",
-        "nikon-d70-burst-2.nef",
         "pentax-k-r.dng"
     };
 

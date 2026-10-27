@@ -1,4 +1,3 @@
-using Microsoft.Data.Sqlite;
 using Xunit;
 
 namespace HappyPhoton.Tests;
@@ -34,48 +33,5 @@ public sealed class BackupCrashLockDiagnosticsTests(ITestOutputHelper output)
         Assert.Contains("target_ms=2000", output.Output);
         Assert.Contains("sqlite_pool_state=observed", output.Output);
         Assert.Contains("connections=0 idle=0 checked_out=0", output.Output);
-    }
-
-    [Fact]
-    public void PoolSnapshot_DistinguishesIdleFromCheckedOutAndCleared()
-    {
-        using var directory = new TemporaryDirectory();
-        var database = Path.Combine(directory.Path, "catalog.db");
-        using var connection = new SqliteConnection(new SqliteConnectionStringBuilder
-            { DataSource = database, Pooling = true }.ToString());
-
-        try
-        {
-            connection.Open();
-            Assert.Contains("connections=1 idle=0 checked_out=1", BackupCrashSqliteDiagnostics.Snapshot(database));
-            connection.Close();
-            Assert.Contains("connections=1 idle=1 checked_out=0", BackupCrashSqliteDiagnostics.Snapshot(database));
-            SqliteConnection.ClearPool(connection);
-            Assert.Contains("connections=0 idle=0 checked_out=0", BackupCrashSqliteDiagnostics.Snapshot(database));
-        }
-        finally
-        {
-            SqliteConnection.ClearPool(connection);
-        }
-    }
-
-    [Fact]
-    public void ReleasedLock_ReportsImmediateSuccessWithoutInventingAnOwner()
-    {
-        Assert.SkipWhen(!OperatingSystem.IsWindows(), "Windows file-sharing diagnostic.");
-
-        using var directory = new TemporaryDirectory();
-        var path = Path.Combine(directory.Path, "released.db");
-        File.WriteAllText(path, "diagnostic control");
-        IOException violation;
-
-        using (var held = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None))
-        {
-            violation = Assert.Throws<IOException>(() => File.Delete(path));
-        }
-
-        var evidence = BackupCrashLockDiagnostics.Capture(violation, directory.Path, 0);
-        Assert.Contains("exclusive_probe=opened target_ms=0", evidence);
-        Assert.Contains("ownership=unproven", evidence);
     }
 }

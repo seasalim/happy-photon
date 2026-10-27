@@ -22,15 +22,6 @@ public sealed class ImageFileMetadataDisplayTests
     }
 
     [Fact]
-    public void ExposureDisplay_FocalLengthOnly()
-    {
-        var image = CreateImage();
-        image.FocalLength = 24;
-
-        Assert.Equal("24mm", image.ExposureDisplay);
-    }
-
-    [Fact]
     public void ExposureDisplay_NoFields_IsNull()
     {
         Assert.Null(CreateImage().ExposureDisplay);

@@ -71,14 +71,6 @@ public sealed partial class ThemeSourceGuardTests
     [Theory]
     [InlineData("<TextBlock FontSize=\"11\"/>", false)]
     [InlineData("<TextBlock FontSize=\"12\"/>", false)]
-    [InlineData("<Setter Property=\"TextBlock.FontSize\" Value=\"9\"/>", false)]
-    [InlineData("<Setter Value='1' Property='TextBlock.LetterSpacing'/>", false)]
-    [InlineData("<Setter Property='local:Owner.FontSize' Value='11'/>", false)]
-    [InlineData("<Setter Property='Owner.LetterSpacing' Value='.5'/>", false)]
-    [InlineData("<Setter Property='FontSize'><Setter.Value>9</Setter.Value></Setter>", false)]
-    [InlineData("<Setter Property='LetterSpacing'><Setter.Value>1</Setter.Value></Setter>", false)]
-    [InlineData("<Setter Property='Owner.FontSize'>\n<Setter.Value> 11 </Setter.Value>\n</Setter>", false)]
-    [InlineData("<Setter Property='local:Owner.LetterSpacing'><Setter.Value>.5</Setter.Value></Setter>", false)]
     [InlineData("", true)]
     public void TypeBaselineRejectsAdditionsAndAllowsRemoval(string addition, bool passes)
     {

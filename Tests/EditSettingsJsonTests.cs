@@ -74,7 +74,16 @@ public sealed class EditSettingsJsonTests
             "[{\"x\":0,\"y\":0},{\"x\":1,\"y\":1}]}," +
             "\"applied_preset_id\":null}";
 
-        Assert.Equal(expected, EditSettingsJson.Serialize(new EditSettings()));
+        var json = EditSettingsJson.Serialize(new EditSettings());
+        var result = EditSettingsJson.Deserialize(json, out _);
+
+        Assert.Equal(expected, json);
+        Assert.Null(result.CurveRed);
+        Assert.Null(result.CurveGreen);
+        Assert.Null(result.CurveBlue);
+        Assert.Equal(json, EditSettingsJson.Serialize(result));
+        Assert.DoesNotContain("rawProfile", json);
+        Assert.Null(result.RawProfile);
     }
 
     [Fact]
@@ -95,19 +104,6 @@ public sealed class EditSettingsJsonTests
         Assert.Null(result.CurveGreen);
         Assert.Null(result.CurveBlue);
         Assert.True(result.CurveRed!.LookupTable[128] > 140);
-    }
-
-    [Fact]
-    public void Deserialize_Current_DoesNotMaterializeOptionalChannels()
-    {
-        var json = EditSettingsJson.Serialize(new EditSettings());
-
-        var result = EditSettingsJson.Deserialize(json, out _);
-
-        Assert.Null(result.CurveRed);
-        Assert.Null(result.CurveGreen);
-        Assert.Null(result.CurveBlue);
-        Assert.Equal(json, EditSettingsJson.Serialize(result));
     }
 
     [Fact]
@@ -261,7 +257,6 @@ public sealed class EditSettingsJsonTests
 
     [Theory]
     [InlineData(0)]
-    [InlineData(1)]
     [InlineData(3)]
     [InlineData(99)]
     public void Serialize_RejectsUnsupportedVersions(int version)
@@ -301,7 +296,6 @@ public sealed class EditSettingsJsonTests
 
     [Theory]
     [InlineData("off")]
-    [InlineData("light")]
     [InlineData("full")]
     public void LegacyNoiseReduction_IsIgnoredWithoutMigration(string mode)
     {
@@ -402,16 +396,6 @@ public sealed class EditSettingsJsonTests
         Assert.Equal(settings.RawProfile.Location, result.RawProfile?.Location);
         Assert.Equal(settings.RawProfile.ContentHash, result.RawProfile?.ContentHash);
         Assert.True(result.HasEdits);
-    }
-
-    [Fact]
-    public void BuiltInProfile_OmitsFieldAndPreservesLegacyCanonicalJson()
-    {
-        var settings = new EditSettings();
-        var json = EditSettingsJson.Serialize(settings);
-
-        Assert.DoesNotContain("rawProfile", json);
-        Assert.Null(EditSettingsJson.Deserialize(json, out _).RawProfile);
     }
 
     [Fact]

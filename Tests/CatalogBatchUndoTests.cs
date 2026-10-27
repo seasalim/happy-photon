@@ -100,7 +100,6 @@ public sealed class CatalogBatchUndoTests
     [InlineData("edit", false)]
     [InlineData("undo", false)]
     [InlineData("undo-twice", false)]
-    [InlineData("jump", false)]
     [InlineData("clear", false)]
     [InlineData("reused-sequence", false)]
     [InlineData("reused-same-settings", false)]

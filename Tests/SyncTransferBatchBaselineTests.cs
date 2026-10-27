@@ -12,19 +12,10 @@ public sealed class SyncTransferBatchBaselineTests(ITestOutputHelper output)
     private const int TargetCount = 500;
 
     [Fact]
-    public async Task BatchWorkloadTransfersDocumentsAndSeedsHistory()
-    {
-        await RunAsync(measure: false);
-    }
-
-    [Fact]
     public Task G2_ConfirmToModelsUpdated_WhenEnabled() => MeasureAsync(sync: false);
 
     [Fact]
     public Task G2_SyncConfirmToModelsUpdated_WhenEnabled() => MeasureAsync(sync: true);
-
-    [Fact]
-    public Task SyncWorkloadTransfersDocumentsAndSeedsHistory() => RunAsync(measure: false, sync: true);
 
     [Fact]
     public Task G2_UndoToModelsUpdated_WhenEnabled() => MeasureAsync(sync: true, undo: true);

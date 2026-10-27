@@ -23,8 +23,6 @@ public sealed class ImageFileRoutingTests
 
     [Theory]
     [InlineData("image.heic")]
-    [InlineData("image.HEIC")]
-    [InlineData("image.heif")]
     [InlineData("image.HEIF")]
     public void HeicExtension_IsStandard(string filePath)
     {

@@ -73,7 +73,6 @@ public sealed partial class LocalsContractPrototypeTests
 
     [Theory]
     [InlineData(true)]
-    [InlineData(false)]
     public void ProductionColorOrderHalfWeightAndContinuity(bool raw)
     {
         using var basis = RenderPipelineTestSupport.CreateBase([12000, 26000, 8000], raw);

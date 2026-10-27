@@ -27,22 +27,6 @@ public sealed class WorkspaceModeTests : IDisposable
         Assert.True(vm.IsBrowseMode);
     }
 
-    [Theory]
-    [InlineData(WorkspaceMode.Browse, false, true)]
-    [InlineData(WorkspaceMode.Develop, true, false)]
-    public async Task WorkspaceMode_DrivesCompatibilityShims(
-        WorkspaceMode mode,
-        bool isDevelopMode,
-        bool isBrowseMode)
-    {
-        await using var vm = CreateViewModel();
-
-        vm.WorkspaceMode = mode;
-
-        Assert.Equal(isDevelopMode, vm.IsDevelopMode);
-        Assert.Equal(isBrowseMode, vm.IsBrowseMode);
-    }
-
     [Fact]
     public async Task ModeTransition_RunsCallbacksBeforeShimNotifications()
     {

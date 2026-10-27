@@ -23,7 +23,8 @@ public sealed class HealBoundaryTests
     }
 
     [Theory]
-    [InlineData(1)] [InlineData(2)] [InlineData(4)]
+    [InlineData(1)]
+    [InlineData(4)]
     public void NormalizedBilinearFieldHasSameBoundaryMeanAtEveryResolution(int scale)
     {
         var width = 128 * scale; var height = 96 * scale;

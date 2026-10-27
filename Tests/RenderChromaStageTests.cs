@@ -24,8 +24,6 @@ public sealed class RenderChromaStageTests
 
     [Theory]
     [InlineData(-100, -100)]
-    [InlineData(-50, 100)]
-    [InlineData(50, -100)]
     [InlineData(100, 100)]
     public void ActiveChroma_AchromaticCodesAndAlphaAreBitExact(
         int saturation,
@@ -96,8 +94,6 @@ public sealed class RenderChromaStageTests
 
     [Theory]
     [InlineData(false, 1)]
-    [InlineData(false, 2)]
-    [InlineData(true, 1)]
     [InlineData(true, 2)]
     public void ActiveRgba_OrdinaryAndRestingPreserveAlphaAndMatch(
         bool isRaw,

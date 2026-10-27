@@ -73,18 +73,6 @@ public sealed class WorkingSpaceColorConversionTests(ITestOutputHelper output)
     }
 
     [Fact]
-    public void ManagedKernel_ChangesNonTrivialSrgbSamples()
-    {
-        using var image = Create(19, 17, true, (i, c) => (ushort)((i * 197 + c * 11003) % 65536));
-        var before = ReadPixels(image);
-
-        WorkingSpaceColorConversion.ConvertSrgbToLinearRec2020(image);
-
-        Assert.Equal(ColorSpace.RGB, image.ColorSpace);
-        Assert.False(before.SequenceEqual(ReadPixels(image)));
-    }
-
-    [Fact]
     public void ManagedKernel_MatchesDiskCacheExactly_WhenEnabled()
     {
         Assert.SkipWhen(Environment.GetEnvironmentVariable("HAPPY_PHOTON_PERF") != "1", "Opt-in global cache limits.");

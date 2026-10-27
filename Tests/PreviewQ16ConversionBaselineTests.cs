@@ -40,7 +40,6 @@ public sealed class PreviewQ16ConversionBaselineTests(ITestOutputHelper output)
 
     [Theory]
     [InlineData("canon-eos-6d-iso-6400.cr2")]
-    [InlineData("fujifilm-x30.raf")]
     [InlineData("generated-jpeg")]
     public void FinalizedFixturePreview_MatchesMagickBgraAndFloorCounts(string fixture)
     {

@@ -10,31 +10,6 @@ public sealed class PasteTargetingTests : IDisposable
     private readonly CatalogVmFixture _fx = new("paste-targets");
 
     [Fact]
-    public async Task OnePhotoBrowseSelection_UsesPasteDialog()
-    {
-        using var catalog = await CreateCatalogAsync();
-        await using var vm = CreateViewModel(catalog);
-        var source = await CreateImageAsync(catalog, "source.jpg", exposure: 2);
-        var target = await CreateImageAsync(catalog, "target.jpg");
-        vm.Browse.SetImages([source, target]);
-        vm.SelectedImage = source;
-        vm.CopyEditSettingsCommand.Execute(null);
-        vm.Browse.ToggleSelection(target);
-        var confirmedCount = 0;
-        vm.ShowPasteSettingsAsync = dialog =>
-        {
-            confirmedCount = dialog.TargetCount;
-            return Task.FromResult(true);
-        };
-
-        await vm.PasteEditSettingsCommand.ExecuteAsync(null);
-
-        Assert.Equal(1, confirmedCount);
-        Assert.Equal(2, target.EditSettings.Exposure);
-        Assert.Equal("Applied to 1 photo", vm.TransientStatus);
-    }
-
-    [Fact]
     public async Task EmptyBrowseSelection_UsesPasteDialogForActivePhoto()
     {
         using var catalog = await CreateCatalogAsync();
@@ -126,6 +101,7 @@ public sealed class PasteTargetingTests : IDisposable
         Assert.Equal(1, confirmedCount);
         Assert.Equal(2, target.EditSettings.Exposure);
         Assert.Equal(0, cloud.EditSettings.Exposure);
+        Assert.Equal("Applied to 1 photo", vm.TransientStatus);
     }
 
     private Task<CatalogService> CreateCatalogAsync() =>

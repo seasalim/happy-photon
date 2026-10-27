@@ -12,7 +12,8 @@ public sealed partial class LocalsContractPrototypeTests
         .OfType<LocalBrushEvaluator>().ToArray();
 
     [Theory]
-    [InlineData(0)] [InlineData(1)] [InlineData(-1)]
+    [InlineData(0)]
+    [InlineData(-1)]
     public void UndersizedBrushBudgetTerminatesAtOneCell(int requestedBudget)
     {
         var document = AdversarialBrush("long-segments");

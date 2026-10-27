@@ -7,7 +7,7 @@ namespace HappyPhoton.Tests;
 
 public sealed class HorizonDetectionEdgeTests(ITestOutputHelper output)
 {
-    public static IEnumerable<object[]> Arms() => StraightenGateScenes.Tilts.SelectMany(
+    public static IEnumerable<object[]> Arms() => new double[] { -5, -3, -.2, 0, .2, 3, 5 }.SelectMany(
         tilt => new[] { false, true }.Select(vertical => new object[] { tilt, vertical }));
 
     [Theory]

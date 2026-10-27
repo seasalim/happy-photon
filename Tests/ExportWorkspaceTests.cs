@@ -88,18 +88,6 @@ public sealed class ExportWorkspaceTests : IDisposable
     }
 
     [Fact]
-    public async Task EnteringExport_InitializesAutomaticDestination()
-    {
-        await using var vm = CreateViewModel(new NullBaseLoader());
-        vm.CurrentFolderPath = _fx.Root;
-
-        vm.SwitchToExportCommand.Execute(null);
-
-        Assert.Equal(Path.Combine(_fx.Root, "export"),
-            vm.ExportSettings.OutputFolder);
-    }
-
-    [Fact]
     public async Task ThumbnailEntry_SwitchesBrowseToDevelop()
     {
         await using var vm = CreateViewModel(new NullBaseLoader());
@@ -111,17 +99,8 @@ public sealed class ExportWorkspaceTests : IDisposable
 
         Assert.True(vm.IsDevelopMode);
         Assert.Null(vm.ExportReport);
-    }
 
-    [Fact]
-    public async Task ThumbnailEntry_LeavesDevelopActive()
-    {
-        await using var vm = CreateViewModel(new NullBaseLoader());
-        var image = new ImageFile(_fx.Path("browse.jpg"));
-        vm.Browse.SetImages([image]);
-        vm.SelectedImage = image;
         vm.SwitchToDevelopCommand.Execute(null);
-
         vm.EnterDevelopModeCommand.Execute(null);
 
         Assert.True(vm.IsDevelopMode);

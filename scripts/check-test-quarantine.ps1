@@ -6,7 +6,7 @@ param(
     [string] $Configuration = "Release",
     [string] $ManifestDirectory,
     [hashtable] $MinimumTestCounts = @{
-        "Tests/HappyPhoton.Tests.csproj" = 1300
+        "Tests/HappyPhoton.Tests.csproj" = 2000
         "HeadlessTests/HappyPhoton.Headless.Tests.csproj" = 900
     },
     [string] $ResultsDirectory,

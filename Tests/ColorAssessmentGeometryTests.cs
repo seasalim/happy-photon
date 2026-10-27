@@ -48,7 +48,6 @@ public sealed class ColorAssessmentGeometryTests
     }
 
     [Theory]
-    [InlineData(800, 600)]
     [InlineData(1279.5, 719.5)]
     public void ModeOff_FitBoxIsBitIdenticalToViewport(
         double width,

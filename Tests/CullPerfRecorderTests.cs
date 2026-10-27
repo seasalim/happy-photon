@@ -34,15 +34,6 @@ public sealed class CullPerfRecorderTests
     }
 
     [Fact]
-    public void DisabledPathAllocatesNothing()
-    {
-        CullPerfRecorder? recorder = null;
-        var before = GC.GetAllocatedBytesForCurrentThread();
-        for (var i = 0; i < 100; i++) recorder?.Record("Receipt");
-        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
-    }
-
-    [Fact]
     public void OperationIdsAreExplicitAndIndependentOfKindNames()
     {
         var recorder = new CullPerfRecorder();

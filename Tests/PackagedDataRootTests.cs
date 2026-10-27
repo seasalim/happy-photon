@@ -6,18 +6,6 @@ namespace HappyPhoton.Tests;
 public sealed class PackagedDataRootTests
 {
     [Fact]
-    public void MacBundleResolvesDataBesideMacOSDirectory()
-    {
-        var contents = Path.Combine(Path.GetTempPath(),
-            $"happy-photon-bundle-{Guid.NewGuid():N}", "Contents");
-        var macOS = Path.Combine(contents, "MacOS");
-
-        var resolved = PackagedDataRoot.Resolve(macOS, isMacOS: true);
-
-        Assert.Equal(Path.Combine(contents, "Resources"), resolved);
-    }
-
-    [Fact]
     public void MacBundleWithTrailingSeparatorResolvesDataBesideMacOSDirectory()
     {
         var contents = Path.Combine(Path.GetTempPath(),

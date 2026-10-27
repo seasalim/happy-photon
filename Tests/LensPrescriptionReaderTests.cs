@@ -33,25 +33,14 @@ public sealed class LensPrescriptionReaderTests : IDisposable
         Assert.Equal(0, prescription.SourceWindow.Top, 10);
         Assert.Equal(0.9, prescription.OutputWindow.Right, 10);
         Assert.Equal(0.8, prescription.OutputWindow.Bottom, 10);
-    }
 
-    [Fact]
-    public void DngReaderRejectsTrimBeforeGeometryButAcceptsGeometryBeforeTrim()
-    {
-        var accepted = WriteDng(BuildOpcodeList(
-            Opcode(1, WarpPayload()),
-            Opcode(3, VignettePayload(0.25)),
-            Opcode(6, TrimPayload(20, 10, 80, 90))));
         var rejected = WriteDng(BuildOpcodeList(
             Opcode(6, TrimPayload(20, 10, 80, 90)),
             Opcode(1, WarpPayload())));
+        var rejectedResult = new DngLensPrescriptionReader().Read(rejected);
 
-        Assert.Equal(
-            LensPrescriptionStatus.Available,
-            new DngLensPrescriptionReader().Read(accepted).Status);
-        var result = new DngLensPrescriptionReader().Read(rejected);
-        Assert.Equal(LensPrescriptionStatus.Unsupported, result.Status);
-        Assert.Contains("TrimBounds", result.Message);
+        Assert.Equal(LensPrescriptionStatus.Unsupported, rejectedResult.Status);
+        Assert.Contains("TrimBounds", rejectedResult.Message);
     }
 
     [Fact]

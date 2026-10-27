@@ -102,7 +102,6 @@ public sealed class RenderNoiseReductionTests
 
     [Theory]
     [InlineData(1)]
-    [InlineData(25)]
     [InlineData(50)]
     [InlineData(100)]
     public void Apply_ChangesOnlyLuminanceIncludingAtGamutBoundaries(int value)

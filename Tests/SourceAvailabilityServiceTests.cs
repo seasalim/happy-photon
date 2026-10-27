@@ -18,9 +18,6 @@ public sealed class SourceAvailabilityServiceTests : IDisposable
     [InlineData(FileAttributes.Offline)]
     [InlineData(RecallOnOpen)]
     [InlineData(RecallOnDataAccess)]
-    [InlineData(FileAttributes.Offline | RecallOnOpen)]
-    [InlineData(FileAttributes.Offline | RecallOnDataAccess)]
-    [InlineData(RecallOnOpen | RecallOnDataAccess)]
     [InlineData(FileAttributes.Offline | RecallOnOpen | RecallOnDataAccess)]
     public void WindowsRecallAttributes_RequireHydration(
         FileAttributes attributes)

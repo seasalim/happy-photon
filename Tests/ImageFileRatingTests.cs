@@ -6,19 +6,13 @@ namespace HappyPhoton.Tests;
 public sealed class ImageFileRatingTests
 {
     [Fact]
-    public void RatingDefaultsToZeroUnrated()
+    public void RatingStarsShowsFilledStarsOnly()
     {
         var image = new ImageFile(@"C:\photos\a.jpg");
 
         Assert.Equal(0, image.Rating);
         Assert.False(image.HasRating);
         Assert.Equal(string.Empty, image.RatingStars);
-    }
-
-    [Fact]
-    public void RatingStarsShowsFilledStarsOnly()
-    {
-        var image = new ImageFile(@"C:\photos\a.jpg");
 
         image.Rating = 3;
         Assert.True(image.HasRating);

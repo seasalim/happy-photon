@@ -28,8 +28,6 @@ public sealed class RawBaseLoaderTests
 
     [Theory]
     [InlineData(HlReconstructionMode.Blend, true, 2)]
-    [InlineData(HlReconstructionMode.Blend, false, 2)]
-    [InlineData(HlReconstructionMode.Clip, true, 0)]
     [InlineData(HlReconstructionMode.Clip, false, 0)]
     public void ConfigureOutput_PinsDeterministicLinearParameters(
         HlReconstructionMode highlight,
@@ -375,12 +373,7 @@ public sealed class RawBaseLoaderTests
 
     [Theory]
     [InlineData(1)]
-    [InlineData(2)]
-    [InlineData(3)]
     [InlineData(4)]
-    [InlineData(5)]
-    [InlineData(6)]
-    [InlineData(7)]
     [InlineData(8)]
     public void Orientation_IsAlreadyAppliedWithoutDependingOnDimensions(int orientation)
     {

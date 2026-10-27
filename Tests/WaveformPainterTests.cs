@@ -8,18 +8,6 @@ namespace HappyPhoton.Tests;
 public sealed class WaveformPainterTests
 {
     [Fact]
-    public void Intensity_IsSquareRootNormalizedPerColumn()
-    {
-        var waveform = new WaveformData();
-        waveform.ColumnSampleCounts[7] = 200;
-        waveform.Luminance[42 * WaveformData.ColumnCount + 7] = 1;
-
-        var intensity = WaveformPainter.Intensity(waveform, 7, 42);
-
-        Assert.Equal(0.5, intensity, precision: 12);
-    }
-
-    [Fact]
     public void Paint_WritesOpaquePremultipliedBgraWithThemeColors()
     {
         var waveform = new WaveformData();
@@ -29,6 +17,9 @@ public sealed class WaveformPainterTests
             WaveformData.ColumnCount * WaveformData.LevelCount * 4];
         var backdrop = Color.FromRgb(10, 20, 30);
         var trace = Color.FromRgb(110, 120, 130);
+        var intensity = WaveformPainter.Intensity(waveform, 7, 42);
+
+        Assert.Equal(0.5, intensity, precision: 12);
 
         WaveformPainter.Paint(
             waveform,

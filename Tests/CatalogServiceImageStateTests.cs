@@ -54,17 +54,6 @@ public sealed class CatalogServiceImageStateTests : IDisposable
     }
 
     [Fact]
-    public async Task LoadImageStatesAsync_HandlesEmptyPathCollection()
-    {
-        using var service = new CatalogService(_tempDirectory);
-        await service.InitializeAsync();
-
-        var states = await service.LoadImageStatesAsync(Array.Empty<string>());
-
-        Assert.Empty(states);
-    }
-
-    [Fact]
     public async Task LoadOrCreateImageStatesAsync_CreatesMissingRecordsAndPreservesState()
     {
         using var service = new CatalogService(_tempDirectory);

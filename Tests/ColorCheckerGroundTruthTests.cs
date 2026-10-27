@@ -34,14 +34,6 @@ public sealed class ColorCheckerGroundTruthTests
             measurement.MeanDeltaE00 <= measurement.Manifest.Budget.MeanDeltaE00,
             $"ColorChecker mean ΔE00 {measurement.MeanDeltaE00:F4} exceeds " +
             $"the measured budget {measurement.Manifest.Budget.MeanDeltaE00:F1}.");
-    }
-
-    [Fact]
-    public void ColorChecker_EveryPatchDeltaE00_IsWithinMeasuredBudget()
-    {
-        var measurement = Measurement.Value;
-        ReportPatches(measurement);
-
         Assert.True(
             measurement.MaximumDeltaE00 <=
                 measurement.Manifest.Budget.MaximumPatchDeltaE00,

@@ -153,6 +153,8 @@ public sealed class EditSettingsTransferTests
         Assert.NotNull(target.Crop);
         Assert.Equal(0.25, target.Crop!.Left);
         Assert.NotNull(target.RawProfile);
+        Assert.True(target.Curve.LookupTable[128] > 140);
+        Assert.True(target.CurveRed!.LookupTable[128] > 140);
     }
 
     [Fact]
@@ -256,17 +258,6 @@ public sealed class EditSettingsTransferTests
         source.CurveRed!.MovePoint(1, 0.5, 0.2);
         Assert.Equal(0.7, clone.CurveRed!.Points[1].Y);
         Assert.False(new EditSettings { CurveRed = new CurveData() }.HasEdits);
-    }
-
-    [Fact]
-    public void ApplySubset_AppliedCurveHasRebuiltLookupTable()
-    {
-        var target = new EditSettings();
-
-        EditSettingsTransfer.ApplyGroups(EditSettingsTransfer.CopyGroups(CreateFullSettings()), target);
-
-        Assert.True(target.Curve.LookupTable[128] > 140);
-        Assert.True(target.CurveRed!.LookupTable[128] > 140);
     }
 
     [Fact]

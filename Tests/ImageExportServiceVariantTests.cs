@@ -51,6 +51,8 @@ public sealed class ImageExportServiceVariantTests : IDisposable
 
         AssertImage(Path.Combine(outputFolder, "source.png"), 400, 200);
         Assert.False(Directory.Exists(Path.Combine(outputFolder, "hi-res")));
+        using var exported = new MagickImage(Path.Combine(outputFolder, "source.png"));
+        Assert.Equal(8u, exported.Depth);
     }
 
     [Fact]
@@ -76,26 +78,6 @@ public sealed class ImageExportServiceVariantTests : IDisposable
         Assert.Equal(1, count);
         AssertImage(Path.Combine(outputFolder, "large", "source.png"), 300, 150);
         AssertImage(Path.Combine(outputFolder, "small", "source.png"), 100, 50);
-    }
-
-    [Fact]
-    public async Task ExportBatch_PngOutputIsEightBit()
-    {
-        var sourcePath = WriteSourceImage();
-        var outputFolder = Path.Combine(_tempDirectory.Path, "png-depth");
-        var settings = new ExportSettings
-        {
-            OutputFolder = outputFolder,
-            Format = ExportFormat.Png
-        };
-
-        await CreateService().ExportBatchAsync(
-            [new ImageFile(sourcePath)],
-            settings);
-
-        using var exported = new MagickImage(
-            Path.Combine(outputFolder, "source.png"));
-        Assert.Equal(8u, exported.Depth);
     }
 
     [Fact]
@@ -313,10 +295,7 @@ public sealed class ImageExportServiceVariantTests : IDisposable
     [InlineData("display-p3-reference.jpg", ExportFormat.Png, ".png")]
     [InlineData("display-p3-reference.jpg", ExportFormat.Webp, ".webp")]
     [InlineData("display-p3-reference.jpg", ExportFormat.Tiff, ".tif")]
-    [InlineData("adobe-rgb-reference.jpg", ExportFormat.Jpeg, ".jpg")]
     [InlineData("adobe-rgb-reference.jpg", ExportFormat.Png, ".png")]
-    [InlineData("adobe-rgb-reference.jpg", ExportFormat.Webp, ".webp")]
-    [InlineData("adobe-rgb-reference.jpg", ExportFormat.Tiff, ".tif")]
     public async Task ExportBatch_TaggedStandardSourceEmbedsSrgbProfile(
         string assetName,
         ExportFormat format,

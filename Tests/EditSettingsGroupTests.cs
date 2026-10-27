@@ -20,7 +20,6 @@ public sealed class EditSettingsGroupTests
     }
 
     [Theory]
-    [InlineData("futureField")]
     [InlineData("lens.futureField")]
     public void CoverageRejectsAnUnassignedField(string field)
     {

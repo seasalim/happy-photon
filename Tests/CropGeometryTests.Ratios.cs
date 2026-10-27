@@ -44,7 +44,6 @@ public partial class CropGeometryTests
     [Theory]
     [InlineData(6000, 4000, 0)]
     [InlineData(6000, 4000, 90)]
-    [InlineData(4000, 3000, 0)]
     [InlineData(4000, 3000, 270)]
     public void PresetConversionUsesCorrectedFrame(int width, int height, int rotation)
     {
@@ -62,7 +61,6 @@ public partial class CropGeometryTests
     [Theory]
     [InlineData(4d / 3, 4d / 3, "Original")]
     [InlineData(3d / 4, 3d / 4, "Original")]
-    [InlineData(1.5, 1.5, "Original")]
     [InlineData(1.5, 2d / 3, "Original")]
     [InlineData(4d / 3, 1, "1:1")]
     [InlineData(4d / 3, 1.506, "3:2")]

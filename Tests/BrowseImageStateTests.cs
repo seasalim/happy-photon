@@ -23,17 +23,6 @@ public sealed class BrowseImageStateTests
     }
 
     [Fact]
-    public void MinimumRatingZero_ShowsAll()
-    {
-        var state = CreateState(
-            CreateImage("a.jpg", rating: 0),
-            CreateImage("b.jpg", rating: 3),
-            CreateImage("c.jpg", rating: 5));
-
-        Assert.Equal(3, state.VisibleImages.Count);
-    }
-
-    [Fact]
     public void MinimumRating_ShowsRatingAndUp()
     {
         var state = CreateState(
@@ -41,6 +30,8 @@ public sealed class BrowseImageStateTests
             CreateImage("b.jpg", rating: 2),
             CreateImage("c.jpg", rating: 3),
             CreateImage("d.jpg", rating: 5));
+
+        Assert.Equal(4, state.VisibleImages.Count);
 
         state.MinimumRating = 3;
 
@@ -158,17 +149,9 @@ public sealed class BrowseImageStateTests
             [nameof(state.FileTypeFilter), nameof(state.FlagFilter),
              nameof(state.MinimumRating), nameof(state.ColorLabelFilter)],
             propertyChanges);
-    }
 
-    [Fact]
-    public void ClearFilters_WhenAlreadyClear_DoesNotNotify()
-    {
-        var state = CreateState(CreateImage("first.jpg"));
-        var filterChanges = 0;
-        var stateChanges = 0;
-        state.FilterChanged += (_, _) => filterChanges++;
-        state.StateChanged += (_, _) => stateChanges++;
-
+        filterChanges = 0;
+        stateChanges = 0;
         state.ClearFilters();
 
         Assert.Equal(0, filterChanges);

@@ -181,6 +181,11 @@ public sealed partial class RawProfileTransitionTests : IDisposable
         var option = Option("history.dcp", 'b');
         await vm.SelectRawProfileAsync(option);
 
+        Assert.Equal(option.Selection?.ContentHash,
+            image.EditSettings.RawProfile?.ContentHash);
+        Assert.True(image.HasEdits);
+        Assert.True(vm.CanReset);
+
         var resetGate = DiscoveryGate(vm);
         var resetDiscovery = vm.OpenRawProfilePickerCommand.ExecuteAsync(null);
         await resetGate.Started.Task.WaitAsync(TestWaits.Condition);

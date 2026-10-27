@@ -29,7 +29,6 @@ public sealed class DcpAdobeProfileProbeTests
 
     [Theory]
     [InlineData(false)]
-    [InlineData(true)]
     public async Task ProbeFindsMalformedAndPlaceholderCandidates(bool placeholder)
     {
         using var directory = new TemporaryDirectory();

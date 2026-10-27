@@ -10,7 +10,6 @@ public sealed class PreviewExposureEstimatorTests
 {
     [Theory]
     [InlineData(-1.25)]
-    [InlineData(0.75)]
     [InlineData(1.25)]
     public void Solve_RecoversKnownExposure(double expectedEv)
     {
@@ -56,7 +55,6 @@ public sealed class PreviewExposureEstimatorTests
 
     [Theory]
     [InlineData(-2.0)]
-    [InlineData(-0.75)]
     [InlineData(0.625)]
     [InlineData(2.0)]
     public void DefaultResponse_UsesPostGainMiddleGreyAnchor(double sourceEv)

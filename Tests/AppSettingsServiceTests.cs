@@ -147,10 +147,12 @@ public sealed class AppSettingsServiceTests : IDisposable
         using var catalog = new CatalogService(_catalogPath);
         await catalog.InitializeAsync();
         await catalog.SetAppSettingAsync("BrowseThumbnailSize", "large");
+        await catalog.SetAppSettingAsync("AppTheme", "midgray");
 
         var loaded = await new AppSettingsService(catalog).LoadAsync();
 
         Assert.Equal(BrowseThumbnailSize.Large, loaded.BrowseThumbnailSize);
+        Assert.Equal(AppTheme.MidGray, loaded.AppTheme);
     }
 
     [Theory]
@@ -167,18 +169,6 @@ public sealed class AppSettingsServiceTests : IDisposable
         var loaded = await new AppSettingsService(catalog).LoadAsync();
 
         Assert.Equal(AppTheme.Dark, loaded.AppTheme);
-    }
-
-    [Fact]
-    public async Task LoadAsync_ParsesThemeCaseInsensitively()
-    {
-        using var catalog = new CatalogService(_catalogPath);
-        await catalog.InitializeAsync();
-        await catalog.SetAppSettingAsync("AppTheme", "midgray");
-
-        var loaded = await new AppSettingsService(catalog).LoadAsync();
-
-        Assert.Equal(AppTheme.MidGray, loaded.AppTheme);
     }
 
     [Theory]

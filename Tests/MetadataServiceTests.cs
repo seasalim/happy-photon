@@ -9,34 +9,6 @@ namespace HappyPhoton.Tests;
 public sealed class MetadataServiceTests
 {
     [Fact]
-    public void ExtractMetadata_ReadsDimensionsWithoutMutatingImageFile()
-    {
-        var directory = Path.Combine(
-            Path.GetTempPath(), $"HappyPhotonMetadata_{Guid.NewGuid():N}");
-        Directory.CreateDirectory(directory);
-        var path = Path.Combine(directory, "image.jpg");
-        try
-        {
-            TestImages.WriteJpeg(path, MagickColors.Red, 320, 240);
-            var image = new ImageFile(path);
-
-            var metadata = MetadataService.ExtractMetadata(
-                image,
-                new LibRawProcessingService());
-
-            Assert.Equal(320, metadata.PixelWidth);
-            Assert.Equal(240, metadata.PixelHeight);
-            Assert.True(metadata.FileSize > 0);
-            Assert.False(image.MetadataLoaded);
-            Assert.Equal(0, image.PixelWidth);
-        }
-        finally
-        {
-            Directory.Delete(directory, recursive: true);
-        }
-    }
-
-    [Fact]
     public void ExtractMetadata_ReadsExtendedExifAndFileModifiedDate()
     {
         var directory = Path.Combine(
@@ -44,6 +16,7 @@ public sealed class MetadataServiceTests
         Directory.CreateDirectory(directory);
         var path = Path.Combine(directory, "image.jpg");
         var modified = new DateTime(2026, 8, 12, 9, 30, 0);
+
         try
         {
             using (var source = new MagickImage(MagickColors.Blue, 600, 400))
@@ -71,12 +44,19 @@ public sealed class MetadataServiceTests
                 source.SetProfile(profile);
                 source.Write(path, MagickFormat.Jpeg);
             }
+
             File.SetLastWriteTime(path, modified);
+            var image = new ImageFile(path);
 
             var metadata = MetadataService.ExtractMetadata(
-                new ImageFile(path),
+                image,
                 new LibRawProcessingService());
 
+            Assert.Equal(600, metadata.PixelWidth);
+            Assert.Equal(400, metadata.PixelHeight);
+            Assert.True(metadata.FileSize > 0);
+            Assert.False(image.MetadataLoaded);
+            Assert.Equal(0, image.PixelWidth);
             Assert.Equal(modified, metadata.FileModifiedDate);
             Assert.Equal(47.608333, metadata.GpsLatitude!.Value, 6);
             Assert.Equal(-122.320833, metadata.GpsLongitude!.Value, 6);
@@ -112,7 +92,6 @@ public sealed class MetadataServiceTests
 
     [Theory]
     [InlineData(0.4, "0.4")]
-    [InlineData(0.8, "0.8")]
     [InlineData(0.5, "1/2")]
     [InlineData(0.0031250001, "1/320")]
     [InlineData(1.0 / 60, "1/60")]

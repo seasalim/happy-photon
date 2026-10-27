@@ -7,17 +7,6 @@ namespace HappyPhoton.Tests;
 public sealed class WaveformAccumulatorTests
 {
     [Fact]
-    public void Data_UsesCanonicalGridDimensions()
-    {
-        var data = new WaveformData();
-
-        Assert.Equal(256, WaveformData.ColumnCount);
-        Assert.Equal(128, WaveformData.LevelCount);
-        Assert.Equal(256 * 128, data.Luminance.Length);
-        Assert.Equal(256, data.ColumnSampleCounts.Length);
-    }
-
-    [Fact]
     public void Accumulate_PlacesSamplesInExactColumnsAndLevels()
     {
         var rgb = new ushort[WaveformData.ColumnCount * 3];
@@ -31,6 +20,10 @@ public sealed class WaveformAccumulatorTests
             WaveformData.ColumnCount,
             1);
 
+        Assert.Equal(256, WaveformData.ColumnCount);
+        Assert.Equal(128, WaveformData.LevelCount);
+        Assert.Equal(256 * 128, data.Luminance.Length);
+        Assert.Equal(256, data.ColumnSampleCounts.Length);
         Assert.Equal((ushort)1, Cell(data, 0, 0));
         Assert.Equal((ushort)1, Cell(data, 1, 1));
         Assert.Equal((ushort)1, Cell(data, 127, 64));
@@ -93,20 +86,6 @@ public sealed class WaveformAccumulatorTests
             Assert.Equal((ushort)2, data.ColumnSampleCounts[column]);
             Assert.Equal((ushort)2, Cell(data, column, expectedLevel));
         }
-    }
-
-    [Fact]
-    public void ProductionDimensionCannotOverflowUshortCells()
-    {
-        var sourceColumnsPerCell =
-            (BaseImage.InteractivePreviewMaxDimension +
-             WaveformData.ColumnCount - 1) /
-            WaveformData.ColumnCount;
-        var maximumCellCount = sourceColumnsPerCell *
-            BaseImage.InteractivePreviewMaxDimension;
-
-        Assert.Equal(11200, maximumCellCount);
-        Assert.True(maximumCellCount <= ushort.MaxValue);
     }
 
     private static ushort Cell(WaveformData data, int column, int level) =>

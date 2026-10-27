@@ -84,9 +84,7 @@ public sealed class HorizonDetectionRobustnessTests(ITestOutputHelper output)
 
     [Theory]
     [InlineData(-3)]
-    [InlineData(-.5)]
     [InlineData(0)]
-    [InlineData(.5)]
     [InlineData(3)]
     public void DiffuseMinorityLowersConfidenceWithoutVeto(double roll)
     {

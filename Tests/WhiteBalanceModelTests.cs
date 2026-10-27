@@ -7,10 +7,7 @@ namespace HappyPhoton.Tests;
 public sealed class WhiteBalanceModelTests
 {
     [Theory]
-    [InlineData(2850, 0)]
     [InlineData(4250, -40)]
-    [InlineData(6504, 0)]
-    [InlineData(10000, 75)]
     public void MatchingTargetAndAnchor_IsExactIdentity(
         double kelvin,
         double tint)
@@ -218,31 +215,6 @@ public sealed class WhiteBalanceModelTests
                 [2, 1, 1.5],
                 ChromaticAdaptation.Identity(),
                 null));
-    }
-
-    [Fact]
-    public void CanonCameraFacts_RecordAbiV2Reference()
-    {
-        // Reference data for the ABI-v2 fix, not a check of production code:
-        // real Canon facts showing rgb_cam's rows sum to 1 (so it consumes
-        // daylight-balanced input) and cam_mul is not uniform (so 1 / cam_mul
-        // could never have been the right input). RawBaseLoaderTests asserts
-        // the same convention against actually decoded fixtures.
-        double[] camMul = [2170, 1018, 1755];
-        double[,] camToSrgb =
-        {
-            { 1.7229120731, -0.8995228410, 0.1766107678 },
-            { 0.0193507429, 1.3393489122, -0.3586996551 },
-            { 0.0241905022, -0.3149886429, 1.2907981407 }
-        };
-
-        Assert.NotEqual(camMul[0] / camMul[1], camMul[2] / camMul[1]);
-        for (var row = 0; row < 3; row++)
-        {
-            var sum = Enumerable.Range(0, 3)
-                .Sum(column => camToSrgb[row, column]);
-            Assert.InRange(sum, 1 - 1e-9, 1 + 1e-9);
-        }
     }
 
     [Fact]

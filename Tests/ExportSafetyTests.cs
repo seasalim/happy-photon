@@ -15,14 +15,6 @@ public sealed class ExportSafetyTests
         Path.Combine(ShootPath, fileName);
 
     [Fact]
-    public void SelfCollision_Detected()
-    {
-        var originals = Set(PhotoPath("IMG_1.jpg"));
-
-        Assert.True(ExportSafety.IsOriginalPath(PhotoPath("IMG_1.jpg"), originals));
-    }
-
-    [Fact]
     public void SiblingCollision_RawExportHitsJpegOriginal()
     {
         // Exporting IMG_1.CR2 as JPEG into the source folder targets IMG_1.jpg —

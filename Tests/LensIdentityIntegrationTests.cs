@@ -9,7 +9,6 @@ public sealed class LensIdentityIntegrationTests
 {
     [Theory]
     [InlineData("nikon-d70-burst-1.nef", "Nikon AF Nikkor 50mm f/1.8D")]
-    [InlineData("nikon-d70-burst-2.nef", "Nikon AF Nikkor 50mm f/1.8D")]
     [InlineData("nikon-d300-colorchecker.nef", "Nikon AF-S Nikkor 70-200mm f/2.8G ED VR II 162")]
     public void CommittedNikonFixturesReachLensfunThroughMakerNoteIdentity(
         string fixture,

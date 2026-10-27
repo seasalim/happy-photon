@@ -12,6 +12,8 @@ public sealed class WatermarkRendererTests
         from edge in Enum.GetValues<WatermarkEdge>()
         from alignment in Enum.GetValues<WatermarkAlignment>()
         from rotate in new[] { false, true }
+        where edge is WatermarkEdge.Left or WatermarkEdge.Right ||
+            !rotate && (edge != WatermarkEdge.Center || alignment == WatermarkAlignment.Middle)
         select new object[] { edge, alignment, rotate };
 
     [Theory]

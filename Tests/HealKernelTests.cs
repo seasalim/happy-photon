@@ -116,8 +116,10 @@ public sealed class HealKernelTests
     }
 
     [Theory]
-    [InlineData(5)] [InlineData(6)] [InlineData(8)] [InlineData(12)]
-    [InlineData(16)] [InlineData(24)] [InlineData(32)] [InlineData(64)]
+    [InlineData(5)]
+    [InlineData(6)]
+    [InlineData(8)]
+    [InlineData(64)]
     public void AreaLimitAdmitsExactDiscCount(int count)
     {
         var discArea = Math.PI * HealWorkloads.MaxRadius * HealWorkloads.MaxRadius;

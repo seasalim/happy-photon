@@ -1,6 +1,6 @@
 # Run under the workflow measure lease; baseline-role wrappers already hold it.
 param(
-    [ValidateSet('G1','G1Blurred','G2','G3','G4','G5','G5Detector','Dump','Owner','OwnerDump')][string]$Gate = 'G5',
+    [ValidateSet('G1','G2','G3','G4','G5','G5Detector','Dump','Owner','OwnerDump')][string]$Gate = 'G5',
     [ValidateSet('canon-eos-6d-iso-6400.cr2','iphone-14-pro-iso-1000.heic','nikon-d300-colorchecker.nef','skyline','fbm')]
     [string]$Fixture = 'canon-eos-6d-iso-6400.cr2',
     [switch]$HorizontalRelabelOnly,
@@ -12,7 +12,6 @@ $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
 $method = switch ($Gate) {
     'G1' { 'StraightenGateSyntheticTests.G1Before' }
-    'G1Blurred' { 'StraightenGateSyntheticTests.G1BlurredBefore' }
     'G2' { 'StraightenGateSyntheticTests.G2Before' }
     'G3' { 'StraightenGateLabelTests.G3Before' }
     'G4' { 'StraightenGatePresenceTests.G4Before' }

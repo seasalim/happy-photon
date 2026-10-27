@@ -6,21 +6,16 @@ namespace HappyPhoton.Tests;
 public sealed class ImageFileBurstTests
 {
     [Fact]
-    public void DefaultsToNoBurst()
+    public void ChipTextAndColorIndex()
     {
         var image = new ImageFile(@"C:\photos\a.jpg");
 
         Assert.False(image.HasBurstGroup);
         Assert.Equal(0, image.BurstSize);
-    }
 
-    [Fact]
-    public void ChipTextAndColorIndex()
-    {
-        var image = new ImageFile(@"C:\photos\a.jpg")
-        {
-            BurstGroupOrdinal = 8, BurstIndex = 2, BurstSize = 5
-        };
+        image.BurstGroupOrdinal = 8;
+        image.BurstIndex = 2;
+        image.BurstSize = 5;
 
         Assert.True(image.HasBurstGroup);
         Assert.Equal("2/5", image.BurstChipText);

@@ -11,7 +11,6 @@ public sealed class ImageStatsServiceTests : IDisposable
     [Theory]
     [InlineData("source.dng")]
     [InlineData("source.NEF")]
-    [InlineData("source.raf")]
     public void RawSourcePath_IsRejectedBeforeMagickDecode(string fileName)
     {
         var path = Path.Combine(_tempDirectory.Path, fileName);

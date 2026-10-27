@@ -139,8 +139,6 @@ public sealed partial class LensfunPrescriptionReaderTests
 
     [Theory]
     [InlineData("de")]
-    [InlineData("ru")]
-    [InlineData("fr")]
     public void NonEnglishCameraAndLensAliasesDoNotMatch(string language)
     {
         WriteDatabase(

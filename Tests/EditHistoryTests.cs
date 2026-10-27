@@ -38,6 +38,8 @@ public sealed class EditHistoryTests
 
         Assert.Equal([0d, 1d, 4d],
             history.Entries.Select(entry => entry.Settings.Exposure));
+        Assert.Equal(3, history.Entries.Count);
+        Assert.Single(history.Entries, entry => entry.Label == "Original");
         Assert.Equal(2, history.Position);
         Assert.False(history.CanRedo);
     }
@@ -59,18 +61,6 @@ public sealed class EditHistoryTests
         Assert.Equal(canUndo, history.CanUndo);
         Assert.False(history.CanRedo);
         Assert.True(history.Entries[position].IsCurrent);
-    }
-
-    [Fact]
-    public void EditAfterMiddleJumpDoesNotInsertOriginal()
-    {
-        var history = Loaded(0, 1, 2);
-        history.PublishPosition(1);
-
-        history.Publish(history.PrepareAppend(S(1), S(3))!);
-
-        Assert.Equal(3, history.Entries.Count);
-        Assert.Single(history.Entries, entry => entry.Label == "Original");
     }
 
     [Fact]

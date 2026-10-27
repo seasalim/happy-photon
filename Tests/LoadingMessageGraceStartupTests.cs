@@ -45,9 +45,6 @@ public sealed class LoadingMessageGraceStartupTests
     [InlineData(StartupGateState.Error, false)]
     [InlineData(StartupGateState.PointerRecovery, false)]
     [InlineData(StartupGateState.Ready, true)]
-    [InlineData(StartupGateState.Welcome, true)]
-    [InlineData(StartupGateState.Error, true)]
-    [InlineData(StartupGateState.PointerRecovery, true)]
     public async Task LeavingInitializingCancelsProgress(StartupGateState state, bool beforeFirstFrame)
     {
         using var fixture = new CatalogVmFixture("startup-grace-cancel");

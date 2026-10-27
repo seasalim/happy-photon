@@ -214,11 +214,12 @@ public sealed class PresetServiceTests : IDisposable
     [Fact]
     public async Task Mutations_PublishSortedStableReadOnlySnapshots()
     {
-        var service = await CreateServiceAsync();
+        var service = new PresetService(_tempDirectory);
         var observedNames = new List<string[]>();
         service.PresetsChanged += (_, _) => observedNames.Add(
             service.UserPresets.Select(preset => preset.Name).ToArray());
 
+        await service.InitializeAsync();
         var zulu = await service.SaveUserPresetAsync("Zulu", new EditSettings());
         var retainedAfterFirstSave = service.UserPresets;
         var alpha = await service.SaveUserPresetAsync("alpha", new EditSettings());
@@ -242,6 +243,7 @@ public sealed class PresetServiceTests : IDisposable
             retainedBeforeDelete.Select(preset => preset.Name));
         Assert.Collection(
             observedNames,
+            names => Assert.Empty(names),
             names => Assert.Equal(new[] { "Zulu" }, names),
             names => Assert.Equal(new[] { "alpha", "Zulu" }, names),
             names => Assert.Equal(new[] { "Aardvark", "alpha" }, names),
@@ -396,21 +398,6 @@ public sealed class PresetServiceTests : IDisposable
 
         Assert.Equal(preset.Id, service.FindUserPresetByName("my WARM look")?.Id);
         Assert.Null(service.FindUserPresetByName("Soft"));
-    }
-
-    [Fact]
-    public async Task PresetsChanged_FiresAfterInitializeSaveRenameAndDelete()
-    {
-        var service = new PresetService(_tempDirectory);
-        var changeCount = 0;
-        service.PresetsChanged += (_, _) => changeCount++;
-
-        await service.InitializeAsync();
-        var preset = await service.SaveUserPresetAsync("One", CreateSettings());
-        await service.RenameUserPresetAsync(preset.Id, "Two");
-        await service.DeleteUserPresetAsync(preset.Id);
-
-        Assert.Equal(4, changeCount);
     }
 
     public void Dispose()

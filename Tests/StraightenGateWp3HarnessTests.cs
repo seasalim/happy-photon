@@ -6,18 +6,6 @@ namespace HappyPhoton.Tests;
 public sealed class StraightenGateWp3HarnessTests
 {
     [Fact]
-    public void SharedLinePredicateKeepsFrozenBaselineConstants()
-    {
-        Assert.Equal(200, HorizonDetection.MinimumBaseSupport);
-        Assert.Equal(450, HorizonDetection.AnswerFloor);
-        Assert.Equal(.2, HorizonDetection.MinimumRelativeEvidence);
-        Assert.Equal(.2, HorizonDetection.MaximumInlierSpread);
-        Assert.Equal(.9, HorizonDetection.MaximumCompetitorRatio);
-        Assert.Equal(.25, HorizonDetection.AgreementTolerance);
-        Assert.Equal(.3, HorizonDetection.RivalGap);
-    }
-
-    [Fact]
     public void SoftRivalBoundaryIsStrictAndIndependentOfMergedConfidence()
     {
         var family = new HorizonDetection.FamilyDiagnostics(2, 1, 1, 2, 1000, 500, 1, .2, 450);

@@ -7,9 +7,6 @@ public sealed class OutputConfigurationTests
     [Theory]
     [InlineData(LibRawHighlightMode.Blend, LibRawFbddMode.Off, true, 2, 0)]
     [InlineData(LibRawHighlightMode.Blend, LibRawFbddMode.Light, false, 2, 1)]
-    [InlineData(LibRawHighlightMode.Blend, LibRawFbddMode.Full, true, 2, 2)]
-    [InlineData(LibRawHighlightMode.Clip, LibRawFbddMode.Off, false, 0, 0)]
-    [InlineData(LibRawHighlightMode.Clip, LibRawFbddMode.Light, true, 0, 1)]
     [InlineData(LibRawHighlightMode.Clip, LibRawFbddMode.Full, false, 0, 2)]
     public void Linear_PinsDeterministicParameters(LibRawHighlightMode highlight,
         LibRawFbddMode noiseReduction, bool preview, int expectedHighlight, int expectedFbdd)

@@ -19,7 +19,6 @@ public sealed class SyncProfileTransferTests
     [InlineData("canon-eos-350d.cr2")]
     [InlineData("fujifilm-x30.raf")]
     [InlineData("nikon-d70-burst-1.nef")]
-    [InlineData("nikon-d70-burst-2.nef")]
     [InlineData("nikon-d300-colorchecker.nef")]
     [InlineData("pentax-k-r.dng")]
     public void AC5_ReaderIdentityEqualsDecoderAcrossFixtureMakers(string name)

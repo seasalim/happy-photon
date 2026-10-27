@@ -34,16 +34,11 @@ public sealed class HealDecodeFramingTests
         Assert.Equal(-7d / 18, reverseGreen.Average(p => p.Y), 14);
         Assert.Equal(7, forwardGreen.Zip(reverseGreen).Count(p => p.First.Y != p.Second.Y));
         Assert.NotEqual(.25, forwardGreen.Average(p => p.X));
-    }
 
-    [Fact]
-    public void X30PackingAlsoLeavesAChromaHoleForPreInterpolation()
-    {
-        var samples = Pack(X30Pattern(), 6, reverseRows: false);
         var missing = Enumerable.Range(0, 9)
-            .Where(i => samples[i, 0] == null && samples[i, 2] == null).ToArray();
+            .Where(i => forward[i, 0] == null && forward[i, 2] == null).ToArray();
         Assert.Equal(new[] { 4 }, missing);
-        Assert.All(Enumerable.Range(0, 9), i => Assert.NotNull(samples[i, 1]));
+        Assert.All(Enumerable.Range(0, 9), i => Assert.NotNull(forward[i, 1]));
     }
 
     private static int[] X30Pattern()

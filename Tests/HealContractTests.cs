@@ -115,8 +115,6 @@ public sealed class HealContractTests
     [Theory]
     [InlineData(200, 20)]
     [InlineData(20, 200)]
-    [InlineData(400, 40)]
-    [InlineData(40, 400)]
     public void PanoramicMaximumRadiusClampsSourceAndAllowsDestinationEdgeCrossing(int width, int height)
     {
         var input = Enumerable.Range(0, width * height * 3)

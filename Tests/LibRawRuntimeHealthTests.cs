@@ -28,29 +28,6 @@ public sealed class LibRawRuntimeHealthTests
         Assert.Contains("unavailable until", health.DiagnosticText);
     }
 
-    [Fact]
-    public void ProcessHealth_EmitsOneDiagnosticAcrossRepeatedConsumers()
-    {
-        var messages = new List<string>();
-        var probes = 0;
-        var rejected = Reject(Healthy() with { Capabilities = LibRawCapabilities.Jpeg });
-        var health = LibRawNativeSupport.CreateLazy(
-            () =>
-            {
-                probes++;
-                return rejected;
-            },
-            messages.Add);
-
-        _ = health.Value;
-        _ = health.Value;
-        _ = health.Value;
-
-        Assert.Equal(1, probes);
-        Assert.Single(messages);
-        Assert.Equal(rejected.DiagnosticText, messages[0]);
-    }
-
     [Theory]
     [MemberData(nameof(Rejections))]
     public async Task EveryRejectionDisablesAllRawDecodeBranches(

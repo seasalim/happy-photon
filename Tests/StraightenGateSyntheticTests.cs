@@ -10,9 +10,6 @@ public sealed class StraightenGateSyntheticTests(ITestOutputHelper output)
     [Fact]
     public void G1Before() => MeasureG1(StraightenGateScenes.Names.Append("facade-blurred"));
 
-    [Fact]
-    public void G1BlurredBefore() => MeasureG1(["facade-blurred"]);
-
     private void MeasureG1(IEnumerable<string> scenes)
     {
         var errors = new List<double>();

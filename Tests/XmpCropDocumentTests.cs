@@ -10,7 +10,6 @@ public sealed class XmpCropDocumentTests
     public static TheoryData<string, XmpFactKind> LightroomFixtures => new()
     {
         { "lightroom-baseline-nocrop.xmp", XmpFactKind.Empty },
-        { "lightroom-crop-plain.xmp", XmpFactKind.Matched },
         { "lightroom-crop-angled.xmp", XmpFactKind.Unsupported },
         { "lightroom-crop-rotated.xmp", XmpFactKind.Unsupported },
         { "lightroom-crop-warp.xmp", XmpFactKind.Unsupported },

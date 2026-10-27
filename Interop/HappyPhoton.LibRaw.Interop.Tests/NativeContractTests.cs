@@ -249,7 +249,6 @@ public sealed unsafe class NativeContractTests
     [Theory]
     [InlineData(0, 1)]
     [InlineData(1, 1)]
-    [InlineData(4, 4)]
     [InlineData(8, 8)]
     [InlineData(16, 16)]
     [InlineData(24, 16)]

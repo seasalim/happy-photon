@@ -17,14 +17,6 @@ public class SingleInstanceGuardTests
     }
 
     [Fact]
-    public void DefaultMutexName_DoesNotCollideWithLegacyPhotoEdit()
-    {
-        Assert.NotEqual(
-            "PhotoEdit.Application.SingleInstance",
-            SingleInstanceGuard.ApplicationMutexName);
-    }
-
-    [Fact]
     public void TryAcquire_AllowsOnlyOneOwnerAtATime()
     {
         var mutexName = $"HappyPhoton.Tests.{Guid.NewGuid():N}";
