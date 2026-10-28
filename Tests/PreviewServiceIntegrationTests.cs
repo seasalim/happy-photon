@@ -5,8 +5,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
-public sealed class PreviewServiceIntegrationTests : IDisposable
+public sealed class PreviewServiceIntegrationTests : IDisposable, IClassFixture<AvaloniaTestFixture>
 {
     private readonly AvaloniaTestFixture _fixture;
     private readonly string _tempDirectory = Path.Combine(

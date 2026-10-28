@@ -5,7 +5,6 @@ using static HappyPhoton.Tests.ConstructionVmProbe;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
 public sealed class BuiltInLookVmTests
 {
     [Theory]

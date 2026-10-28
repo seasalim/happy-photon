@@ -7,7 +7,6 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
 public sealed class ModernCameraCompatibilityTests
 {
     private const string OptInVariable = "HAPPY_PHOTON_COMPAT";

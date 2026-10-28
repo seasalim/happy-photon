@@ -6,7 +6,6 @@ using static HappyPhoton.Tests.ConstructionVmProbe;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
 public sealed class EditConstructionVmBaselineTests
 {
     private static readonly string[] States = ["fresh", "dirty", "committed-crop", "draft-crop", "raw-profile", "stored-geometry", "live-geometry", "live-crop-horizon", "active-preset", "before-after-split"];

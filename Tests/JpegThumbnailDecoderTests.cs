@@ -4,8 +4,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
-public sealed class JpegThumbnailDecoderTests : IDisposable
+public sealed class JpegThumbnailDecoderTests : IDisposable, IClassFixture<AvaloniaTestFixture>
 {
     private readonly AvaloniaTestFixture _fixture;
     private readonly TemporaryDirectory _tempDirectory = new();

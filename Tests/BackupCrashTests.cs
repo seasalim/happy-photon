@@ -4,7 +4,6 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(BackupBaselineCollection.Name)]
 public sealed class BackupCrashTests(BackupCatalogFixtures fixtures, ITestOutputHelper output)
 {
     public static IEnumerable<object[]> KillPoints => BackupKillPointMatrix.Backup.Rows();

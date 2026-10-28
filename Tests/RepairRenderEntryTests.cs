@@ -6,7 +6,6 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
 public sealed class RepairRenderEntryTests
 {
     internal static EditSettings Settings() => new()

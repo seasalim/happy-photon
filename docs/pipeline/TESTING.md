@@ -12,8 +12,10 @@ pixel workers, and the shared Magick/LibRaw OpenMP budget together. Each test
 assembly sets the budget before native loading, including `MAGICK_THREAD_LIMIT`,
 so the default host uses eight native workers. Explicit environment limits win.
 `verify.ps1 -ProcessorCount <n>` overrides the cap for unsharded test hosts.
-Full `verify.ps1` runs use four headless shards at two processors each with isolated
-temporary roots. Classes are assigned largest estimated cost first (discovered case
+Full `verify.ps1` runs keep one unit process. The headless assembly runs as four shards
+at two processors each with isolated temporary roots. `verify.ps1` refuses top-level
+caps above eight each or 24 in sum (FullCpu exempt).
+Classes are assigned largest estimated cost first (discovered case
 count × `ShardCost`, default 1) to the least-loaded shard, with ordinal ties.
 `-HeadlessShards <n>` changes the count, while `-Filter`,
 `-SerialProjects` or `-HeadlessShards 1` keeps one headless host.

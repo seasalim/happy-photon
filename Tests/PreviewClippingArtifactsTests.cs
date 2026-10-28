@@ -5,8 +5,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
-public sealed class PreviewClippingArtifactsTests : IDisposable
+public sealed class PreviewClippingArtifactsTests : IDisposable, IClassFixture<AvaloniaTestFixture>
 {
     private readonly AvaloniaTestFixture _fixture;
     private readonly TemporaryDirectory _root = new();

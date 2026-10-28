@@ -32,6 +32,21 @@ if ($PolicyOnly -and $SkipPolicy) {
 }
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
+$useShards = -not $Filter -and -not $SerialProjects -and $HeadlessShards -gt 1
+. (Join-Path $PSScriptRoot 'test-processor-budget.ps1')
+
+if (-not $PolicyOnly) {
+    $cap = if ($ProcessorCount) { $ProcessorCount } else { 8 }
+
+    if ($useShards) {
+        Assert-TestProcessorBudget (@($cap, $cap) + @(2) * $HeadlessShards)
+    } else {
+        Assert-TestProcessorBudget @($cap, $cap, $cap) -Serial:$SerialProjects
+    }
+
+    if ($ProcessorCount) { Assert-TestProcessorBudget @($ProcessorCount) }
+}
+
 $clock = [Diagnostics.Stopwatch]::StartNew()
 $buildSeconds = 0.0
 $policySeconds = 0.0
@@ -58,6 +73,7 @@ try {
         & (Join-Path $PSScriptRoot "check-test-ledger-fixtures.ps1")
         & (Join-Path $PSScriptRoot "check-test-abort-fixtures.ps1")
         & (Join-Path $PSScriptRoot "check-headless-shards-fixtures.ps1")
+        & (Join-Path $PSScriptRoot "check-test-cpu-fixtures.ps1")
     }
     if ($PolicyOnly) { return }
 
@@ -67,7 +83,6 @@ try {
     $null = New-Item -ItemType Directory -Path $runDirectory
     Write-Host "Current-run test evidence: $runDirectory"
     $checker = Join-Path $PSScriptRoot "check-test-quarantine.ps1"
-    $useShards = -not $Filter -and -not $SerialProjects -and $HeadlessShards -gt 1
 
     # Every unfiltered run needs discovery evidence for the pruning ledger.
     if (-not $SkipQuarantine -or -not $Filter) {

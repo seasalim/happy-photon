@@ -5,7 +5,6 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(BackupBaselineCollection.Name)]
 public sealed class RestoreHotJournalTests(BackupCatalogFixtures fixtures, ITestOutputHelper output)
 {
     [Fact]

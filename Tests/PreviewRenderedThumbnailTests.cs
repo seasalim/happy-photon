@@ -6,8 +6,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
-public sealed class PreviewRenderedThumbnailTests : IDisposable
+public sealed class PreviewRenderedThumbnailTests : IDisposable, IClassFixture<AvaloniaTestFixture>
 {
     private readonly AvaloniaTestFixture _fixture;
     private readonly string _root = Path.Combine(

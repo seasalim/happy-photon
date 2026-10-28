@@ -5,7 +5,6 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(CheckpointCRenderGateCollection.Name)]
 public sealed class GeometryGoldenTests
 {
     public static TheoryData<string, int> Cases => new()

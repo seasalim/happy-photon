@@ -10,7 +10,6 @@ public sealed class BackupBaselineCollection
     public const string Name = "Backup baseline controls";
 }
 
-[Collection(BackupBaselineCollection.Name)]
 public sealed class BackupBaselineTests(BackupCatalogFixtures fixtures)
 {
     [Fact]

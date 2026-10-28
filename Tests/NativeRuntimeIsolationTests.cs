@@ -64,6 +64,9 @@ public sealed class NativeRuntimeIsolationTests
     {
         var mode = Environment.GetEnvironmentVariable("HAPPY_PHOTON_NATIVE_CHILD");
         Assert.SkipWhen(string.IsNullOrEmpty(mode), "Runs only in an isolated child process.");
+
+        TestContext.Current.TestOutputHelper!.WriteLine($"Native child processor count: {Environment.ProcessorCount}");
+
         if (mode == "package")
         {
             var runtime = LibRawContext.Runtime;
@@ -131,16 +134,24 @@ public sealed class NativeRuntimeIsolationTests
             RedirectStandardError = true,
             UseShellExecute = false
         };
+
         foreach (var argument in new[]
         {
             "test", "Tests/HappyPhoton.Tests.csproj", "--configuration", configuration,
             "--no-build", "--no-restore", "-p:UsedAvaloniaProducts=", "--filter",
-            "FullyQualifiedName=HappyPhoton.Tests.NativeRuntimeIsolationTests.RuntimeIsolation_Child"
-        }) start.ArgumentList.Add(argument);
+            "FullyQualifiedName=HappyPhoton.Tests.NativeRuntimeIsolationTests.RuntimeIsolation_Child",
+            "--logger", "console;verbosity=detailed", "--",
+            $"RunConfiguration.EnvironmentVariables.DOTNET_PROCESSOR_COUNT={Environment.ProcessorCount}"
+        })
+        {
+            start.ArgumentList.Add(argument);
+        }
+
         start.Environment["HAPPY_PHOTON_NATIVE_CHILD"] = mode;
         start.Environment.Remove("HAPPY_PHOTON_LIBRAW_BRIDGE_DIR");
         start.Environment.Remove("OMP_NUM_THREADS");
         if (staging != null) start.Environment["HAPPY_PHOTON_LIBRAW_BRIDGE_DIR"] = staging;
+
         if (decoys != null)
         {
             start.Environment.TryGetValue("PATH", out var currentPath);
@@ -148,12 +159,14 @@ public sealed class NativeRuntimeIsolationTests
                 currentPath;
             start.Environment["LD_LIBRARY_PATH"] = decoys;
         }
+
         using var process = Process.Start(start)!;
         var outputTask = process.StandardOutput.ReadToEndAsync();
         var errorTask = process.StandardError.ReadToEndAsync();
         await process.WaitForExitAsync(TestContext.Current.CancellationToken);
         var output = await outputTask;
         var error = await errorTask;
+        TestContext.Current.TestOutputHelper!.WriteLine(output);
         Assert.True(process.ExitCode == 0,
             $"Native child failed ({mode}).{Environment.NewLine}{output}{Environment.NewLine}{error}");
     }

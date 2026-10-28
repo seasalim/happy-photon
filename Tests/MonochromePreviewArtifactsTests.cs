@@ -5,7 +5,6 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
 public sealed class MonochromePreviewArtifactsTests : IDisposable
 {
     private readonly CatalogVmFixture _fixture = new("mono-artifacts");

@@ -12,7 +12,6 @@ public sealed class CheckpointCRenderGateCollection
     public const string Name = "Checkpoint C render gates";
 }
 
-[Collection(CheckpointCRenderGateCollection.Name)]
 public sealed class WideGamutColorimetryTests
 {
     private readonly ITestOutputHelper _output;

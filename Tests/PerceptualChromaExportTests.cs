@@ -5,7 +5,6 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(CheckpointCRenderGateCollection.Name)]
 public sealed class PerceptualChromaExportTests : IDisposable
 {
     private readonly TemporaryDirectory _output = new();

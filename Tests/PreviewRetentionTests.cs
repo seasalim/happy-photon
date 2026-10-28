@@ -5,7 +5,6 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
 public sealed class PreviewRetentionTests : IDisposable
 {
     private readonly TemporaryDirectory _root = new();

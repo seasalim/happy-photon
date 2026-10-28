@@ -9,10 +9,6 @@ using static HappyPhoton.Tests.FinishingGateSupport;
 
 namespace HappyPhoton.Tests;
 
-[CollectionDefinition(nameof(FinishingGateSupportCollection), DisableParallelization = true)]
-public sealed class FinishingGateSupportCollection;
-
-[Collection(nameof(FinishingGateSupportCollection))]
 public sealed class FinishingGateSupportTests
 {
     [Fact]

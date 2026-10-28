@@ -10,7 +10,11 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot 'test-processor-budget.ps1')
+$cap = if ($ProcessorCount) { $ProcessorCount } else { 8 }
+Assert-TestProcessorBudget (@($cap, $cap) + @(2) * $Shards.Count)
 $hosts = [Collections.Generic.List[object]]::new()
+$records = [Collections.Generic.List[object]]::new()
 $tempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd(
     [IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
 $shardRoot = Join-Path $tempRoot "hps-$([Guid]::NewGuid().ToString('N').Substring(0, 8))"
@@ -24,6 +28,8 @@ function Start-TestHost([string] $Name, [string] $Project, [int] $Cap, $Shard = 
     $start.CreateNoWindow = $true
     $start.RedirectStandardOutput = $true
     $start.RedirectStandardError = $true
+
+    $temporary = $null
 
     if ($null -ne $Shard) {
         $arguments += @("--filter", $Shard.Filter)
@@ -47,6 +53,9 @@ function Start-TestHost([string] $Name, [string] $Project, [int] $Cap, $Shard = 
     $process.StartInfo = $start
     $hostRun = [pscustomobject]@{
         Name = $Name
+        Project = $Project
+        Cap = if ($Cap -gt 0) { $Cap } elseif ($env:HAPPY_PHOTON_FULL_CPU -eq '1') { $null } else { 8 }
+        TempRoot = $temporary
         Process = $process
         Started = $false
         Output = $null
@@ -86,6 +95,19 @@ try {
                 if (-not $hostRun.Process.HasExited) { $hostRun.Process.Kill($true) }
 
                 $hostRun.Process.WaitForExit()
+                $records.Add([pscustomobject]@{
+                    role = $hostRun.Name
+                    project = $hostRun.Project
+                    cap = $hostRun.Cap
+                    pid = $hostRun.Process.Id
+                    tempRoot = $hostRun.TempRoot
+                    startUtc = $hostRun.Process.StartTime.ToUniversalTime().ToString('o')
+                    exitUtc = $hostRun.Process.ExitTime.ToUniversalTime().ToString('o')
+                    wallSeconds = ($hostRun.Process.ExitTime - $hostRun.Process.StartTime).TotalSeconds
+                    exitCode = $hostRun.Process.ExitCode
+                })
+                ConvertTo-Json -InputObject @($records.ToArray()) -Depth 5 |
+                    Set-Content -LiteralPath (Join-Path $RunDirectory 'hosts.json')
 
                 if ($null -ne $hostRun.Output -and $null -ne $hostRun.Error) {
                     [IO.File]::WriteAllText($hostRun.Log,

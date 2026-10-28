@@ -8,10 +8,6 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[CollectionDefinition("OpenMP isolation", DisableParallelization = true)]
-public sealed class OpenMpIsolationCollection;
-
-[Collection("OpenMP isolation")]
 public sealed class OpenMpRuntimeTests
 {
     [Fact]

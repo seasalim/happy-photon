@@ -8,7 +8,6 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
 public sealed class ThumbnailResidentStateTests : IDisposable
 {
     private readonly string _root = Path.Combine(

@@ -6,7 +6,6 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
 public sealed class ExportBrowseRefreshTests : IDisposable
 {
     private readonly CatalogVmFixture _fx = new("export-browse");

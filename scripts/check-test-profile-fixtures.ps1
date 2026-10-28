@@ -29,6 +29,14 @@ $under = Get-ProfileAttribution $uncovered $tests
 Assert-Equal $under.hosts[0].attributedShare 0.8 'Uncovered lifetime sample retained'
 Assert-Equal $under.hosts[0].g4Passed $false 'G4 coverage fails'
 Assert-Equal $under.hosts[0].unattributedGrowthBytes 70 'Unattributed growth retained'
+$large = @(foreach ($index in 0..2) {
+    [pscustomobject]@{
+        utc = ([DateTimeOffset]::Parse('2026-10-14T00:00:00Z').AddSeconds($index)).ToString('o')
+        instance = 'large'; host = 'HappyPhoton.Tests'; pagedBytes = @([long]9e9, [long]0, [long]10e9)[$index]
+    }
+})
+$largeGrowth = Get-ProfileAttribution $large @()
+Assert-Equal $largeGrowth.hosts[0].unattributedGrowthBytes ([long]10e9) 'Int64 growth and decline beyond Int32 range'
 $headlessSamples = $samples | ConvertTo-Json | ConvertFrom-Json
 $headlessTests = $tests | ConvertTo-Json | ConvertFrom-Json
 

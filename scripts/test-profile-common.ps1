@@ -27,7 +27,7 @@ function Read-ProfileTrx([string] $Directory) {
         foreach ($result in $xml.SelectNodes('//t:UnitTestResult', $ns)) {
             $definition = $definitions[$result.testId]
             if (-not $definition) { throw "TRX definition missing: $($result.testId)" }
-            if ($definition.host -notin @('HappyPhoton.Tests', 'HappyPhoton.Headless.Tests')) { continue }
+            if ($definition.host -notin @('HappyPhoton.Tests', 'HappyPhoton.Headless.Tests', 'HappyPhoton.LibRaw.Interop.Tests')) { continue }
 
             [pscustomobject]@{
                 host = $definition.host
@@ -57,7 +57,7 @@ function Get-ProfileAttribution($Samples, $Tests) {
         $cursor = 0
         $attributed = 0
         $over = [Collections.Generic.List[object]]::new()
-        $previous = [long]$rows[0].pagedBytes
+        [long]$previous = $rows[0].pagedBytes
         $unattributedGrowth = 0.0
 
         foreach ($row in $rows) {
@@ -72,7 +72,7 @@ function Get-ProfileAttribution($Samples, $Tests) {
                 if ([DateTimeOffset]$active[$i].end -le $time) { $active.RemoveAt($i) }
             }
 
-            $growth = [Math]::Max(0, [long]$row.pagedBytes - $previous)
+            [long]$growth = [Math]::Max([long]0, ([long]$row.pagedBytes - $previous))
             $previous = [long]$row.pagedBytes
 
             if ($active.Count -gt $bound) {

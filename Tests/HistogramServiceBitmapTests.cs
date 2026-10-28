@@ -8,8 +8,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-[Collection(AvaloniaTestCollection.Name)]
-public sealed class HistogramServiceBitmapTests
+public sealed class HistogramServiceBitmapTests : IClassFixture<AvaloniaTestFixture>
 {
     private readonly AvaloniaTestFixture _fixture;
 
