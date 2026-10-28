@@ -65,7 +65,7 @@ jobs:
             os: windows-latest
             rid: win-x64
           - name: Linux x64
-            os: ubuntu-latest
+            os: ubuntu-24.04
             rid: linux-x64
           - name: macOS Apple Silicon
             os: macos-15
