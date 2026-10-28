@@ -7,10 +7,11 @@ using Avalonia.VisualTree;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using Xunit;
+using static HappyPhoton.Tests.CompactSliderEntryTestSupport;
 
 namespace HappyPhoton.Tests;
 
-public sealed partial class CompactSliderEntryTests
+public sealed partial class CompactSliderEntryTestsInteractions
 {
     [AvaloniaTheory]
     [InlineData("drag", false)]

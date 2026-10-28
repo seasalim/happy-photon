@@ -1,3 +1,6 @@
+# Fitted full-run cap for the unit and interop hosts; shards keep two each.
+$FullRunProcessorCount = 5
+
 # Validate effective simultaneous caps before discovery or execution starts a host.
 function Assert-TestProcessorBudget([int[]] $Caps, [switch] $Serial) {
     if ($env:HAPPY_PHOTON_FULL_CPU -eq '1') { return }

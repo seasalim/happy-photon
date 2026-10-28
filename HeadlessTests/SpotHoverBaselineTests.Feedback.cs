@@ -9,9 +9,9 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed partial class SpotHoverBaselineTests
+internal static partial class SpotHoverBaselineTestSupport
 {
-    private static void AssertHover(string name, SpotsOverlayControl overlay, MainWindowViewModel vm, Point point)
+    internal static void AssertHover(string name, SpotsOverlayControl overlay, MainWindowViewModel vm, Point point)
     {
         var outcome = FrozenPressOutcome(name);
         var action = Enum.Parse<SpotHandle>(outcome.Split("gesture=")[1].Split(';')[0]);
@@ -44,7 +44,7 @@ public sealed partial class SpotHoverBaselineTests
         }
     }
 
-    private static GeometryDrawing[] Circles(SpotsOverlayControl overlay)
+    internal static GeometryDrawing[] Circles(SpotsOverlayControl overlay)
     {
         var group = new DrawingGroup();
         using (var context = group.Open()) overlay.Render(context);
@@ -53,10 +53,10 @@ public sealed partial class SpotHoverBaselineTests
             .Where(d => d.Geometry != null && d.Pen != null).ToArray();
     }
 
-    private static GeometryDrawing[] Highlights(SpotsOverlayControl overlay) =>
+    internal static GeometryDrawing[] Highlights(SpotsOverlayControl overlay) =>
         Circles(overlay).Where(d => d.Pen!.Thickness == 2).ToArray();
 
-    private static void AssertHighlight(SpotsOverlayControl overlay, MainWindowViewModel vm, Repair? spot, SpotHandle action)
+    internal static void AssertHighlight(SpotsOverlayControl overlay, MainWindowViewModel vm, Repair? spot, SpotHandle action)
     {
         if (spot == null)
         {

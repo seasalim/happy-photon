@@ -9,6 +9,7 @@ using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
 using HappyPhoton.Views;
 using Xunit;
+using static HappyPhoton.Tests.SpotHoverBaselineTestSupport;
 
 namespace HappyPhoton.Tests;
 

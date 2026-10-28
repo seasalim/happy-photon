@@ -11,7 +11,8 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot 'test-processor-budget.ps1')
-$cap = if ($ProcessorCount) { $ProcessorCount } else { 8 }
+$cap = if ($ProcessorCount) { $ProcessorCount } else { $FullRunProcessorCount }
+$hostCap = if (-not $ProcessorCount -and $env:HAPPY_PHOTON_FULL_CPU -eq '1') { 0 } else { $cap }
 Assert-TestProcessorBudget (@($cap, $cap) + @(2) * $Shards.Count)
 $hosts = [Collections.Generic.List[object]]::new()
 $records = [Collections.Generic.List[object]]::new()
@@ -72,8 +73,8 @@ function Start-TestHost([string] $Name, [string] $Project, [int] $Cap, $Shard = 
 $exitCode = 0
 
 try {
-    Start-TestHost "unit" "Tests/HappyPhoton.Tests.csproj" $ProcessorCount
-    Start-TestHost "interop" "Interop/HappyPhoton.LibRaw.Interop.Tests/HappyPhoton.LibRaw.Interop.Tests.csproj" $ProcessorCount
+    Start-TestHost "unit" "Tests/HappyPhoton.Tests.csproj" $hostCap
+    Start-TestHost "interop" "Interop/HappyPhoton.LibRaw.Interop.Tests/HappyPhoton.LibRaw.Interop.Tests.csproj" $hostCap
 
     foreach ($shard in $Shards) {
         Start-TestHost "headless-$($shard.Index)" "HeadlessTests/HappyPhoton.Headless.Tests.csproj" 2 $shard

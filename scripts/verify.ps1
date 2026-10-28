@@ -18,9 +18,8 @@ param(
     [string] $BlameHangTimeout = "90s",
     [string] $LogFilePrefix = "",
     [string] $ResultsDirectory = "",
-    # A `dotnet test --filter` expression. With it, only the matching tests run
-    # (the targeted verification a change needs); the quarantine reconciliation
-    # needs the whole suite and is skipped. The full suite runs nightly.
+    # A `dotnet test --filter` expression. Matching tests and the shared-policy set run.
+    # Quarantine reconciliation needs the whole suite and is skipped.
     [string] $Filter = ""
 )
 
@@ -36,7 +35,7 @@ $useShards = -not $Filter -and -not $SerialProjects -and $HeadlessShards -gt 1
 . (Join-Path $PSScriptRoot 'test-processor-budget.ps1')
 
 if (-not $PolicyOnly) {
-    $cap = if ($ProcessorCount) { $ProcessorCount } else { 8 }
+    $cap = if ($ProcessorCount) { $ProcessorCount } elseif ($useShards) { $FullRunProcessorCount } else { 8 }
 
     if ($useShards) {
         Assert-TestProcessorBudget (@($cap, $cap) + @(2) * $HeadlessShards)
@@ -74,6 +73,7 @@ try {
         & (Join-Path $PSScriptRoot "check-test-abort-fixtures.ps1")
         & (Join-Path $PSScriptRoot "check-headless-shards-fixtures.ps1")
         & (Join-Path $PSScriptRoot "check-test-cpu-fixtures.ps1")
+        & (Join-Path $PSScriptRoot "check-shared-policy-fixtures.ps1")
     }
     if ($PolicyOnly) { return }
 
@@ -126,6 +126,8 @@ try {
         $testArguments += @("--blame-hang", "--blame-hang-timeout", $BlameHangTimeout)
     }
 
+    $sharedPolicyArguments = $testArguments
+
     if ($Filter) {
         $testArguments += @("--filter", $Filter)
     }
@@ -157,6 +159,11 @@ try {
         }
 
         & (Join-Path $PSScriptRoot "report-test-abort.ps1") -OutputPath $testLog -ResultsDirectory $runDirectory
+    }
+
+    if ($Filter) {
+        & (Join-Path $PSScriptRoot "run-shared-policy-tests.ps1") -TestArguments $sharedPolicyArguments `
+            -RunDirectory $runDirectory -LogFilePrefix "$prefix-shared-policy" -ProcessorCount $ProcessorCount
     }
 
     if ((-not $SkipQuarantine -or $useShards) -and -not $Filter) {

@@ -1,0 +1,7 @@
+[
+  "HappyPhoton.Tests.DevelopControlsShowcaseTests",
+  "HappyPhoton.Tests.FirstRunCardWidthBaselineTests",
+  "HappyPhoton.Tests.AssessmentTargetingTests",
+  "HappyPhoton.Tests.ShortcutReachabilityTests",
+  "HappyPhoton.Tests.ThemeSourceGuardTests"
+]

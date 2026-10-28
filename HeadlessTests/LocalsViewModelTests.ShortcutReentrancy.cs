@@ -11,7 +11,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed partial class LocalsViewModelTests
+public sealed partial class LocalsViewModelTestsShortcuts
 {
     [AvaloniaFact]
     public async Task ViewerShortcutRepeatDuringCropCancelCannotReopenClosedLocals()

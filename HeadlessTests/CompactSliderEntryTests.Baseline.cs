@@ -6,6 +6,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using HappyPhoton.Views;
 using Xunit;
+using static HappyPhoton.Tests.CompactSliderEntryTestSupport;
 
 namespace HappyPhoton.Tests;
 

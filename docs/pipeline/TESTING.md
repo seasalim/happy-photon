@@ -12,13 +12,32 @@ pixel workers, and the shared Magick/LibRaw OpenMP budget together. Each test
 assembly sets the budget before native loading, including `MAGICK_THREAD_LIMIT`,
 so the default host uses eight native workers. Explicit environment limits win.
 `verify.ps1 -ProcessorCount <n>` overrides the cap for unsharded test hosts.
-Full `verify.ps1` runs keep one unit process. The headless assembly runs as four shards
+Full `verify.ps1` runs cap the unit and interop hosts at five processors each.
+The headless assembly runs as four shards
 at two processors each with isolated temporary roots. `verify.ps1` refuses top-level
 caps above eight each or 24 in sum (FullCpu exempt).
 Classes are assigned largest estimated cost first (discovered case
 count × `ShardCost`, default 1) to the least-loaded shard, with ordinal ties.
 `-HeadlessShards <n>` changes the count, while `-Filter`,
-`-SerialProjects` or `-HeadlessShards 1` keeps one headless host.
+`-SerialProjects` or `-HeadlessShards 1` keeps one headless host and the ordinary
+runsettings cap of eight. Filtered runs also execute the classes defined once in
+[`shared-policy-tests.json`](../../scripts/shared-policy-tests.json), reported separately;
+missing class results or a shared-policy failure fail verification.
+
+Full-suite timings on this Windows machine (32 logical processors; three-run medians):
+
+| Process / metric | Processor cap | Wall / value |
+|---|---|---:|
+| Unit host | 5 | 227.38 s |
+| Interop host | 5 | 1.89 s |
+| Headless shard 1 | 2 | 270.34 s |
+| Headless shard 2 | 2 | 273.25 s |
+| Headless shard 3 | 2 | 308.17 s |
+| Headless shard 4 | 2 | 319.10 s |
+| Test phase | 18 total | 331.12 s |
+| Peak 5 s whole-tree CPU (upper bound, maximum of three runs) | ≤ 24 | 21.43 processors |
+| Test-phase target (reported, not blocking) | — | ≤ 360 s |
+
 Opt-in performance measurements use `HAPPY_PHOTON_FULL_CPU=1` in a fresh process,
 which switches to `HappyPhoton.FullCpu.runsettings` with the same quarantine filter
 and no processor cap; the full-CPU helper requires the marker and more than eight processors.

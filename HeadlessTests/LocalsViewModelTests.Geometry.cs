@@ -12,7 +12,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed partial class LocalsViewModelTests
+public sealed partial class LocalsViewModelTestsGeometry : LocalsViewModelTestBase
 {
     [AvaloniaTheory]
     [InlineData("X", -100, -1)]

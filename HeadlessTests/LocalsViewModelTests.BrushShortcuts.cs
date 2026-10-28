@@ -14,7 +14,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed partial class LocalsViewModelTests
+public sealed partial class LocalsViewModelTestsBrushShortcuts : LocalsViewModelTestBase
 {
     [AvaloniaTheory]
     [InlineData(false)]

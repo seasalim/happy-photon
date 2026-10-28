@@ -12,7 +12,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed partial class LocalsViewModelTests
+public sealed partial class LocalsViewModelTestsGeometry
 {
     [AvaloniaTheory]
     [InlineData(false, 1)]
@@ -146,11 +146,4 @@ public sealed partial class LocalsViewModelTests
         Assert.Equal(.5, vm.SelectedLocal!.Cu);
         Assert.Equal(.5, vm.SelectedLocal.Cv);
     }
-
-    private static void SettleHit(Window window, Control control) => ShowcaseTestHelper.Settle(() =>
-    {
-        var center = control.TranslatePoint(new Point(control.Bounds.Width / 2, control.Bounds.Height / 2), window)!.Value;
-        var target = window.InputHitTest(center) as Visual;
-        return ReferenceEquals(target, control) || target?.GetVisualAncestors().Contains(control) == true;
-    }, $"{control.Name} expansion and scroll");
 }

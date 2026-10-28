@@ -12,9 +12,9 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed partial class SpotHoverBaselineTests
+internal static partial class SpotHoverBaselineTestSupport
 {
-    public static IEnumerable<object[]> GestureCases()
+    public static IEnumerable<object[]> GestureCases(bool cancel)
     {
         // Keep each gesture kind, initial selection state and resize cursor direction.
         // MeasureCurrentBehavior still checks hit precedence at every grid point.
@@ -26,14 +26,12 @@ public sealed partial class SpotHoverBaselineTests
         {
             foreach (var outside in new[] { false, true })
             {
-                foreach (var cancel in new[] { false, true }) yield return [zone, outside, cancel];
+                yield return [zone, outside, cancel];
             }
         }
     }
 
-    [AvaloniaTheory]
-    [MemberData(nameof(GestureCases))]
-    public async Task GestureFeedbackPersistsAndEnds(string zone, bool outside, bool cancel)
+    internal static async Task GestureFeedbackPersistsAndEnds(ITestOutputHelper output, string zone, bool outside, bool cancel)
     {
         using var fixture = new CatalogVmFixture("spot-hover-gesture");
         using var catalog = await fixture.CreateCatalogAsync();

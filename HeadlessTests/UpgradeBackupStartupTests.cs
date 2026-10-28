@@ -11,7 +11,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed class UpgradeBackupStartupTests(BackupCatalogFixtures fixtures)
+public sealed class UpgradeBackupStartupTests
 {
     [AvaloniaTheory]
     [InlineData("missing", false)]
@@ -25,8 +25,7 @@ public sealed class UpgradeBackupStartupTests(BackupCatalogFixtures fixtures)
         using var directory = new TemporaryDirectory();
         var service = RestoreTestSupport.Service(directory.Path);
         var locations = await service.CreateFreshAsync(useStandardCatalog: true);
-        await UpgradeTestSupport.SeedAsync(locations.CatalogRoot);
-        File.Copy((await fixtures.Schema3Archive).DatabasePath, locations.DatabasePath, overwrite: true);
+        await SeedFailureCatalogAsync(locations.CatalogRoot);
 
         if (hot)
         {
@@ -172,5 +171,23 @@ public sealed class UpgradeBackupStartupTests(BackupCatalogFixtures fixtures)
                 Assert.Contains("Close", buttons);
                 Assert.DoesNotContain("Restore from backup…", buttons);
             });
+    }
+
+    private static async Task SeedFailureCatalogAsync(string root)
+    {
+        await UpgradeTestSupport.SeedAsync(root);
+
+        using var connection = CatalogService.OpenBackupCopy(Path.Combine(root, "catalog.db"), SqliteOpenMode.ReadWrite);
+        using var command = connection.CreateCommand();
+
+        // KillWriter updates 100 rows: enough dirty pages to spill a hot journal at cache_size=1.
+        // Backup-failure preservation does not require the archive fixture's 225,000 rows.
+        command.CommandText = """
+            WITH RECURSIVE rows(n) AS (VALUES(2) UNION ALL SELECT n + 1 FROM rows WHERE n < 100)
+            INSERT INTO images(file_path, file_name, edit_settings, edit_version)
+            SELECT '/virtual/' || n || '.jpg', 'original-' || n || '.jpg', edit_settings, edit_version
+            FROM rows CROSS JOIN images WHERE images.id = 1;
+            """;
+        command.ExecuteNonQuery();
     }
 }

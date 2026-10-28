@@ -11,7 +11,7 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed partial class LocalsViewModelTests
+public sealed partial class LocalsViewModelTestsShortcuts : LocalsViewModelTestBase
 {
     [AvaloniaFact]
     public async Task ViewerShortcutsToggleLocalsWithToolArbitration()
@@ -228,33 +228,4 @@ public sealed partial class LocalsViewModelTests
         }
         await AssertShortcutSnapshot(vm, catalog, before);
     }
-
-    private async Task PrepareShortcutLocal(MainWindowViewModel vm, CatalogService catalog)
-    {
-        await Prepare(vm, catalog);
-        vm.ShowWorkspaceReady(MainWindowViewModel.CurrentFirstRunExperienceVersion);
-        await vm.ToggleLocalsModeCommand.ExecuteAsync(null);
-        await vm.PlaceLocalAtCenterCommand.ExecuteAsync(null);
-    }
-
-    private static void ShortcutDown(MainWindow window, Key key, RawInputModifiers modifiers = RawInputModifiers.None) =>
-        window.KeyPress(key, modifiers, PhysicalKey.None, null);
-    private static void ShortcutUp(MainWindow window, Key key, RawInputModifiers modifiers = RawInputModifiers.None) =>
-        window.KeyRelease(key, modifiers, PhysicalKey.None, null);
-    private static void ShortcutPress(MainWindow window, Key key, RawInputModifiers modifiers = RawInputModifiers.None)
-    {
-        ShortcutDown(window, key, modifiers);
-        ShortcutUp(window, key, modifiers);
-    }
-    private static async Task<(int History, string Saved, string Live)> ShortcutSnapshot(MainWindowViewModel vm, CatalogService catalog)
-    {
-        // Returning to Develop reloads history asynchronously.
-        if (vm.PendingHistoryLoadTask is { } historyLoad)
-            await historyLoad.WaitAsync(TestWaits.Condition);
-        var image = vm.SelectedImage!;
-        var saved = (await catalog.LoadImageStatesAsync([image.FilePath]))[image.FilePath].Single().EditSettings;
-        return (vm.HistoryEntries.Count, RenderSettingsHash.Compute(saved), RenderSettingsHash.Compute(image.EditSettings));
-    }
-    private static async Task AssertShortcutSnapshot(MainWindowViewModel vm, CatalogService catalog,
-        (int History, string Saved, string Live) before) => Assert.Equal(before, await ShortcutSnapshot(vm, catalog));
 }

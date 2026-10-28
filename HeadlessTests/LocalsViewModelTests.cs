@@ -8,10 +8,8 @@ using Xunit;
 
 namespace HappyPhoton.Tests;
 
-public sealed partial class LocalsViewModelTests : IDisposable
+public sealed partial class LocalsViewModelTests : LocalsViewModelTestBase
 {
-    private readonly CatalogVmFixture _fixture = new("locals-vm");
-
     [AvaloniaFact]
     public async Task LocalOperationsPreserveHistoryAndPresetPolicy()
     {
@@ -78,23 +76,6 @@ public sealed partial class LocalsViewModelTests : IDisposable
         Assert.Equal((before.Angle + 90) % 360, vm.SelectedLocal!.Angle);
     }
 
-    private MainWindowViewModel CreateVm(CatalogService catalog, TimeProvider? clock = null,
-        bool raw = false, bool mono = false)
-    {
-        var vm = _fixture.CreateViewModel(catalog, new LocalTestLoader(raw, mono),
-            _ => Task.CompletedTask, new TestSourceAvailabilityService(SourceAvailability.AvailableLocally), timeProvider: clock);
-        vm.IsDevelopMode = true;
-        return vm;
-    }
-    private async Task Prepare(MainWindowViewModel vm, CatalogService catalog)
-    {
-        var image = new ImageFile(_fixture.Path("photo.jpg"));
-        image.CatalogId = await catalog.GetOrCreateImageAsync(image.FilePath);
-        vm.Browse.SetImages([image]);
-        vm.SelectedImage = image;
-        await TestWaits.UntilAsync(() => vm.IsHistoryLoaded && vm.PreviewImage != null);
-    }
-    public void Dispose() => _fixture.Dispose();
 }
 
 internal sealed class LocalTestLoader(bool raw = false, bool mono = false, bool saturated = false, int width = 64, int height = 48) : IBaseImageLoader

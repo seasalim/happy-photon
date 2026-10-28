@@ -36,8 +36,25 @@ if ([IO.Path]::GetFileName($executable) -eq 'pwsh.exe' -and $executable -like '*
     $executable = Join-Path $PSHOME 'pwsh.exe'
 
     if ($PSHOME -like '*\WindowsApps\*') {
-        $runtime = Join-Path $directory 'powershell'
-        Copy-Item -LiteralPath $PSHOME -Destination $runtime -Recurse
+        $version = $PSVersionTable.PSVersion.ToString()
+        $cacheRoot = [IO.Path]::GetFullPath((Join-Path $root 'artifacts/measure-suite')) + [IO.Path]::DirectorySeparatorChar
+        $runtime = [IO.Path]::GetFullPath((Join-Path $cacheRoot "powershell-$version"))
+        $marker = Join-Path $runtime 'runtime-version.txt'
+
+        if (-not $runtime.StartsWith($cacheRoot, [StringComparison]::OrdinalIgnoreCase)) {
+            throw "PowerShell staging path is outside the checkout cache: $runtime"
+        }
+
+        if (-not (Test-Path -LiteralPath $marker) -or
+            (Get-Content -Raw -LiteralPath $marker).Trim() -ne $version -or
+            -not (Test-Path -LiteralPath (Join-Path $runtime 'pwsh.exe'))) {
+            if (Test-Path -LiteralPath $runtime) { Remove-Item -LiteralPath $runtime -Recurse -Force }
+
+            $null = New-Item -ItemType Directory -Force -Path $cacheRoot
+            Copy-Item -LiteralPath $PSHOME -Destination $runtime -Recurse
+            Set-Content -LiteralPath $marker -Value $version
+        }
+
         $executable = Join-Path $runtime 'pwsh.exe'
     }
 }
