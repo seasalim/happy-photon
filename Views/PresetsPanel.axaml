@@ -21,6 +21,9 @@
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
+            <Setter Property="ToolTip.Placement" Value="Right"/>
+            <Setter Property="ToolTip.HorizontalOffset" Value="4"/>
+            <Setter Property="ToolTip.VerticalOffset" Value="0"/>
         </Style>
         <Style Selector="Button.preset:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource ControlHover}"/>

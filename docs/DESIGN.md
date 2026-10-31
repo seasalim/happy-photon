@@ -110,6 +110,7 @@ read-only, then empty when space runs out. Develop hides its zoom slider before 
 the cluster; Browse's online-only message yields first. Assessment state never moves the
 cluster or its neighbours. Key letters appear in tooltips and Help, not in the cluster.
 Bar tooltips open directly above their control, so they never cover the pointer.
+Preset tooltips open beside their row, outside the list, so they never cover the next preset.
 Develop and Loupe shortcuts briefly show a chrome-less confirmation over the
 photo, with primary text and a dark halo for legibility on unknown content.
 
