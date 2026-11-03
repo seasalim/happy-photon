@@ -121,16 +121,64 @@ function Get-RootLinkState {
     return (@($current) + $links) -join "`n"
 }
 
-function Resolve-FormatSelection {
-    param([string]$RepoRoot, [string[]]$Path, [string]$Scratch)
+# Every listed file under an adopted prefix with a qualified formatter, outside the exclusions. A prefix that
+# selects nothing is refused, so a renamed folder or a typo cannot silently drop enforcement.
+function Get-AdoptedPaths {
+    param($Scope, [Collections.Generic.HashSet[string]]$Listed, [string]$RepoRoot)
 
-    if (-not $Path -or -not @($Path | Where-Object { $_ }).Count) {
-        throw 'SELECTION: name at least one repository-relative file with -Path'
+    $prefixes = @($Scope.PSObject.Properties['adopted'] | ForEach-Object { $_.Value })
+
+    if (-not $prefixes.Count) {
+        throw 'SELECTION: config/scope.json adopts no path prefix'
+    }
+
+    $sorted = [string[]]@($Listed)
+    [Array]::Sort($sorted, [StringComparer]::Ordinal)
+    $paths = [Collections.Generic.List[string]]::new()
+
+    foreach ($prefix in $prefixes) {
+        $segments = $prefix.TrimEnd('/').Split('/')
+
+        if (-not $prefix.EndsWith('/') -or $prefix.Contains('\') -or @($segments | Where-Object { $_ -in @('', '.', '..') }).Count) {
+            throw "SELECTION: adopted prefix '$prefix' must be a plain repository-relative folder ending in '/'"
+        }
+
+        $matched = @($sorted | Where-Object {
+                $_.StartsWith($prefix, [StringComparison]::Ordinal) -and (Get-FormatFamily $_) -and
+                -not (Test-FormatExcluded $_ $Scope.excluded) -and (Test-Path -LiteralPath (Join-Path $RepoRoot $_) -PathType Leaf)
+            })
+
+        if (-not $matched.Count) {
+            throw "SELECTION: adopted prefix '$prefix' selects no file"
+        }
+
+        $paths.AddRange([string[]]@($matched | Where-Object { -not $paths.Contains($_) }))
+    }
+
+    return , $paths.ToArray()
+}
+
+function Resolve-FormatSelection {
+    param([string]$RepoRoot, [string[]]$Path, [string]$Scratch, [switch]$Adopted)
+
+    $named = @($Path | Where-Object { $_ }).Count
+
+    if ($Adopted -and $named) {
+        throw 'SELECTION: -Adopted selects the adopted scope; do not also name files'
+    }
+
+    if (-not $Adopted -and -not $named) {
+        throw 'SELECTION: name at least one repository-relative file with -Path, or use -Adopted'
     }
 
     $scope = Get-Content -LiteralPath (Join-Path $script:FormatHome 'config/scope.json') -Raw | ConvertFrom-Json
     $listed = Get-RepositoryFiles $RepoRoot $Scratch
     $rootLinks = Get-RootLinkState $RepoRoot
+
+    if ($Adopted) {
+        $Path = Get-AdoptedPaths $scope $listed $RepoRoot
+    }
+
     $seen = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
 
     foreach ($name in $Path) {

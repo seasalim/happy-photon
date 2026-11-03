@@ -8,4 +8,4 @@ $script:FormatHome = $PSScriptRoot
 . "$PSScriptRoot/FormatPrettier.ps1"
 . "$PSScriptRoot/FormatRun.ps1"
 
-Export-ModuleMember -Function Invoke-FormatCommand, Invoke-FormatProcess, Get-ChildEnvironment, Get-FormatPins
+Export-ModuleMember -Function Invoke-FormatCommand, Invoke-FormatProcess, Get-ChildEnvironment, Get-FormatPins, Get-DefaultToolRoot

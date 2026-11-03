@@ -74,6 +74,9 @@ try {
         & (Join-Path $PSScriptRoot "check-headless-shards-fixtures.ps1")
         & (Join-Path $PSScriptRoot "check-test-cpu-fixtures.ps1")
         & (Join-Path $PSScriptRoot "check-shared-policy-fixtures.ps1")
+        # Needs the pinned formatter tools: scripts/format/install-format-tools.ps1, once per clone.
+        & (Join-Path $PSScriptRoot "format/check-adopted.ps1")
+        if ($LASTEXITCODE -ne 0) { throw "Adopted formatter scope check failed with exit code $LASTEXITCODE." }
     }
     if ($PolicyOnly) { return }
 

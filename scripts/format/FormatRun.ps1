@@ -6,6 +6,36 @@ function Get-FullDirectory {
     return $full.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
 }
 
+# Every linked worktree of a clone shares the main checkout's ignored tool root, so one install serves them
+# all. A worktree's .git file names its admin folder, whose commondir file leads to the main .git folder.
+# Anything else (an ordinary clone, a submodule, no git at all) keeps the tool root inside the checkout.
+function Get-DefaultToolRoot {
+    param([string]$RepoRoot)
+
+    $root = Get-FullDirectory $RepoRoot
+    $marker = Join-Path $root '.git'
+
+    if (Test-Path -LiteralPath $marker -PathType Leaf) {
+        $line = [string](Get-Content -LiteralPath $marker -TotalCount 1)
+
+        if ($line -match '^gitdir:\s*(.+?)\s*$') {
+            $admin = [IO.Path]::GetFullPath($Matches[1], $root)
+            $commonFile = Join-Path $admin 'commondir'
+
+            if (Test-Path -LiteralPath $commonFile -PathType Leaf) {
+                $common = [IO.Path]::GetFullPath(([string](Get-Content -LiteralPath $commonFile -TotalCount 1)).Trim(), $admin)
+                $common = $common.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
+
+                if ([IO.Path]::GetFileName($common) -eq '.git') {
+                    $root = [IO.Path]::GetDirectoryName($common)
+                }
+            }
+        }
+    }
+
+    return Join-Path $root '.tools/format'
+}
+
 function Test-PathUnder {
     param([string]$Path, [string]$Root)
 
@@ -128,12 +158,12 @@ function Write-FormatFile {
 }
 
 function Invoke-FormatRun {
-    param([string]$RepoRoot, [string]$ToolRoot, [string[]]$Path, [switch]$Apply)
+    param([string]$RepoRoot, [string]$ToolRoot, [string[]]$Path, [switch]$Apply, [switch]$Adopted)
 
     $scratch = New-FormatScratch $RepoRoot $ToolRoot
 
     try {
-        $selection = @(Resolve-FormatSelection $RepoRoot $Path $scratch)
+        $selection = @(Resolve-FormatSelection $RepoRoot $Path $scratch -Adopted:$Adopted)
         $prettier = Assert-FormatTools $ToolRoot $scratch
         $checks = @($selection | ForEach-Object { New-FormatCheck $_ })
 
@@ -204,7 +234,7 @@ function Invoke-FormatRun {
 }
 
 function Invoke-FormatCommand {
-    param([string[]]$Path, [string]$RepoRoot, [string]$ToolRoot, [switch]$Apply)
+    param([string[]]$Path, [string]$RepoRoot, [string]$ToolRoot, [switch]$Apply, [switch]$Adopted)
 
     try {
         if (-not $RepoRoot) {
@@ -212,10 +242,10 @@ function Invoke-FormatCommand {
         }
 
         if (-not $ToolRoot) {
-            $ToolRoot = Join-Path $script:FormatHome '../../.tools/format'
+            $ToolRoot = Get-DefaultToolRoot (Join-Path $script:FormatHome '../..')
         }
 
-        return Invoke-FormatRun (Get-FullDirectory $RepoRoot) (Get-FullDirectory $ToolRoot) $Path -Apply:$Apply
+        return Invoke-FormatRun (Get-FullDirectory $RepoRoot) (Get-FullDirectory $ToolRoot) $Path -Apply:$Apply -Adopted:$Adopted
     } catch {
         # Unknown is never success: refusals, tool problems and formatter failures report no verdicts.
         $message = $_.Exception.Message

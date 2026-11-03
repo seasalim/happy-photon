@@ -38,7 +38,8 @@ $script:RepoRoot = [IO.Path]::GetFullPath((Join-Path $FormatRoot '../..'))
 $script:ToolRoot = $ToolRoot
 
 if (-not $script:ToolRoot) {
-    $script:ToolRoot = Join-Path $script:RepoRoot '.tools/format'
+    Import-Module (Join-Path $FormatRoot 'FormatTools.psm1') -Force
+    $script:ToolRoot = Get-DefaultToolRoot $script:RepoRoot
 }
 
 $script:ToolRoot = [IO.Path]::GetFullPath($script:ToolRoot)
@@ -76,6 +77,8 @@ try {
     Test-GuardControls
     Test-RealSource
     Test-SelfCheck
+    Test-AdoptedControls
+    Test-ToolRootControls
 
     if ($DriftReport) {
         Invoke-DriftReport $DriftReport
