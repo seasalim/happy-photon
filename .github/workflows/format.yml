@@ -59,17 +59,41 @@ jobs:
         run: |
           function Get-Reached {
             $reached = @()
-            try { Invoke-WebRequest -UseBasicParsing -Uri https://www.powershellgallery.com -TimeoutSec 20 | Out-Null; $reached += 'pwsh' }
-            catch { "  pwsh: $($_.Exception.Message)" | Write-Host }
+
+            try {
+              Invoke-WebRequest -UseBasicParsing -Uri https://www.powershellgallery.com -TimeoutSec 20 | Out-Null
+              $reached += 'pwsh'
+            } catch {
+              Write-Host "  pwsh: $($_.Exception.Message)"
+            }
+
             $git = git ls-remote https://github.com/actions/checkout HEAD 2>&1
-            if ($LASTEXITCODE -eq 0) { $reached += 'git' } else { "  git: exit $LASTEXITCODE $($git | Select-Object -First 1)" | Write-Host }
-            node -e "fetch('https://registry.npmjs.org/').then(() => process.exit(0), () => process.exit(3))"
-            if ($LASTEXITCODE -eq 0) { $reached += 'node' } else { "  node: exit $LASTEXITCODE" | Write-Host }
+
+            if ($LASTEXITCODE -eq 0) {
+              $reached += 'git'
+            } else {
+              Write-Host "  git: exit $LASTEXITCODE $($git | Select-Object -First 1)"
+            }
+
+            node ./scripts/format/fixtures/reach-npm.cjs
+
+            if ($LASTEXITCODE -eq 0) {
+              $reached += 'node'
+            } else {
+              Write-Host "  node: exit $LASTEXITCODE"
+            }
+
             # dotnet package search can exit 0 after a failed request, so require an actual result;
             # a fresh HTTP cache keeps the earlier positive control from answering offline.
             $env:NUGET_HTTP_CACHE_PATH = Join-Path $env:RUNNER_TEMP ('nuget-http-' + [guid]::NewGuid().ToString('N'))
             $search = (dotnet package search Newtonsoft.Json --take 1 --exact-match 2>&1) -join ' '
-            if ($search -match 'Newtonsoft\.Json\s*\|') { $reached += 'dotnet' } else { "  dotnet: $($search.Substring(0, [math]::Min(300, $search.Length)))" | Write-Host }
+
+            if ($search -match 'Newtonsoft\.Json\s*\|') {
+              $reached += 'dotnet'
+            } else {
+              Write-Host "  dotnet: $($search.Substring(0, [math]::Min(300, $search.Length)))"
+            }
+
             return , $reached
           }
 
@@ -79,16 +103,20 @@ jobs:
           if ($before.Count -ne 4) { throw 'the network probe could not reach the network before blocking' }
 
           Set-NetFirewallProfile -All -Enabled True
+
           # Every executable under each tool's install root, plus Git's exec path for its HTTPS helpers.
           $roots = foreach ($name in 'pwsh', 'node', 'dotnet', 'git') {
             Split-Path (Get-Command $name -CommandType Application | Select-Object -First 1).Source
           }
+
           $roots = @($roots) + (Resolve-Path (git --exec-path)).Path | Sort-Object -Unique
           $count = 0
+
           foreach ($program in Get-ChildItem -LiteralPath $roots -Recurse -Filter *.exe -File) {
             New-NetFirewallRule -DisplayName "format-block-$count" -Direction Outbound -Action Block -Program $program.FullName | Out-Null
             $count++
           }
+
           "Blocked outbound traffic for $count executables under $($roots -join ', ')"
 
           $after = Get-Reached
