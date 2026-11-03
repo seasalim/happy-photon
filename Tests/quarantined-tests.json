@@ -10,27 +10,27 @@
       "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
       "issue": "https://github.com/seasalim/happy-photon/issues/12",
       "owner": "@seasalim",
-      "reason": "Owner-directed quarantine after a Windows CI inactivity timeout with G1_Lens unfinished; unchanged application/test source passed release qualification. Entry-gate exception and investigation are recorded in the repair issue.",
+      "reason": "Owner-directed quarantine after a Windows CI inactivity timeout with G1_Lens unfinished; unchanged application/test source passed release qualification. Entry-gate exception and investigation are recorded in the repair issue. Window extended to 2027-01-01 with owner approval on 2026-11-03; the repair is still pending in the issue.",
       "introducedOn": "2026-10-03",
-      "expiresOn": "2026-11-02"
+      "expiresOn": "2027-01-01"
     },
     {
       "fullyQualifiedName": "HappyPhoton.Tests.SyncProfileDevelopTests.CopyLoadedIdentitySurvivesNavigationAndUnavailableSourceWithNoSourceOpens",
       "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
       "issue": "https://github.com/seasalim/happy-photon/issues/11",
       "owner": "@seasalim",
-      "reason": "Owner-directed quarantine after a Linux CI decode-count assertion failed while local and prior Linux runs passed. Entry-gate exception and investigation are recorded in the repair issue.",
+      "reason": "Owner-directed quarantine after a Linux CI decode-count assertion failed while local and prior Linux runs passed. Entry-gate exception and investigation are recorded in the repair issue. Window extended to 2027-01-01 with owner approval on 2026-11-03; the repair is still pending in the issue.",
       "introducedOn": "2026-10-03",
-      "expiresOn": "2026-11-02"
+      "expiresOn": "2027-01-01"
     },
     {
       "fullyQualifiedName": "HappyPhoton.Tests.SyncTransferParityViewModelTests.G1_Crop",
       "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
       "issue": "https://github.com/seasalim/happy-photon/issues/10",
       "owner": "@seasalim",
-      "reason": "Owner-directed quarantine after one Windows CI watchdog timeout in SQLite; local and previous CI runs pass. Entry-gate exception and investigation are recorded in the repair issue.",
+      "reason": "Owner-directed quarantine after one Windows CI watchdog timeout in SQLite; local and previous CI runs pass. Entry-gate exception and investigation are recorded in the repair issue. Window extended to 2027-01-01 with owner approval on 2026-11-03; the repair is still pending in the issue.",
       "introducedOn": "2026-10-03",
-      "expiresOn": "2026-11-02"
+      "expiresOn": "2027-01-01"
     },
     {
       "fullyQualifiedName": "HappyPhoton.Tests.BeforeAfterSplitHeadlessTests.ToggleRendersAndSynchronizesBeforeWhileAfterStaysLive",
