@@ -106,15 +106,59 @@ function Get-EligibleFiles {
         } $listed $scope.excluded $script:RepoRoot)
 }
 
-# The tooling is its own first adopted scope: every formatter-supported file under scripts/format is clean.
+# The tooling is its own first adopted scope: the adopted check covers every formatter-supported file under
+# scripts/format, and all of them are clean.
 function Test-SelfCheck {
     $prefix = [IO.Path]::GetRelativePath($script:RepoRoot, $script:FormatRoot).Replace('\', '/')
     $files = Get-EligibleFiles $prefix
     $before = (& git -C $script:RepoRoot status --porcelain) -join "`n"
-    $check = Invoke-Format check $script:RepoRoot $files
+    $check = Invoke-Format check $script:RepoRoot @() -Adopted
     $after = (& git -C $script:RepoRoot status --porcelain) -join "`n"
-    [void](Add-Property 'formatter tooling is clean under its own check' ($check.ExitCode -eq 0 -and $files.Count) $check.Text)
+
+    $covered = @($files | Where-Object { $check.Text -cmatch "(?m)^OK $([regex]::Escape($_))$" }).Count
+    $clean = $check.ExitCode -eq 0 -and $files.Count -and $covered -eq $files.Count
+    [void](Add-Property 'formatter tooling is adopted and clean under its own check' $clean "$covered of $($files.Count) covered`n$($check.Text)")
     [void](Add-Property 'check leaves the repository untouched' ($before -ceq $after))
+}
+
+# The adopted scope is a selection of its own: naming files with it, or adopting a folder with no file, is refused.
+function Test-AdoptedControls {
+    $repo = New-CaseRepo @{ 'src/A.cs' = $script:Cases.parsers[0].expected }
+    $both = Invoke-FormatChild check $repo @('-Adopted', 'src/A.cs') $script:ToolRoot
+    [void](Add-Property 'adopted scope refused together with named files' (Test-Verdict $both 2 '(?m)^SELECTION: -Adopted') $both.Text)
+    $none = Invoke-FormatChild check $repo @('-Adopted') $script:ToolRoot
+    $refused = Test-Verdict $none 2 "(?m)^SELECTION: adopted prefix '[^']+' selects no file"
+    [void](Add-Property 'adopted prefix that selects nothing refused' $refused $none.Text)
+}
+
+# One install serves a clone: a linked worktree defaults to the main checkout's tool root; -ToolRoot overrides it.
+# Roots are compared by a marker file, because git and the temp directory may spell the same folder differently.
+function Test-ToolRootControls {
+    $main = Join-Path $script:Scratch 'clone'
+    $linked = Join-Path $script:Scratch 'clone-linked'
+    $marker = 'qualify-' + [guid]::NewGuid().ToString('N')
+    [void][IO.Directory]::CreateDirectory((Join-Path $main '.tools/format'))
+    [IO.File]::WriteAllText((Join-Path $main ".tools/format/$marker"), '')
+    Invoke-Git $main @('-c', 'init.defaultBranch=main', 'init', '-q')
+    Invoke-Git $main @('worktree', 'add', '-q', '--orphan', '-b', 'linked', $linked)
+    Copy-Item -LiteralPath $script:FormatRoot -Destination (Join-Path $linked 'scripts/format') -Recurse
+
+    $module = Get-Module FormatTools
+    $roots = @($main, $linked | ForEach-Object { & $module { Get-DefaultToolRoot $args[0] } $_ })
+    $shared = @($roots | Where-Object { Test-Path -LiteralPath (Join-Path $_ $marker) }).Count -eq 2
+    [void](Add-Property 'linked worktree shares the main checkout tool root' $shared ($roots -join '; '))
+
+    $entry = Join-Path $linked 'scripts/format/check-format.ps1'
+    $default = (@(& $script:Pwsh -NoProfile -NonInteractive -File $entry 'scripts/format/check-format.ps1' 2>&1) | ForEach-Object { "$_" }) -join "`n"
+    $defaultExit = $LASTEXITCODE
+    $named = if ($default -match '(?m)^VERSION: formatter tools are missing from (.+); run ') { $Matches[1] }
+    $closed = $defaultExit -eq 2 -and $named -and (Test-Path -LiteralPath (Join-Path $named $marker))
+    [void](Add-Property 'default tool root from a linked worktree fails closed' $closed $default)
+
+    $override = (@(& $script:Pwsh -NoProfile -NonInteractive -File $entry -ToolRoot $script:ToolRoot 'scripts/format/check-format.ps1' 2>&1) |
+            ForEach-Object { "$_" }) -join "`n"
+    $overridden = $LASTEXITCODE -eq 0 -and $override -cmatch '(?m)^OK scripts/format/check-format\.ps1$'
+    [void](Add-Property 'explicit tool root overrides the default' $overridden $override)
 }
 
 # AC7: a read-only drift report of every eligible legacy file, written outside the repository.

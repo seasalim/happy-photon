@@ -1,4 +1,5 @@
 {
+  "adopted": ["scripts/format/"],
   "excluded": [
     "data/*",
     "Assets/Looks/*",

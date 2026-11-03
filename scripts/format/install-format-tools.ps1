@@ -15,7 +15,7 @@ $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'FormatTools.psm1') -Force
 
 if (-not $ToolRoot) {
-    $ToolRoot = Join-Path $PSScriptRoot '../../.tools/format'
+    $ToolRoot = Get-DefaultToolRoot (Join-Path $PSScriptRoot '../..')
 }
 
 $ToolRoot = [IO.Path]::GetFullPath($ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($ToolRoot))

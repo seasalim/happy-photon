@@ -44,11 +44,24 @@ jobs:
         with:
           persist-credentials: false
 
-      # The pruning ledger check evaluates the test projects' Compile items.
+      # The pruning ledger check evaluates the test projects' Compile items. The adopted formatter check
+      # selects the pinned 10.0.401 SDK through its own scratch global.json; nothing else uses it.
       - name: Install .NET 10
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: |
+            10.0.x
+            10.0.401
+
+      - name: Install Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+
+      # The only download step; the policy check below then validates the pins and downloads nothing.
+      - name: Install pinned formatter tools
+        shell: pwsh
+        run: ./scripts/format/install-format-tools.ps1
 
       - name: Verify repository policy
         shell: pwsh

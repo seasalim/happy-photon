@@ -1,0 +1,171 @@
+name: Formatter qualification
+
+# Qualifies the pinned formatter commands and the adopted-scope check on Windows and Linux with networking
+# removed after the explicit install, whenever the formatter tooling changes.
+on:
+  pull_request:
+    paths:
+      - "scripts/format/**"
+      - ".github/workflows/format.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/format/**"
+      - ".github/workflows/format.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: format-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# The shell running the harness must not send its own telemetry, or the proxy sink counts it.
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "1"
+  POWERSHELL_TELEMETRY_OPTOUT: "1"
+  POWERSHELL_UPDATECHECK: "Off"
+
+jobs:
+  windows:
+    name: Qualify on Windows without network
+    runs-on: windows-2025
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install .NET SDK 10.0.401
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.401
+
+      - name: Install Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+
+      - name: Install pinned formatter tools
+        shell: pwsh
+        run: ./scripts/format/install-format-tools.ps1
+
+      - name: Block network access for the formatter tools and prove it
+        shell: pwsh
+        run: |
+          function Get-Reached {
+            $reached = @()
+            try { Invoke-WebRequest -UseBasicParsing -Uri https://www.powershellgallery.com -TimeoutSec 20 | Out-Null; $reached += 'pwsh' }
+            catch { "  pwsh: $($_.Exception.Message)" | Write-Host }
+            $git = git ls-remote https://github.com/actions/checkout HEAD 2>&1
+            if ($LASTEXITCODE -eq 0) { $reached += 'git' } else { "  git: exit $LASTEXITCODE $($git | Select-Object -First 1)" | Write-Host }
+            node -e "fetch('https://registry.npmjs.org/').then(() => process.exit(0), () => process.exit(3))"
+            if ($LASTEXITCODE -eq 0) { $reached += 'node' } else { "  node: exit $LASTEXITCODE" | Write-Host }
+            # dotnet package search can exit 0 after a failed request, so require an actual result;
+            # a fresh HTTP cache keeps the earlier positive control from answering offline.
+            $env:NUGET_HTTP_CACHE_PATH = Join-Path $env:RUNNER_TEMP ('nuget-http-' + [guid]::NewGuid().ToString('N'))
+            $search = (dotnet package search Newtonsoft.Json --take 1 --exact-match 2>&1) -join ' '
+            if ($search -match 'Newtonsoft\.Json\s*\|') { $reached += 'dotnet' } else { "  dotnet: $($search.Substring(0, [math]::Min(300, $search.Length)))" | Write-Host }
+            return , $reached
+          }
+
+          # Positive control: the probe must see all four tools online before the block.
+          $before = Get-Reached
+          "Online before blocking: $($before -join ', ')"
+          if ($before.Count -ne 4) { throw 'the network probe could not reach the network before blocking' }
+
+          Set-NetFirewallProfile -All -Enabled True
+          # Every executable under each tool's install root, plus Git's exec path for its HTTPS helpers.
+          $roots = foreach ($name in 'pwsh', 'node', 'dotnet', 'git') {
+            Split-Path (Get-Command $name -CommandType Application | Select-Object -First 1).Source
+          }
+          $roots = @($roots) + (Resolve-Path (git --exec-path)).Path | Sort-Object -Unique
+          $count = 0
+          foreach ($program in Get-ChildItem -LiteralPath $roots -Recurse -Filter *.exe -File) {
+            New-NetFirewallRule -DisplayName "format-block-$count" -Direction Outbound -Action Block -Program $program.FullName | Out-Null
+            $count++
+          }
+          "Blocked outbound traffic for $count executables under $($roots -join ', ')"
+
+          $after = Get-Reached
+          if ($after.Count) { throw "still reaching the network: $($after -join ', ')" }
+          'All four tools are offline.'
+
+      - name: Qualify
+        shell: pwsh
+        run: ./scripts/format/qualify-format.ps1 -EvidencePath "$env:RUNNER_TEMP/qualify-windows.json"
+
+      - name: Check adopted scope offline
+        shell: pwsh
+        run: ./scripts/format/check-adopted.ps1
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: qualify-windows
+          retention-days: 7
+          path: ${{ runner.temp }}/qualify-windows.json
+
+  linux:
+    name: Qualify on Linux without network and compare
+    needs: windows
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install .NET SDK 10.0.401
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.401
+
+      - name: Install Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+
+      - name: Install pinned formatter tools
+        shell: pwsh
+        run: ./scripts/format/install-format-tools.ps1
+
+      - name: Download Windows evidence
+        uses: actions/download-artifact@v8
+        with:
+          name: qualify-windows
+          path: ${{ runner.temp }}/windows
+
+      - name: Qualify and check in a network namespace with loopback only
+        shell: bash
+        run: |
+          set -euo pipefail
+          offline() {
+            sudo unshare --net -- bash -c 'ip link set lo up && exec sudo -u "$1" env "PATH=$2" "HOME=$3" "DOTNET_ROOT=$4" \
+              DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 POWERSHELL_TELEMETRY_OPTOUT=1 POWERSHELL_UPDATECHECK=Off "${@:5}"' \
+              _ "$USER" "$PATH" "$HOME" "${DOTNET_ROOT:-}" "$@"
+          }
+          # Positive control first: the same probe must succeed outside the namespace.
+          curl -sS --max-time 10 -o /dev/null https://www.powershellgallery.com
+          if offline curl -sS --max-time 10 -o /dev/null https://www.powershellgallery.com; then
+            echo "::error::network is still reachable inside the namespace"
+            exit 1
+          fi
+          echo "Network unavailable inside the qualification namespace."
+          offline pwsh -NoProfile -File ./scripts/format/qualify-format.ps1 \
+            -EvidencePath "$RUNNER_TEMP/qualify-linux.json" -CompareWith "$RUNNER_TEMP/windows/qualify-windows.json"
+          offline pwsh -NoProfile -File ./scripts/format/check-adopted.ps1
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: qualify-linux
+          retention-days: 7
+          path: ${{ runner.temp }}/qualify-linux.json

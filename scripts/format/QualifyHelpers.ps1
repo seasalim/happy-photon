@@ -141,10 +141,16 @@ function Get-HostState {
 }
 
 function Invoke-Format {
-    param([string]$Command, [string]$Repo, [string[]]$Path, [string]$Tools = $script:ToolRoot)
+    param([string]$Command, [string]$Repo, [string[]]$Path, [string]$Tools = $script:ToolRoot, [switch]$Adopted)
 
     $entry = Join-Path $script:FormatRoot "$Command-format.ps1"
-    $lines = @(& $entry -Path $Path -RepoRoot $Repo -ToolRoot $Tools)
+    $selection = @{ Path = $Path }
+
+    if ($Adopted) {
+        $selection = @{ Adopted = $true }
+    }
+
+    $lines = @(& $entry @selection -RepoRoot $Repo -ToolRoot $Tools)
     $exitCode = $LASTEXITCODE
     $module = Get-Module FormatTools
 

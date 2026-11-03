@@ -9,6 +9,7 @@ on:
       - "scripts/check-site.ps1"
       - "scripts/check-source-lines.ps1"
       - "scripts/SiteBuild.psm1"
+      - "scripts/format/**"
       - ".github/workflows/pages.yml"
   push:
     branches:
@@ -20,6 +21,7 @@ on:
       - "scripts/check-site.ps1"
       - "scripts/check-source-lines.ps1"
       - "scripts/SiteBuild.psm1"
+      - "scripts/format/**"
       - ".github/workflows/pages.yml"
   release:
     types:
@@ -59,6 +61,20 @@ jobs:
         shell: pwsh
         run: Install-Module Pester -RequiredVersion 5.7.1 -Scope CurrentUser -Force
 
+      # Formatter enforcement runs for source changes only, so release and scheduled deploys never depend
+      # on the formatter downloads. The formatter selects this SDK through its own scratch global.json.
+      - name: Install the formatter's pinned .NET SDK
+        if: github.event_name == 'pull_request' || github.event_name == 'push'
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: 10.0.401
+
+      # The only download step; the adopted check below validates the pins and downloads nothing.
+      - name: Install pinned formatter tools
+        if: github.event_name == 'pull_request' || github.event_name == 'push'
+        shell: pwsh
+        run: ./scripts/format/install-format-tools.ps1
+
       - name: Resolve committed site profile
         id: profile
         shell: pwsh
@@ -91,6 +107,11 @@ jobs:
             "Tests/Site/*.ps1",
             "Tests/Site/*.mjs"
           )
+
+      - name: Check adopted formatter scope
+        if: github.event_name == 'pull_request' || github.event_name == 'push'
+        shell: pwsh
+        run: ./scripts/format/check-adopted.ps1
 
       - name: Test release and platform logic
         shell: pwsh
