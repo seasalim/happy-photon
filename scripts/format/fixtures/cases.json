@@ -1,0 +1,122 @@
+{
+  "parsers": [
+    {
+      "name": "csharp",
+      "path": "src/Sample.cs",
+      "dirty": "namespace Fixture;\npublic class Sample{\npublic string Spaced => \"a  b\\t c \";\n    public string Verbatim = @\"line one\n   line two  \";\n  public string Interpolated(int n)=>$\"n = {n+1}  units\";\npublic string Raw = \"\"\"\n        raw  text\n        \"\"\";\npublic int Add(int x,int y){return x+y;}\n}\n",
+      "expected": "namespace Fixture;\n\npublic class Sample\n{\n    public string Spaced => \"a  b\\t c \";\n    public string Verbatim = @\"line one\n   line two  \";\n    public string Interpolated(int n) => $\"n = {n + 1}  units\";\n    public string Raw = \"\"\"\n        raw  text\n        \"\"\";\n    public int Add(int x, int y) { return x + y; }\n}\n",
+      "literals": [
+        "\"a  b\\t c \"",
+        "@\"line one\n   line two  \"",
+        "}  units\"",
+        "raw  text"
+      ]
+    },
+    {
+      "name": "powershell",
+      "path": "scripts/Sample.ps1",
+      "dirty": "function Get-Sample{\nparam([string]$Name)\n$table=@{a=1;b='x  y'}\n$here=@'\n  keep   this\n'@\nif($Name){ \"Hello,  $Name\" }else{ 'none' }\n}\n",
+      "expected": "function Get-Sample {\n    param([string]$Name)\n    $table = @{a = 1; b = 'x  y' }\n    $here = @'\n  keep   this\n'@\n    if ($Name) { \"Hello,  $Name\" }else { 'none' }\n}\n",
+      "literals": [
+        "'x  y'",
+        "@'\n  keep   this\n'@",
+        "\"Hello,  $Name\""
+      ]
+    },
+    {
+      "name": "javascript",
+      "path": "site/sample.js",
+      "dirty": "const greeting='Hello,  world';const tpl=`a  ${1+2}  b`;\nfunction add(a,b){return a+b}\n",
+      "expected": "const greeting = \"Hello,  world\";\nconst tpl = `a  ${1 + 2}  b`;\nfunction add(a, b) {\n  return a + b;\n}\n",
+      "literals": [
+        "Hello,  world",
+        "`a  ${",
+        "}  b`"
+      ]
+    },
+    {
+      "name": "module",
+      "path": "site/sample.mjs",
+      "dirty": "import {strict as assert} from 'node:assert';\nexport const value = { text : \"x  y\" , n:0XFF };\nassert.equal(value.n,255);\n",
+      "expected": "import { strict as assert } from \"node:assert\";\nexport const value = { text: \"x  y\", n: 0xff };\nassert.equal(value.n, 255);\n",
+      "literals": [
+        "node:assert",
+        "x  y"
+      ]
+    },
+    {
+      "name": "typescript",
+      "path": "site/sample.ts",
+      "dirty": "interface Point{ x:number; label:string }\nexport const origin:Point={x:0,label:'zero  point'};\n",
+      "expected": "interface Point {\n  x: number;\n  label: string;\n}\nexport const origin: Point = { x: 0, label: \"zero  point\" };\n",
+      "literals": [
+        "zero  point"
+      ]
+    },
+    {
+      "name": "css",
+      "path": "site/sample.css",
+      "dirty": ".lead{color:#333;content:\"  a  b \";margin:0 auto}\n",
+      "expected": ".lead {\n  color: #333;\n  content: \"  a  b \";\n  margin: 0 auto;\n}\n",
+      "literals": [
+        "\"  a  b \""
+      ]
+    },
+    {
+      "name": "json",
+      "path": "site/sample.json",
+      "dirty": "{\"name\":\"sample\",\"spaced\":\"a  b\",\"list\":[1,2.5,-3],\"nested\":{\"ok\":true}}\n",
+      "expected": "{\n  \"name\": \"sample\",\n  \"spaced\": \"a  b\",\n  \"list\": [1, 2.5, -3],\n  \"nested\": { \"ok\": true }\n}\n",
+      "literals": [
+        "\"a  b\"",
+        "2.5",
+        "-3"
+      ]
+    }
+  ],
+  "semantics": [
+    {
+      "name": "JSON number text",
+      "path": "site/price.json",
+      "files": {
+        "site/price.json": "{\"price\": 2.50}\n"
+      }
+    }
+  ],
+  "size": {
+    "jsPath": "site/big.js",
+    "jsonPath": "site/big.json",
+    "jsPrefix": "const items = [",
+    "jsSuffix": "];\n",
+    "item": "\"item{0}\"",
+    "count": 600
+  },
+  "parseErrors": [
+    {
+      "path": "src/Broken.cs",
+      "text": "class Broken { void M( { } }\n"
+    },
+    {
+      "path": "scripts/Broken.ps1",
+      "text": "function Broken { if (\n"
+    },
+    {
+      "path": "site/broken.js",
+      "text": "const = ;\n"
+    }
+  ],
+  "guards": {
+    "csharp": {
+      "before": "class A { string s = \"a  b\"; int n = 1; }\n",
+      "whitespace": "class A\n{\n    string s = \"a  b\";\n    int n = 1;\n}\n",
+      "literal": "class A { string s = \"a b\"; int n = 1; }\n",
+      "token": "class A { string s = \"a  b\"; int n = 2; }\n"
+    },
+    "powershell": {
+      "before": "function f {\n    $value = 'a  b'\n    return $value\n}\n",
+      "whitespace": "function f {\n  $value   =   'a  b'\n  return $value\n}\n",
+      "literal": "function f {\n    $value = 'a b'\n    return $value\n}\n",
+      "statement": "function f {\n    $value = 'a  b'\n    return\n    $value\n}\n"
+    }
+  }
+}

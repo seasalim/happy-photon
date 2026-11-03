@@ -1,0 +1,18 @@
+{
+  "excluded": [
+    "data/*",
+    "Assets/Looks/*",
+    "Tests/assets/*",
+    "fixtures/*",
+    "*/fixtures/*",
+    "*fixtures.json",
+    "native/libraw/oracle/*",
+    "native/libraw/ports/*",
+    "packages/*",
+    "packages.lock.json",
+    "packages.AnyCPU.lock.json",
+    "package-lock.json",
+    "*.min.js",
+    "*.min.css"
+  ]
+}

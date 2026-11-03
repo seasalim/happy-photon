@@ -19,3 +19,6 @@ TestResults/
 
 # Python
 __pycache__/
+
+# Pinned formatter tools (scripts/format/install-format-tools.ps1)
+.tools/

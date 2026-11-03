@@ -1,0 +1,8 @@
+{
+  "name": "happy-photon-format-tools",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "prettier": "3.9.9"
+  }
+}
