@@ -8,7 +8,7 @@ param(
     [string]$ToolRoot
 )
 
-$version   =   $PSVersionTable.PSVersion
+$version = $PSVersionTable.PSVersion
 
 if ($version.Major -lt 7 -or ($version.Major -eq 7 -and $version.Minor -lt 4)) {
     Write-Output 'VERSION: PowerShell 7.4 or later is required'
