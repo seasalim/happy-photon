@@ -201,7 +201,9 @@ Generate the committed Store assets after changing the application icon:
 ./scripts/generate-windows-msix-assets.ps1
 ```
 
-The generator preserves and verifies transparent icon corners. It also writes
+The generator preserves and verifies transparent icon corners, including the
+`altform-unplated` target sizes the taskbar uses; the packager indexes them into
+`resources.pri`, without which Windows draws the icon on a square accent plate. It also writes
 `packaging/windows/StoreListing/AppTileIcon.png`; upload that file as the
 300-by-300 **1:1 App tile icon** in the Partner Center Store listing so the
 Store uses it instead of deriving a listing icon from the package.

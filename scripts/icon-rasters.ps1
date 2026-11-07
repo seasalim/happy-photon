@@ -44,6 +44,12 @@ function Import-MagickNet {
     Add-Type -Path $coreAssembly
     Add-Type -Path $magickAssembly
     $env:PATH = "$nativeDirectory$([IO.Path]::PathSeparator)$env:PATH"
+
+    # Newer PowerShell hosts no longer search PATH for P/Invoke libraries; loading
+    # the natives by full path lets Magick.NET's DllImport resolve them.
+    Get-ChildItem -LiteralPath $nativeDirectory -Filter *.dll |
+        Sort-Object { $_.Name -notlike 'vcomp*' } |
+        ForEach-Object { [Runtime.InteropServices.NativeLibrary]::Load($_.FullName) | Out-Null }
 }
 
 function Read-IconRaster {

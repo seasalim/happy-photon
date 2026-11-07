@@ -70,21 +70,23 @@ function Resolve-MsixVersion([string]$SemVer) {
     return "$($parts[0]).$($parts[1]).$($parts[2]).0"
 }
 
-function Find-MakeAppx {
+function Find-SdkTool([string]$FileName) {
     $kitsDirectory = "${env:ProgramFiles(x86)}\Windows Kits\10\bin"
-    $makeAppx = Get-ChildItem $kitsDirectory -Recurse -Filter makeappx.exe |
-        Where-Object FullName -Match '\\x64\\makeappx\.exe$' |
+    $tool = Get-ChildItem $kitsDirectory -Recurse -Filter $FileName |
+        Where-Object FullName -Match "\\x64\\$([regex]::Escape($FileName))$" |
         Sort-Object FullName -Descending |
         Select-Object -First 1
-    if (-not $makeAppx) {
-        throw 'The x64 Windows SDK MakeAppx.exe tool was not found.'
+    if (-not $tool) {
+        throw "The x64 Windows SDK $FileName tool was not found."
     }
 
-    return $makeAppx.FullName
+    return $tool.FullName
 }
 
 $msixVersion = Resolve-MsixVersion $Version
-$makeAppxPath = Find-MakeAppx
+$makeAppxPath = Find-SdkTool 'makeappx.exe'
+$makePriPath = Find-SdkTool 'makepri.exe'
+$priDirectory = Join-Path $artifactRoot 'pri'
 
 foreach ($requiredPath in @($manifestTemplate, $assetDirectory, $projectPath)) {
     if (-not (Test-Path -LiteralPath $requiredPath)) {
@@ -109,7 +111,8 @@ foreach ($directory in @(
     $publishDirectory,
     $stagingDirectory,
     $inspectionDirectory,
-    $packageDirectory
+    $packageDirectory,
+    $priDirectory
 )) {
     Remove-BuildDirectory $directory
     [IO.Directory]::CreateDirectory($directory) | Out-Null
@@ -193,6 +196,28 @@ finally {
     $writer.Dispose()
 }
 
+# Windows resolves the scale, target-size and unplated logo variants only through
+# resources.pri; without it the taskbar draws the base logo on an accent plate.
+# Index only the Assets folder so the binaries stay out of the resource index.
+$priRoot = Join-Path $priDirectory 'root'
+$priConfigPath = Join-Path $priDirectory 'priconfig.xml'
+Copy-Item -LiteralPath $assetDirectory -Destination (Join-Path $priRoot 'Assets') -Recurse
+
+& $makePriPath createconfig /cf $priConfigPath /dq en-US /pv 10.0.0 /o | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    throw 'MakePri failed to create its configuration.'
+}
+
+& $makePriPath new `
+    /pr $priRoot `
+    /cf $priConfigPath `
+    /mn $manifestPath `
+    /of (Join-Path $stagingDirectory 'resources.pri') `
+    /o | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    throw 'MakePri failed to index the MSIX assets.'
+}
+
 $packOutput = & $makeAppxPath pack `
     /o `
     /h SHA256 `
@@ -217,6 +242,8 @@ $unpackOutput | Select-Object -Last 3 | Write-Output
 $requiredPackageFiles = @(
     'AppxManifest.xml',
     'HappyPhoton.exe',
+    'resources.pri',
+    'Assets\Square44x44Logo.targetsize-48_altform-unplated.png',
     'LICENSE',
     'TRADEMARKS.md',
     'THIRD_PARTY_NOTICES.md',
