@@ -148,7 +148,8 @@ jobs:
         if: matrix.rid == 'win-x64'
         shell: pwsh
         run: |
-          $version = (dotnet msbuild HappyPhoton.csproj -nologo -getProperty:Version).Trim()
+          # MSIX takes a final x.y.z version; CI packages use the project version's core.
+          $version = ((dotnet msbuild HappyPhoton.csproj -nologo -getProperty:Version).Trim() -split '-')[0]
           ./scripts/package-windows-msix.ps1 `
             -Version $version `
             -SourceRevision ${{ steps.source-identity.outputs.source-revision }} `
