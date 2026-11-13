@@ -128,6 +128,11 @@ if (-not $NoRestore) {
     }
 }
 
+# The composite single-file publish shares this folder; its component stubs would ship
+# without their composite image, and the package would fail fast at launch.
+Remove-Item -LiteralPath (Join-Path $repositoryRoot 'obj\Release\net10.0\win-x64\R2R') `
+    -Recurse -Force -ErrorAction SilentlyContinue
+
 $publishArguments = @(
     'publish'
     $projectPath

@@ -1,5 +1,6 @@
 <Styles xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:HappyPhoton.ViewModels">
     <Style Selector="Expander.develop-group">
         <Setter Property="HorizontalAlignment" Value="Stretch"/>
         <Setter Property="Focusable" Value="False"/>
@@ -11,7 +12,7 @@
                     <TextBlock Classes="section-label" Text="{Binding}"/>
                     <Ellipse Width="5" Height="5" Fill="{DynamicResource TextSecondary}"
                              VerticalAlignment="Center"
-                             IsVisible="{ReflectionBinding $parent[Expander].Tag.ShowsEditDot}"/>
+                             IsVisible="{Binding $parent[Expander].((vm:DevelopGroupViewModel)Tag).ShowsEditDot}"/>
                 </StackPanel>
             </DataTemplate>
         </Setter>
@@ -25,7 +26,7 @@
                                   Content="{TemplateBinding Header}"
                                   ContentTemplate="{TemplateBinding HeaderTemplate}"
                                   AutomationProperties.Name="{TemplateBinding Header}"
-                                  AutomationProperties.HelpText="{ReflectionBinding $parent[Expander].Tag.EditDotHelpText}"
+                                  AutomationProperties.HelpText="{Binding $parent[Expander].((vm:DevelopGroupViewModel)Tag).EditDotHelpText}"
                                   IsChecked="{TemplateBinding IsExpanded, Mode=TwoWay}"
                                   ToolTip.Tip="Alt+click to show only this group"/>
                     <ContentPresenter Name="PART_ContentPresenter" Grid.Row="1" Margin="0,8,0,4"

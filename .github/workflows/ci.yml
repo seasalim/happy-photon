@@ -224,6 +224,22 @@ jobs:
             $line | Out-File -LiteralPath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           }
 
+      # Trimming failures only show at run time in the published build.
+      - name: Self-check packaged builds
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          $executables = switch ('${{ matrix.rid }}') {
+            'win-x64' { 'artifacts/ci/win-x64/HappyPhoton.exe', 'artifacts/windows-msix/inspection/HappyPhoton.exe' }
+            'linux-x64' { 'artifacts/ci/linux-x64/HappyPhoton' }
+            'osx-arm64' { 'artifacts/osx-arm64/Happy Photon.app/Contents/MacOS/HappyPhoton' }
+          }
+
+          foreach ($executable in $executables) {
+            Write-Output "Self-check: $executable"
+            ./scripts/run-self-check.ps1 -Executable $executable
+          }
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v7

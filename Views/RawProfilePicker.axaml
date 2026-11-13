@@ -53,13 +53,13 @@
                       ToolTip.Tip="{Binding RawProfilePickerState.SelectedOption.ClosedRowTooltip}"
                       AutomationProperties.Name="Camera profile">
                 <ComboBox.Styles>
-                    <Style Selector="ComboBoxItem">
+                    <Style Selector="ComboBoxItem" x:DataType="vm:RawProfileOptionViewModel">
                         <Setter Property="IsEnabled"
-                                Value="{ReflectionBinding CanActivate}"/>
+                                Value="{Binding CanActivate}"/>
                         <Setter Property="HorizontalContentAlignment"
                                 Value="Stretch"/>
                         <Setter Property="ToolTip.Tip"
-                                Value="{ReflectionBinding Status}"/>
+                                Value="{Binding Status}"/>
                         <Setter Property="ToolTip.ShowOnDisabled" Value="True"/>
                     </Style>
                 </ComboBox.Styles>

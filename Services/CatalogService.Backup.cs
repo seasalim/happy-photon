@@ -9,6 +9,10 @@ public partial class CatalogService
 
     internal bool SkipUpgradeBackupForTests { get; set; }
 
+    // The self-check runs beside a possibly running instance, whose import snapshot the
+    // age-based sweep cannot tell from an orphan.
+    internal bool SkipSnapshotSweep { get; init; }
+
     internal Action<CatalogBackupService>? ConfigureUpgradeBackup { get; set; }
 
     internal Guid? OpenCatalogIdentity => _initialized ? _identity?.CatalogId : null;

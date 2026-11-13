@@ -56,17 +56,17 @@
             <ItemsControl ItemsSource="{Binding HistoryEntries}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:EditHistoryEntry">
-                        <Button x:CompileBindings="False" Content="{Binding Label}" Classes="compact-button history-row"
+                        <Button Content="{Binding Label}" Classes="compact-button history-row"
                                 Classes.current="{Binding IsCurrent}"
                                 PointerEntered="OnHistoryRowPointerEntered"
                                 PointerExited="OnHistoryRowPointerExited"
-                                Command="{Binding DataContext.JumpToHistoryStepCommand, ElementName=Root}"
+                                Command="{Binding #Root.((vm:MainWindowViewModel)DataContext).JumpToHistoryStepCommand}"
                                 CommandParameter="{Binding}">
                             <Button.ContextMenu>
                                 <ContextMenu>
                                     <MenuItem x:Name="ClearHistoryAboveStepMenuItem"
                                               Header="Clear history above this step"
-                                              Command="{Binding DataContext.ClearHistoryAboveStepCommand, ElementName=Root}"
+                                              Command="{Binding #Root.((vm:MainWindowViewModel)DataContext).ClearHistoryAboveStepCommand}"
                                               CommandParameter="{Binding}"/>
                                 </ContextMenu>
                             </Button.ContextMenu>

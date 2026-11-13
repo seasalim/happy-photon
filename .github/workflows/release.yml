@@ -106,6 +106,11 @@ jobs:
             -BuildTimestampUtc ${{ needs.prepare.outputs.build-timestamp }} `
             -ContinuousIntegrationBuild `
             -NoRestore
+      - name: Self-check Microsoft Store package
+        if: needs.prepare.outputs.is-prerelease == 'false'
+        shell: pwsh
+        timeout-minutes: 15
+        run: ./scripts/run-self-check.ps1 -Executable artifacts/windows-msix/inspection/HappyPhoton.exe
       - name: Upload private Microsoft Store package
         if: needs.prepare.outputs.is-prerelease == 'false'
         uses: actions/upload-artifact@v7
@@ -133,6 +138,10 @@ jobs:
             -OutputPath artifacts/release/win-x64/DEPENDENCIES.json `
             -Version ${{ needs.prepare.outputs.version }} `
             -RuntimeIdentifier win-x64
+      - name: Self-check Windows build
+        shell: pwsh
+        timeout-minutes: 15
+        run: ./scripts/run-self-check.ps1 -Executable artifacts/release/win-x64/HappyPhoton.exe
       - name: Create Windows ZIP
         shell: pwsh
         run: |
@@ -207,6 +216,11 @@ jobs:
             -C artifacts/release/linux-x64 \
             -cf - . |
             gzip -n > "$artifact"
+
+      - name: Self-check Linux build
+        shell: pwsh
+        timeout-minutes: 15
+        run: ./scripts/run-self-check.ps1 -Executable artifacts/release/linux-x64/HappyPhoton
 
       - name: Create Linux AppImage
         shell: bash
@@ -340,6 +354,11 @@ jobs:
             export APPLE_SIGNING_IDENTITY="-"
           fi
           ./scripts/package-macos.sh arm64
+
+      - name: Self-check signed app
+        shell: pwsh
+        timeout-minutes: 15
+        run: ./scripts/run-self-check.ps1 -Executable "artifacts/osx-arm64/Happy Photon.app/Contents/MacOS/HappyPhoton"
 
       - name: Smoke test signed app launch
         shell: bash
