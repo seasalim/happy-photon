@@ -20,6 +20,15 @@ internal static class RenderKernelSupport
         return (ushort)(value + 0.5f);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static ushort ToQuantum(double value)
+    {
+        if (value <= ushort.MinValue) return ushort.MinValue;
+        if (value >= ushort.MaxValue) return ushort.MaxValue;
+
+        return (ushort)(value + 0.5);
+    }
+
     internal static double CalculateEffectiveSigma(
         MagickImage image,
         BaseImageInfo info,

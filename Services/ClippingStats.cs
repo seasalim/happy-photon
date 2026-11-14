@@ -85,10 +85,10 @@ internal static class ClippingStatsCalculator
             ? new byte[pixels]
             : null;
         long lowR = 0, lowG = 0, lowB = 0, lowAll = 0;
-        var workers = WorkerCount(pixels);
+        var workers = ParallelChunks.WorkerCount(pixels, 8192);
         Parallel.For(0, workers, worker =>
         {
-            var (start, end) = ChunkRange(pixels, worker, workers);
+            var (start, end) = ParallelChunks.ChunkRange(pixels, worker, workers);
             long localLowR = 0, localLowG = 0, localLowB = 0, localLowAll = 0;
             for (var pixel = start; pixel < end; pixel++)
             {
@@ -152,16 +152,6 @@ internal static class ClippingStatsCalculator
                     overlaySides,
                     flags));
     }
-
-    private static int WorkerCount(int pixelCount) =>
-        Math.Min(Environment.ProcessorCount, Math.Max(1, pixelCount / 8192));
-
-    private static (int Start, int End) ChunkRange(
-        int pixelCount,
-        int worker,
-        int workers) =>
-        ((int)((long)pixelCount * worker / workers),
-            (int)((long)pixelCount * (worker + 1) / workers));
 
     // Magick Q16 to byte scaling: nearest integer, including alpha.
     private static byte Scale(ushort value) => (byte)((value + 128) / 257);

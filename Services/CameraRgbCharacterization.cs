@@ -1,6 +1,5 @@
 using System.Buffers;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using ImageMagick;
 
 namespace HappyPhoton.Services;
@@ -158,30 +157,14 @@ internal sealed class CameraRgbCharacterization
 
     private static bool TryInvert(double[,] value, out double[,] inverse)
     {
-        var a = value[0, 0];
-        var b = value[0, 1];
-        var c = value[0, 2];
-        var d = value[1, 0];
-        var e = value[1, 1];
-        var f = value[1, 2];
-        var g = value[2, 0];
-        var h = value[2, 1];
-        var i = value[2, 2];
-        var determinant = a * (e * i - f * h) -
-            b * (d * i - f * g) + c * (d * h - e * g);
-        if (!double.IsFinite(determinant) || Math.Abs(determinant) < 1e-12)
+        if (ChromaticAdaptation.InvertOrNull(value) is not { } result)
         {
             inverse = ChromaticAdaptation.Identity();
             return false;
         }
 
-        var scale = 1 / determinant;
-        inverse = new[,]
-        {
-            { (e * i - f * h) * scale, (c * h - b * i) * scale, (b * f - c * e) * scale },
-            { (f * g - d * i) * scale, (a * i - c * g) * scale, (c * d - a * f) * scale },
-            { (d * h - e * g) * scale, (b * g - a * h) * scale, (a * e - b * d) * scale }
-        };
+        inverse = result;
+
         return inverse.Cast<double>().All(double.IsFinite);
     }
 
@@ -306,9 +289,7 @@ internal sealed class CameraRgbCharacterization
         var m20 = CameraToRec2020[2, 0];
         var m21 = CameraToRec2020[2, 1];
         var m22 = CameraToRec2020[2, 2];
-        var workers = Math.Min(
-            Environment.ProcessorCount,
-            Math.Max(1, (pixelCount + 32_767) / 32_768));
+        var workers = ParallelChunks.WorkerCountCeiling(pixelCount, 32_768);
         Parallel.For(0, workers, new ParallelOptions
         {
             CancellationToken = cancellationToken
@@ -330,22 +311,14 @@ internal sealed class CameraRgbCharacterization
                 var red = source[input];
                 var green = source[input + 1];
                 var blue = source[input + 2];
-                destination[output + layout.Red] = EncodeQ16(
+                destination[output + layout.Red] = RenderKernelSupport.ToQuantum(
                     m00 * red + m01 * green + m02 * blue);
-                destination[output + layout.Green] = EncodeQ16(
+                destination[output + layout.Green] = RenderKernelSupport.ToQuantum(
                     m10 * red + m11 * green + m12 * blue);
-                destination[output + layout.Blue] = EncodeQ16(
+                destination[output + layout.Blue] = RenderKernelSupport.ToQuantum(
                     m20 * red + m21 * green + m22 * blue);
             }
         });
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static ushort EncodeQ16(double value)
-    {
-        if (value <= ushort.MinValue) return ushort.MinValue;
-        if (value >= ushort.MaxValue) return ushort.MaxValue;
-        return (ushort)(value + 0.5);
     }
 
     private static MagickImage ImportDirect(

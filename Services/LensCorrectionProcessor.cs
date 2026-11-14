@@ -188,7 +188,7 @@ internal static class LensCorrectionProcessor
         var source = (ushort*)sourceAddress;
         var matrix = characterization.CameraToRec2020;
         var applyMatrix = characterization.AppliesMatrix;
-        var workers = Math.Min(Environment.ProcessorCount, Math.Max(1, rows / 16));
+        var workers = ParallelChunks.WorkerCount(rows, 16);
         Parallel.For(0, workers,
             new ParallelOptions { CancellationToken = cancellationToken }, worker =>
             {
@@ -246,18 +246,18 @@ internal static class LensCorrectionProcessor
                     var destination = ((y - bandY) * outputWidth + x) * layout.Channels;
                     if (applyMatrix)
                     {
-                        buffer[destination + layout.Red] = Encode(
+                        buffer[destination + layout.Red] = RenderKernelSupport.ToQuantum(
                             matrix[0, 0] * camera0 + matrix[0, 1] * camera1 + matrix[0, 2] * camera2);
-                        buffer[destination + layout.Green] = Encode(
+                        buffer[destination + layout.Green] = RenderKernelSupport.ToQuantum(
                             matrix[1, 0] * camera0 + matrix[1, 1] * camera1 + matrix[1, 2] * camera2);
-                        buffer[destination + layout.Blue] = Encode(
+                        buffer[destination + layout.Blue] = RenderKernelSupport.ToQuantum(
                             matrix[2, 0] * camera0 + matrix[2, 1] * camera1 + matrix[2, 2] * camera2);
                     }
                     else
                     {
-                        buffer[destination + layout.Red] = Encode(camera0);
-                        buffer[destination + layout.Green] = Encode(camera1);
-                        buffer[destination + layout.Blue] = Encode(camera2);
+                        buffer[destination + layout.Red] = RenderKernelSupport.ToQuantum(camera0);
+                        buffer[destination + layout.Green] = RenderKernelSupport.ToQuantum(camera1);
+                        buffer[destination + layout.Blue] = RenderKernelSupport.ToQuantum(camera2);
                     }
                 }
             });
@@ -426,10 +426,6 @@ internal static class LensCorrectionProcessor
         int channel) =>
         (topLeft[channel] + (topRight[channel] - topLeft[channel]) * fx) * (1 - fy) +
         (bottomLeft[channel] + (bottomRight[channel] - bottomLeft[channel]) * fx) * fy;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static ushort Encode(double value) => value <= 0 ? (ushort)0 :
-        value >= ushort.MaxValue ? ushort.MaxValue : (ushort)(value + 0.5);
 
     private static void Validate(
         ReadOnlySpan<byte> source,

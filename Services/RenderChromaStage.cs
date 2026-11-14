@@ -93,9 +93,7 @@ internal static class RenderChromaStage
         RenderExecutionOptions? execution)
     {
         var mixerParameters = mixer;
-        var workers = Math.Min(
-            Environment.ProcessorCount,
-            Math.Max(1, (pixelCount + 32_767) / 32_768));
+        var workers = ParallelChunks.WorkerCountCeiling(pixelCount, 32_768);
         if (execution is { } bounded)
         {
             workers = bounded.CapWorkers(workers);

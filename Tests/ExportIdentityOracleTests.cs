@@ -93,9 +93,9 @@ public sealed class ExportIdentityOracleTests
 
     private static MagickImage FinalizeProofCase(MagickImage upstream,
         ExportVariant variant, ExportSettings settings, EditSettings edits) =>
-        RenderFinalizer.FinalizeOwnedProof(upstream, variant.MaxDimension,
-            settings.OutputColorSpace, settings.OutputSharpening, edits.Effects,
-            settings.SnapshotOutput().Watermark);
+        RenderFinalizer.FinalizeOwned(upstream, variant.MaxDimension,
+            settings.OutputColorSpace, settings.OutputSharpening, wasResized: false,
+            effects: edits.Effects, watermark: settings.SnapshotOutput().Watermark);
 
     private static string HashProof(MagickImage image)
     {

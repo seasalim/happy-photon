@@ -53,8 +53,8 @@ public sealed class WatermarkRendererTests
             var spec = new WatermarkSpec("© Jane Doe 2026");
             using var export = RenderFinalizer.Finalize(source, size, color,
                 OutputSharpeningMode.Screen, false, watermark: spec);
-            using var proof = RenderFinalizer.FinalizeProof(source, size, color,
-                OutputSharpeningMode.Screen, watermark: spec);
+            using var proof = RenderFinalizer.Finalize(source, size, color,
+                OutputSharpeningMode.Screen, wasResized: false, watermark: spec);
             using var off = RenderFinalizer.Finalize(source, size, color,
                 OutputSharpeningMode.Screen, false);
             Assert.Equal(Rgba(export), Rgba(proof));

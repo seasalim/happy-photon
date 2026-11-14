@@ -6,76 +6,6 @@ namespace HappyPhoton.Services;
 
 internal static class RenderFinalizer
 {
-    internal static MagickImage FinalizeProof(
-        MagickImage displayRec2020,
-        int? maxDimension,
-        OutputColorSpace outputColorSpace,
-        OutputSharpeningMode outputSharpening,
-        EffectsSettings? effects = null,
-        WatermarkSpec? watermark = null)
-    {
-        ArgumentNullException.ThrowIfNull(displayRec2020);
-        if (maxDimension is <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(maxDimension));
-        }
-
-        return FinalizeOwnedProof(
-            new MagickImage(displayRec2020),
-            maxDimension,
-            outputColorSpace,
-            outputSharpening,
-            effects, watermark);
-    }
-
-    internal static MagickImage FinalizeOwnedProof(
-        MagickImage displayRec2020,
-        int? maxDimension,
-        OutputColorSpace outputColorSpace,
-        OutputSharpeningMode outputSharpening,
-        EffectsSettings? effects = null,
-        WatermarkSpec? watermark = null)
-    {
-        ArgumentNullException.ThrowIfNull(displayRec2020);
-        try
-        {
-            if (maxDimension is <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(maxDimension));
-            }
-
-            var before = Math.Max(displayRec2020.Width, displayRec2020.Height);
-            if (maxDimension is { } limit)
-            {
-                RenderColorEncoding.ResizeInLinearLight(displayRec2020, limit);
-            }
-            var wasResized = Math.Max(
-                displayRec2020.Width,
-                displayRec2020.Height) < before;
-            RenderSharpening.ApplyOutput(
-                displayRec2020,
-                outputSharpening,
-                wasResized,
-                DefaultBandPixelLimit);
-            RenderEffects.Apply(displayRec2020, effects);
-            RenderColorEncoding.ConvertEncodedRec2020ToTarget(
-                displayRec2020,
-                outputColorSpace);
-            if (watermark != null)
-            {
-                var watermarkProbe = RenderStageProbe.Begin();
-                WatermarkRenderer.Apply(displayRec2020, watermark);
-                RenderStageProbe.End(watermarkProbe, "watermark", displayRec2020);
-            }
-            return displayRec2020;
-        }
-        catch
-        {
-            displayRec2020.Dispose();
-            throw;
-        }
-    }
-
     internal static MagickImage Finalize(
         MagickImage displayRec2020,
         int? maxDimension,
@@ -206,7 +136,7 @@ internal static class RenderFinalizer
             var probe = RenderStageProbe.Begin();
             if (maxDimension is { } limit)
             {
-                RenderColorEncoding.ResizeInLinearLightResting(
+                RenderColorEncoding.ResizeInLinearLight(
                     displayRec2020,
                     limit,
                     execution);
@@ -214,13 +144,13 @@ internal static class RenderFinalizer
             RenderStageProbe.End(probe, "resize", displayRec2020);
             execution.ThrowIfCancellationRequested();
             probe = RenderStageProbe.Begin();
-            RenderEffects.ApplyResting(
+            RenderEffects.Apply(
                 displayRec2020,
                 effects,
                 execution);
             RenderStageProbe.End(probe, "effects", displayRec2020);
             probe = RenderStageProbe.Begin();
-            RenderColorEncoding.ConvertEncodedRec2020ToTargetResting(
+            RenderColorEncoding.ConvertEncodedRec2020ToTarget(
                 displayRec2020,
                 outputColorSpace,
                 execution);

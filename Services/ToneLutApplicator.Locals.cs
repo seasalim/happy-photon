@@ -12,12 +12,12 @@ internal static partial class ToneLutApplicator
         var values = pixels.GetArea(0, 0, image.Width, image.Height)!;
         var layout = RenderKernelSupport.GetLayout(pixels);
         var count = checked((int)(image.Width * image.Height));
-        var workers = execution?.CapWorkers(WorkerCount(count)) ?? WorkerCount(count);
+        var workers = execution?.CapWorkers(ParallelChunks.WorkerCount(count, 8192)) ?? ParallelChunks.WorkerCount(count, 8192);
         var needsBasis = locals.NeedsBasis;
         var extended = locals.HasWhitesBlacks ? ExtendedToneLut.ForStandard(luts, tone, execution) : null;
         Parallel.For(0, workers, execution?.ParallelOptions ?? new ParallelOptions(), worker =>
         {
-            var (start, end) = ChunkRange(count, worker, workers);
+            var (start, end) = ParallelChunks.ChunkRange(count, worker, workers);
             for (var pixel = start; pixel < end; pixel++)
             {
                 if ((pixel & 8191) == 0) execution?.ThrowIfCancellationRequested();

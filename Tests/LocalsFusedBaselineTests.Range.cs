@@ -38,7 +38,7 @@ public sealed partial class LocalsFusedBaselineTests
                 windowEvaluations += System.Numerics.BitOperations.PopCount((uint)active);
             }
         var wb = RenderChromaticStage.CreateWhiteBalanceMatrix(basis.Info, Settings);
-        var matrix = new DcpRenderMatrix(wb);
+        var matrix = new AgxCrossing.Matrix3x3(wb);
         var workers = Math.Min(Environment.ProcessorCount, Math.Max(1, (pixels + 32767) / 32768));
         var totals = new double[workers];
         var windows = Enumerable.Range(0, 8).Select(i => (

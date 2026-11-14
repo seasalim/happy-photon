@@ -40,7 +40,7 @@ internal static class LocalRangeMaskRenderer
             var destination = (byte*)frame.Address;
             var stride = frame.RowBytes;
             var count = size.Width * size.Height;
-            var workers = Math.Min(Environment.ProcessorCount, Math.Max(1, (count + 32767) / 32768));
+            var workers = ParallelChunks.WorkerCountCeiling(count, 32768);
             Parallel.For(0, workers, new ParallelOptions { CancellationToken = token }, RenderWorker);
             // Requested overlays must meet their latency bound on the first use, before tier promotion.
             [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]

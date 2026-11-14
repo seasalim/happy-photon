@@ -77,9 +77,7 @@ internal sealed class SourceSaturationMask
         var values = pixels.ToShortArray(PixelMapping.RGB) ??
             throw new InvalidOperationException(
                 "Unable to read encoded source pixels.");
-        var workers = Math.Min(
-            Environment.ProcessorCount,
-            Math.Max(1, height / 64));
+        var workers = ParallelChunks.WorkerCount(height, 64);
 
         Parallel.For(
             0,
@@ -87,12 +85,12 @@ internal sealed class SourceSaturationMask
             new ParallelOptions { CancellationToken = cancellationToken },
             worker =>
             {
-                var (startRow, endRow) = ChunkRange(height, worker, workers);
+                var (startRow, endRow) = ParallelChunks.ChunkRange(height, worker, workers);
                 for (var y = startRow; y < endRow; y++)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    var sourceStart = CeilingDivide((long)y * sourceHeight, height);
-                    var sourceEnd = CeilingDivide((long)(y + 1) * sourceHeight, height);
+                    var sourceStart = ParallelChunks.CeilingDivide((long)y * sourceHeight, height);
+                    var sourceEnd = ParallelChunks.CeilingDivide((long)(y + 1) * sourceHeight, height);
                     for (var sourceY = sourceStart; sourceY < sourceEnd; sourceY++)
                     {
                         var rowOffset = sourceY * sourceWidth * ChannelCount;
@@ -211,8 +209,8 @@ internal sealed class SourceSaturationMask
             return (target, target + 1);
         }
         return (
-            CeilingDivide((long)source * targetSize, sourceSize),
-            CeilingDivide((long)(source + 1) * targetSize, sourceSize));
+            ParallelChunks.CeilingDivide((long)source * targetSize, sourceSize),
+            ParallelChunks.CeilingDivide((long)(source + 1) * targetSize, sourceSize));
     }
 
     private static bool IsDecodedNearEndpoint(
@@ -240,14 +238,4 @@ internal sealed class SourceSaturationMask
             Math.Max(1, (int)Math.Round(width * scale)),
             Math.Max(1, (int)Math.Round(height * scale)));
     }
-
-    private static int CeilingDivide(long numerator, int denominator) =>
-        checked((int)((numerator + denominator - 1) / denominator));
-
-    private static (int Start, int End) ChunkRange(
-        int rows,
-        int worker,
-        int workers) =>
-        ((int)((long)rows * worker / workers),
-            (int)((long)rows * (worker + 1) / workers));
 }

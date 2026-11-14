@@ -6,14 +6,14 @@ namespace HappyPhoton.Tests;
 public sealed partial class LocalsContractPrototypeTests
 {
     private enum Candidate { Analytic, Linear16, Log }
-    private readonly record struct PreparedLocal(DcpRenderMatrix Matrix, double Gain, double Weight,
+    private readonly record struct PreparedLocal(AgxCrossing.Matrix3x3 Matrix, double Gain, double Weight,
         double Saturation, bool ColorActive);
 
     private static PreparedLocal[] Prepare(Local[] locals) => locals.Where(l => l.Active)
         .Select(l => new PreparedLocal(new(l.Matrix), Math.Pow(2, l.Ev), l.Weight,
             1 + l.Saturation / 100, l.Mired != 0 || l.Tint != 0 || l.Saturation != 0)).ToArray();
 
-    private static Rgb Transform(DcpRenderMatrix m, Rgb v) => new(
+    private static Rgb Transform(AgxCrossing.Matrix3x3 m, Rgb v) => new(
         m.Row0(v.R, v.G, v.B), m.Row1(v.R, v.G, v.B), m.Row2(v.R, v.G, v.B));
 
     private static Rgb CandidateLocals(Rgb v, PreparedLocal[] locals, bool mono)
@@ -45,12 +45,12 @@ public sealed partial class LocalsContractPrototypeTests
         private readonly AgxToneParameters _raw;
         private readonly ToneParams _standard;
         private readonly bool _isRaw;
-        private readonly DcpRenderMatrix _wb;
-        private readonly DcpRenderMatrix _inset = new(AgxToneEngine.InsetMatrix);
-        private readonly DcpRenderMatrix _outset = new(AgxToneEngine.OutsetMatrix);
+        private readonly AgxCrossing.Matrix3x3 _wb;
+        private readonly AgxCrossing.Matrix3x3 _inset = new(AgxToneEngine.InsetMatrix);
+        private readonly AgxCrossing.Matrix3x3 _outset = new(AgxToneEngine.OutsetMatrix);
         private readonly AgxCrossing _legacy;
         private readonly ToneLuts _legacyStandard;
-        private readonly DcpRenderMatrix _normalizedWb;
+        private readonly AgxCrossing.Matrix3x3 _normalizedWb;
         private readonly double[][] _tables;
         private readonly double _gain;
         private readonly double _slope;

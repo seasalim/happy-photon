@@ -221,9 +221,7 @@ internal sealed class ToneCurve
     private ToneCurve(Func<double, double> evaluate) => _evaluate = evaluate;
 
     internal static ToneCurve Identity { get; } = new(value => value);
-    internal static ToneCurve Srgb { get; } = new(value => value <= 0.04045
-        ? value / 12.92
-        : Math.Pow((value + 0.055) / 1.055, 2.4));
+    internal static ToneCurve Srgb { get; } = new(ToneLut.SrgbDecode);
 
     internal double Evaluate(double value) =>
         Math.Clamp(_evaluate(Math.Clamp(value, 0, 1)), 0, 1);

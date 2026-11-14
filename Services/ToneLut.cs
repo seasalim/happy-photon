@@ -21,6 +21,8 @@ internal static class ToneLut
 {
     internal const int Length = ushort.MaxValue + 1;
     private const int CacheCapacity = 4;
+    internal static readonly Lazy<double[]> SrgbDecodeTable = new(() => CreateTransferTable(SrgbDecode));
+    internal static readonly Lazy<double[]> SrgbEncodeTable = new(() => CreateTransferTable(SrgbEncode));
     private static readonly object CacheLock = new();
     private static readonly List<CacheEntry> Cache = [];
 
@@ -118,9 +120,7 @@ internal static class ToneLut
         CurveData? channelCurve, RenderExecutionOptions? execution)
     {
         var lut = new double[Length];
-        var workers = Math.Min(
-            Environment.ProcessorCount,
-            Math.Max(1, Length / 8192));
+        var workers = ParallelChunks.WorkerCount(Length, 8192);
         workers = execution?.CapWorkers(workers) ?? workers;
         Parallel.For(0, workers, worker =>
         {
@@ -180,6 +180,17 @@ internal static class ToneLut
         value <= 0.04045
             ? value / 12.92
             : Math.Pow((value + 0.055) / 1.055, 2.4);
+
+    private static double[] CreateTransferTable(Func<double, double> transfer)
+    {
+        var result = new double[Length];
+        for (var index = 0; index < result.Length; index++)
+        {
+            result[index] = transfer(index / (double)ushort.MaxValue);
+        }
+
+        return result;
+    }
 
     internal static double HighlightKnee(int highlights) =>
         1 + Math.Min(highlights, 0) / 100.0 * 0.55;

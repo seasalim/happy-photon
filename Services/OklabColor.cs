@@ -37,10 +37,6 @@ internal static partial class OklabColor
         Math.Sin(SkinHueCenterRadians);
     private static readonly double SkinHueEdgeCos =
         Math.Cos(SkinHueHalfWidthRadians);
-    private static readonly Lazy<double[]> SrgbDecode = new(
-        () => CreateTransferLut(ToneLut.SrgbDecode));
-    private static readonly Lazy<double[]> SrgbEncode = new(
-        () => CreateTransferLut(ToneLut.SrgbEncode));
 
     // ITU-R BT.2020-2 Rec.2020 -> XYZ D65 composed with Ottosson's
     // XYZ D65 -> LMS matrix. The inverse below is derived from the same
@@ -236,7 +232,7 @@ internal static partial class OklabColor
             return new OklabQ16(red, green, blue);
         }
 
-        var decode = SrgbDecode.Value;
+        var decode = ToneLut.SrgbDecodeTable.Value;
         var linearRed = decode[red];
         var linearGreen = decode[green];
         var linearBlue = decode[blue];
@@ -270,7 +266,7 @@ internal static partial class OklabColor
         {
             transformed = ProjectCartesianToRec2020Gamut(lightness, a, b);
         }
-        var encode = SrgbEncode.Value;
+        var encode = ToneLut.SrgbEncodeTable.Value;
         return new OklabQ16(
             EncodeQ16(transformed.Red, encode),
             EncodeQ16(transformed.Green, encode),
@@ -282,16 +278,6 @@ internal static partial class OklabColor
         value.Red is >= 0 and <= 1 &&
         value.Green is >= 0 and <= 1 &&
         value.Blue is >= 0 and <= 1;
-
-    private static double[] CreateTransferLut(Func<double, double> transfer)
-    {
-        var result = new double[ushort.MaxValue + 1];
-        for (var index = 0; index < result.Length; index++)
-        {
-            result[index] = transfer(index / (double)ushort.MaxValue);
-        }
-        return result;
-    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static ushort EncodeQ16(double linear, double[] encode)

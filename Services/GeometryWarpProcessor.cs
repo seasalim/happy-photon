@@ -91,9 +91,7 @@ internal static class GeometryWarpProcessor
         int sourceChannels,
         int alphaChannel, RenderExecutionOptions? execution)
     {
-        var workers = Math.Min(
-            Environment.ProcessorCount,
-            Math.Max(1, rows / 16));
+        var workers = ParallelChunks.WorkerCount(rows, 16);
         execution?.ReportStage("geometry-warp");
         workers = execution?.CapWorkers(workers) ?? workers;
         Parallel.For(0, workers, worker =>
@@ -117,11 +115,11 @@ internal static class GeometryWarpProcessor
                     out var alpha);
                 var destination =
                     ((y - bandY) * map.OutputWidth + x) * layout.Channels;
-                buffer[destination + layout.Red] = Encode(red);
-                buffer[destination + layout.Green] = Encode(green);
-                buffer[destination + layout.Blue] = Encode(blue);
+                buffer[destination + layout.Red] = RenderKernelSupport.ToQuantum(red);
+                buffer[destination + layout.Green] = RenderKernelSupport.ToQuantum(green);
+                buffer[destination + layout.Blue] = RenderKernelSupport.ToQuantum(blue);
                 if (alphaChannel >= 0)
-                    buffer[destination + alphaChannel] = Encode(alpha);
+                    buffer[destination + alphaChannel] = RenderKernelSupport.ToQuantum(alpha);
             }
         });
     }
@@ -172,10 +170,4 @@ internal static class GeometryWarpProcessor
             (1 - fy) +
         (bottomLeft[channel] + (bottomRight[channel] - bottomLeft[channel]) * fx) *
             fy;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static ushort Encode(double value) =>
-        value <= ushort.MinValue ? ushort.MinValue :
-        value >= ushort.MaxValue ? ushort.MaxValue :
-        (ushort)(value + 0.5);
 }

@@ -46,12 +46,12 @@ internal static partial class ToneLutApplicator
         var blue = GetChannelIndex(pixels, PixelChannel.Blue);
         var pixelCount = checked((int)(image.Width * image.Height));
 
-        var workers = WorkerCount(pixelCount);
+        var workers = ParallelChunks.WorkerCount(pixelCount, 8192);
         workers = execution?.CapWorkers(workers) ?? workers;
         var options = execution?.ParallelOptions ?? new ParallelOptions();
         Parallel.For(0, workers, options, worker =>
         {
-            var (start, end) = ChunkRange(pixelCount, worker, workers);
+            var (start, end) = ParallelChunks.ChunkRange(pixelCount, worker, workers);
             if (matrix == null)
             {
                 for (var blockStart = start; blockStart < end;)
@@ -101,16 +101,6 @@ internal static partial class ToneLutApplicator
     // Chunked partitioning matches AgxCrossing: each pixel is independent, so
     // output is bit-identical for any worker count or cap.
     private const int CancellationCheckMask = 0x1FFF;
-
-    private static int WorkerCount(int pixelCount) =>
-        Math.Min(Environment.ProcessorCount, Math.Max(1, pixelCount / 8192));
-
-    private static (int Start, int End) ChunkRange(
-        int pixelCount,
-        int worker,
-        int workers) =>
-        ((int)((long)pixelCount * worker / workers),
-            (int)((long)pixelCount * (worker + 1) / workers));
 
     private static void ValidateMatrix(double[,] matrix)
     {

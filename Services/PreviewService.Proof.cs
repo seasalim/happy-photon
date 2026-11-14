@@ -55,12 +55,14 @@ public sealed partial class PreviewService
                 new RenderOptions(false, false));
             var upstream = (ProofRenderDisplayRec2020 ??
                 _renderPipeline.RenderDisplayRec2020)(request);
-            using var finalized = RenderFinalizer.FinalizeOwnedProof(
+            using var finalized = RenderFinalizer.FinalizeOwned(
                 upstream,
                 maxDimension,
                 outputColorSpace,
                 outputSharpening,
-                settingsSnapshot.Effects, watermark);
+                wasResized: false,
+                effects: settingsSnapshot.Effects,
+                watermark: watermark);
             cancellationToken.ThrowIfCancellationRequested();
             return BitmapConversionService.ConvertToBitmap(finalized);
         }, cancellationToken).ConfigureAwait(false);

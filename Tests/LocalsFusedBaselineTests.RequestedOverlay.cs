@@ -41,7 +41,7 @@ public sealed partial class LocalsFusedBaselineTests
             var source = RenderPipelineTestSupport.ReadPixels(geometry);
             var width = (int)geometry.Width; var height = (int)geometry.Height;
             var edge = Math.Max(width, height); var pixels = width * height;
-            var wb = new DcpRenderMatrix(RenderChromaticStage.CreateWhiteBalanceMatrix(basis.Info, settings));
+            var wb = new AgxCrossing.Matrix3x3(RenderChromaticStage.CreateWhiteBalanceMatrix(basis.Info, settings));
             var tint = HappyPhotonColors.MixerMagentaColor;
             var bgra = new byte[pixels * 4];
             var workers = Math.Min(Environment.ProcessorCount, Math.Max(1, (pixels + 32767) / 32768));

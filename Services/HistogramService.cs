@@ -24,23 +24,6 @@ public class HistogramService
         bool includeWaveform,
         bool scaleWorkersWithFrame = false)
     {
-        CalculateBgraHistogram(
-            bgra,
-            width,
-            height,
-            histogram,
-            includeWaveform,
-            scaleWorkersWithFrame);
-    }
-
-    private static void CalculateBgraHistogram(
-        byte[] bgra,
-        int width,
-        int height,
-        HistogramData histogram,
-        bool includeWaveform,
-        bool scaleWorkersWithFrame = false)
-    {
         ArgumentNullException.ThrowIfNull(bgra);
         ArgumentNullException.ThrowIfNull(histogram);
         if (bgra.Length != checked(width * height * 4))
@@ -102,7 +85,7 @@ public class HistogramService
         ArgumentNullException.ThrowIfNull(bitmap);
         var histogram = new HistogramData();
         var data = BitmapConversionService.CopyBgraPixels(bitmap);
-        CalculateBgraHistogram(
+        CalculatePreviewHistogram(
             data,
             bitmap.PixelSize.Width,
             bitmap.PixelSize.Height,

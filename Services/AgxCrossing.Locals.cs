@@ -5,7 +5,7 @@ internal sealed partial class AgxCrossing
     private void ApplyLocals(ushort[] values, int count, int channels, int red, int green,
         int blue, RenderExecutionOptions? execution)
     {
-        var workers = Math.Min(Environment.ProcessorCount, Math.Max(1, (count + 32767) / 32768));
+        var workers = ParallelChunks.WorkerCountCeiling(count, 32768);
         workers = execution?.CapWorkers(workers) ?? workers;
         var exposure = Math.Pow(2, _parameters.ExposureEv + _parameters.SourceExposureEv);
         var toeScale = AgxToneEngine.TailScale(AgxToneEngine.XPivot,
@@ -68,9 +68,9 @@ internal sealed partial class AgxCrossing
 
                     if (!adjusted)
                     {
-                        tr = AgxToneLut.InterpolateUnchecked(_luts.Red, Clamp01(ir));
-                        tg = AgxToneLut.InterpolateUnchecked(_luts.Green, Clamp01(ig));
-                        tb = AgxToneLut.InterpolateUnchecked(_luts.Blue, Clamp01(ib));
+                        tr = ToneLutApplicator.Interpolate(_luts.Red, Clamp01(ir));
+                        tg = ToneLutApplicator.Interpolate(_luts.Green, Clamp01(ig));
+                        tb = ToneLutApplicator.Interpolate(_luts.Blue, Clamp01(ib));
                     }
                     else if (pointsAdjusted)
                     {

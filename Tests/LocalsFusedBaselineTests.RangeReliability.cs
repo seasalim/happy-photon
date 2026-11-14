@@ -26,7 +26,7 @@ public sealed partial class LocalsFusedBaselineTests
             var values = RenderPipelineTestSupport.ReadPixels(image);
             var width = (int)image.Width; var height = (int)image.Height;
             Assert.Equal(1600, Math.Max(width, height));
-            var matrix = new DcpRenderMatrix(RenderChromaticStage.CreateWhiteBalanceMatrix(basis.Info, Settings));
+            var matrix = new AgxCrossing.Matrix3x3(RenderChromaticStage.CreateWhiteBalanceMatrix(basis.Info, Settings));
             var rows = new Lab[3 * width]; // Bounded rolling rows, never a full-frame L/hue image.
             var bins = Enumerable.Range(0, 201).Select(_ => new List<double>()).ToArray();
             void Row(int y)

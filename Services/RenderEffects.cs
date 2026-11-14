@@ -15,21 +15,8 @@ internal static class RenderEffects
 
     internal static void Apply(
         MagickImage image,
-        EffectsSettings? settings)
-    {
-        ArgumentNullException.ThrowIfNull(image);
-        if (settings?.HasActivePixels != true)
-        {
-            return;
-        }
-
-        ApplyCore(image, settings, execution: null);
-    }
-
-    internal static void ApplyResting(
-        MagickImage image,
         EffectsSettings? settings,
-        RenderExecutionOptions execution)
+        RenderExecutionOptions? execution = null)
     {
         ArgumentNullException.ThrowIfNull(image);
         if (settings?.HasActivePixels != true)
@@ -37,16 +24,8 @@ internal static class RenderEffects
             return;
         }
 
-        execution.ThrowIfCancellationRequested();
-        execution.ReportStage("effects");
-        ApplyCore(image, settings, execution);
-    }
-
-    private static void ApplyCore(
-        MagickImage image,
-        EffectsSettings settings,
-        RenderExecutionOptions? execution)
-    {
+        execution?.ThrowIfCancellationRequested();
+        execution?.ReportStage("effects");
         using var pixels = image.GetPixels();
         var values = pixels.GetArea(0, 0, image.Width, image.Height) ??
             throw new InvalidOperationException("Unable to access Q16 pixels.");
@@ -56,19 +35,9 @@ internal static class RenderEffects
         var width = checked((int)image.Width);
         var height = checked((int)image.Height);
         var pixelCount = checked(width * height);
-        var workers = Math.Min(
-            Environment.ProcessorCount,
-            Math.Max(1, (pixelCount + 32_767) / 32_768));
-        if (execution is { } bounded)
-        {
-            workers = bounded.CapWorkers(workers);
-            Parallel.For(0, workers, bounded.ParallelOptions, ProcessWorker);
-        }
-        else
-        {
-            Parallel.For(0, workers, ProcessWorker);
-        }
-
+        var workers = ParallelChunks.WorkerCountCeiling(pixelCount, 32_768);
+        workers = execution?.CapWorkers(workers) ?? workers;
+        Parallel.For(0, workers, execution?.ParallelOptions ?? new ParallelOptions(), ProcessWorker);
         execution?.ThrowIfCancellationRequested();
         pixels.SetArea(0, 0, image.Width, image.Height, values);
         execution?.ThrowIfCancellationRequested();

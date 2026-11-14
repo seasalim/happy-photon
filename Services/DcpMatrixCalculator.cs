@@ -326,26 +326,15 @@ internal static class DcpMatrixCalculator
         {
             throw Unsupported("Only three-channel DCP matrices are supported.");
         }
-        var a = value[0, 0]; var b = value[0, 1]; var c = value[0, 2];
-        var d = value[1, 0]; var e = value[1, 1]; var f = value[1, 2];
-        var g = value[2, 0]; var h = value[2, 1]; var i = value[2, 2];
-        var determinant = a * (e * i - f * h) - b * (d * i - f * g) +
-            c * (d * h - e * g);
-        if (!double.IsFinite(determinant) || Math.Abs(determinant) < 1e-12)
-        {
+
+        var inverse = ChromaticAdaptation.InvertOrNull(value) ??
             throw Unsupported("A DCP matrix is singular.");
-        }
-        var scale = 1 / determinant;
-        var inverse = new[,]
-        {
-            { (e * i - f * h) * scale, (c * h - b * i) * scale, (b * f - c * e) * scale },
-            { (f * g - d * i) * scale, (a * i - c * g) * scale, (c * d - a * f) * scale },
-            { (d * h - e * g) * scale, (b * g - a * h) * scale, (a * e - b * d) * scale }
-        };
+
         if (inverse.Cast<double>().Any(item => !double.IsFinite(item)))
         {
             throw Unsupported("A DCP matrix inverse is not finite.");
         }
+
         return inverse;
     }
 

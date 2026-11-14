@@ -172,7 +172,7 @@ internal static partial class OklabColor
             return new OklabQ16(red, green, blue);
         }
 
-        var decode = SrgbDecode.Value;
+        var decode = ToneLut.SrgbDecodeTable.Value;
         var linearRed = decode[red];
         var linearGreen = decode[green];
         var linearBlue = decode[blue];
@@ -210,7 +210,7 @@ internal static partial class OklabColor
                 a,
                 b);
         }
-        var encode = SrgbEncode.Value;
+        var encode = ToneLut.SrgbEncodeTable.Value;
         return new OklabQ16(
             EncodeQ16(transformed.Red, encode),
             EncodeQ16(transformed.Green, encode),

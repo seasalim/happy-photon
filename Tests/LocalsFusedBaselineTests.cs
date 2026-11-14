@@ -262,7 +262,7 @@ public sealed partial class LocalsFusedBaselineTests(ITestOutputHelper output)
         private readonly ToneParams standard;
         private readonly AgxCrossing crossing;
         private readonly double[,] matrix;
-        private readonly DcpRenderMatrix input, unnormalized, outset = new(AgxToneEngine.OutsetMatrix);
+        private readonly AgxCrossing.Matrix3x3 input, unnormalized, outset = new(AgxToneEngine.OutsetMatrix);
         private readonly ToneLuts luts;
         private readonly double gain, slope, toe, shoulder;
         public Kernel(BaseImageInfo info, EditSettings? settings = null)
@@ -337,7 +337,7 @@ public sealed partial class LocalsFusedBaselineTests(ITestOutputHelper output)
                 }
             });
         }
-        private double Lut(double[] lut, double v) => raw ? AgxToneLut.InterpolateUnchecked(lut, Math.Clamp(v, 0, 1)) : ToneLutApplicator.Interpolate(lut, v);
+        private double Lut(double[] lut, double v) => raw ? ToneLutApplicator.Interpolate(lut, Math.Clamp(v, 0, 1)) : ToneLutApplicator.Interpolate(lut, v);
         private double Tone(double exposed)
         {
             if (!raw) return ToneLut.Evaluate(standard with { ExposureEv = 0, Fold = 1 }, exposed);

@@ -62,9 +62,7 @@ internal sealed partial class AgxCrossing
             for (var row = 0; row < 3; row++) for (var col = 0; col < 3; col++) wb[row, col] /= Fold;
             _localWhiteBalance = new(wb);
         }
-        _luts = execution == null
-            ? AgxToneLut.ComposeCached(_parameters, Fold)
-            : AgxToneLut.ComposeCached(_parameters, Fold, execution.Value);
+        _luts = AgxToneLut.ComposeCached(_parameters, Fold, execution);
         _log2Fold = Math.Log2(Fold);
         _slope = AgxToneEngine.Slope(_parameters.Contrast);
         _toePower = AgxToneEngine.ToePower(_parameters.Shadows);
@@ -156,9 +154,7 @@ internal sealed partial class AgxCrossing
             ApplyLocals(values, pixelCount, channels, redChannel, greenChannel, blueChannel, execution);
             return;
         }
-        var workers = Math.Min(
-            Environment.ProcessorCount,
-            Math.Max(1, (pixelCount + 32_767) / 32_768));
+        var workers = ParallelChunks.WorkerCountCeiling(pixelCount, 32_768);
         workers = execution?.CapWorkers(workers) ?? workers;
         var options = execution?.ParallelOptions ?? new ParallelOptions();
         var input = _input;
@@ -179,9 +175,9 @@ internal sealed partial class AgxCrossing
                 var insetRed = Clamp01(input.Row0(red, green, blue));
                 var insetGreen = Clamp01(input.Row1(red, green, blue));
                 var insetBlue = Clamp01(input.Row2(red, green, blue));
-                var toneRed = AgxToneLut.InterpolateUnchecked(luts.Red, insetRed);
-                var toneGreen = AgxToneLut.InterpolateUnchecked(luts.Green, insetGreen);
-                var toneBlue = AgxToneLut.InterpolateUnchecked(luts.Blue, insetBlue);
+                var toneRed = ToneLutApplicator.Interpolate(luts.Red, insetRed);
+                var toneGreen = ToneLutApplicator.Interpolate(luts.Green, insetGreen);
+                var toneBlue = ToneLutApplicator.Interpolate(luts.Blue, insetBlue);
 
                 values[offset + redChannel] = EncodeQ16(
                     outset.Row0(toneRed, toneGreen, toneBlue));
@@ -244,9 +240,9 @@ internal sealed partial class AgxCrossing
     {
         var inset = TransformInput(input, _input);
         var tone = new AgxRgb(
-            AgxToneLut.InterpolateUnchecked(_luts.Red, inset.Red),
-            AgxToneLut.InterpolateUnchecked(_luts.Green, inset.Green),
-            AgxToneLut.InterpolateUnchecked(_luts.Blue, inset.Blue));
+            ToneLutApplicator.Interpolate(_luts.Red, inset.Red),
+            ToneLutApplicator.Interpolate(_luts.Green, inset.Green),
+            ToneLutApplicator.Interpolate(_luts.Blue, inset.Blue));
         return TransformOutput(tone, _outset);
     }
 

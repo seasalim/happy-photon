@@ -26,7 +26,7 @@ internal static class WorkingSpaceColorConversion
             var m00 = matrix[0, 0]; var m01 = matrix[0, 1]; var m02 = matrix[0, 2];
             var m10 = matrix[1, 0]; var m11 = matrix[1, 1]; var m12 = matrix[1, 2];
             var m20 = matrix[2, 0]; var m21 = matrix[2, 1]; var m22 = matrix[2, 2];
-            var workers = Math.Min(Environment.ProcessorCount, Math.Max(1, (count + 262_143) / 262_144));
+            var workers = ParallelChunks.WorkerCountCeiling(count, 262_144);
             Parallel.For(0, workers, ConvertWorker);
             // A separate view commits disk-backed caches without invalidating the source pointer.
             using var destination = image.GetPixelsUnsafe();
@@ -43,9 +43,9 @@ internal static class WorkingSpaceColorConversion
                     double red = decode[values[offset + layout.Red]];
                     double green = decode[values[offset + layout.Green]];
                     double blue = decode[values[offset + layout.Blue]];
-                    values[offset + layout.Red] = ToQuantum(m00 * red + m01 * green + m02 * blue);
-                    values[offset + layout.Green] = ToQuantum(m10 * red + m11 * green + m12 * blue);
-                    values[offset + layout.Blue] = ToQuantum(m20 * red + m21 * green + m22 * blue);
+                    values[offset + layout.Red] = RenderKernelSupport.ToQuantum(m00 * red + m01 * green + m02 * blue);
+                    values[offset + layout.Green] = RenderKernelSupport.ToQuantum(m10 * red + m11 * green + m12 * blue);
+                    values[offset + layout.Blue] = RenderKernelSupport.ToQuantum(m20 * red + m21 * green + m22 * blue);
                 }
             }
         }
@@ -56,9 +56,6 @@ internal static class WorkingSpaceColorConversion
                 "Working-space conversion did not produce linear RGB samples.");
         }
     }
-
-    private static ushort ToQuantum(double value) => value <= 0 ? (ushort)0 :
-        value >= ushort.MaxValue ? ushort.MaxValue : (ushort)(value + 0.5);
 
     private static ushort[] CreateSrgbDecodeTable()
     {

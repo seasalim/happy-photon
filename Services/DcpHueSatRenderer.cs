@@ -6,8 +6,8 @@ namespace HappyPhoton.Services;
 
 internal static partial class DcpHueSatRenderer
 {
-    private static readonly DcpRenderMatrix WorkingToProPhoto = CreateWorkingToProPhoto();
-    private static readonly DcpRenderMatrix ProPhotoToWorking = CreateProPhotoToWorking();
+    private static readonly AgxCrossing.Matrix3x3 WorkingToProPhoto = CreateWorkingToProPhoto();
+    private static readonly AgxCrossing.Matrix3x3 ProPhotoToWorking = CreateProPhotoToWorking();
 
     /// <summary>
     /// Standalone application for tests and tools. The production render
@@ -56,9 +56,7 @@ internal static partial class DcpHueSatRenderer
     {
         var prepared = map.RgbLut == null ? Prepare(map, execution) : map;
         var lut = prepared.RgbLut!;
-        var workers = Math.Min(
-            Environment.ProcessorCount,
-            Math.Max(1, (pixelCount + 32_767) / 32_768));
+        var workers = ParallelChunks.WorkerCountCeiling(pixelCount, 32_768);
         workers = execution?.CapWorkers(workers) ?? workers;
         Parallel.For(0, workers, execution?.ParallelOptions ?? new ParallelOptions(), worker =>
         {
@@ -137,14 +135,14 @@ internal static partial class DcpHueSatRenderer
         double value)
     {
         var encodedValue = map.ValueDivisions > 1 && map.EncodeValueAsSrgb
-            ? EncodeSrgb(Clamp01(value))
+            ? ToneLut.SrgbEncode(Clamp01(value))
             : Clamp01(value);
         var delta = Lookup(map, hue, saturation, encodedValue);
         var resultHue = WrapHue(hue + delta.HueShift);
         var resultSaturation = Clamp01(saturation * delta.SaturationScale);
         encodedValue = Clamp01(encodedValue * delta.ValueScale);
         var resultValue = map.ValueDivisions > 1 && map.EncodeValueAsSrgb
-            ? DecodeSrgb(encodedValue)
+            ? ToneLut.SrgbDecode(encodedValue)
             : encodedValue;
         return new DcpHsv(resultHue, resultSaturation, resultValue);
     }
@@ -287,14 +285,6 @@ internal static partial class DcpHueSatRenderer
         blue += match;
     }
 
-    private static double EncodeSrgb(double value) => value <= 0.0031308
-        ? 12.92 * value
-        : 1.055 * Math.Pow(value, 1 / 2.4) - 0.055;
-
-    private static double DecodeSrgb(double value) => value <= 0.04045
-        ? value / 12.92
-        : Math.Pow((value + 0.055) / 1.055, 2.4);
-
     private static double WrapHue(double hue)
     {
         hue %= 360;
@@ -306,25 +296,25 @@ internal static partial class DcpHueSatRenderer
     private static ushort EncodeQuantum(double value) =>
         (ushort)(Clamp01(value) * ushort.MaxValue + 0.5);
 
-    private static DcpRenderMatrix CreateWorkingToProPhoto()
+    private static AgxCrossing.Matrix3x3 CreateWorkingToProPhoto()
     {
         var d65ToD50 = ChromaticAdaptation.CreateBradfordMatrix(
             [0.95047, 1.0, 1.08883],
             [0.96422, 1.0, 0.82521]);
         var proPhotoToXyzD50 = ProPhotoToXyzD50();
-        return new DcpRenderMatrix(ChromaticAdaptation.Multiply(
+        return new AgxCrossing.Matrix3x3(ChromaticAdaptation.Multiply(
             DcpMatrixCalculator.Invert(proPhotoToXyzD50),
             ChromaticAdaptation.Multiply(
                 d65ToD50,
                 RgbColorSpaceMatrices.LinearRec2020ToXyzD65DerivedExact)));
     }
 
-    private static DcpRenderMatrix CreateProPhotoToWorking()
+    private static AgxCrossing.Matrix3x3 CreateProPhotoToWorking()
     {
         var d50ToD65 = ChromaticAdaptation.CreateBradfordMatrix(
             [0.96422, 1.0, 0.82521],
             [0.95047, 1.0, 1.08883]);
-        return new DcpRenderMatrix(ChromaticAdaptation.Multiply(
+        return new AgxCrossing.Matrix3x3(ChromaticAdaptation.Multiply(
             RgbColorSpaceMatrices.XyzD65ToLinearRec2020DerivedExact,
             ChromaticAdaptation.Multiply(d50ToD65, ProPhotoToXyzD50())));
     }
@@ -346,38 +336,3 @@ internal readonly record struct DcpHsv(
     double Hue,
     double Saturation,
     double Value);
-
-internal readonly record struct DcpRenderMatrix(
-    double M00,
-    double M01,
-    double M02,
-    double M10,
-    double M11,
-    double M12,
-    double M20,
-    double M21,
-    double M22)
-{
-    internal DcpRenderMatrix(double[,] values) : this(
-        values[0, 0], values[0, 1], values[0, 2],
-        values[1, 0], values[1, 1], values[1, 2],
-        values[2, 0], values[2, 1], values[2, 2])
-    {
-        if (values.GetLength(0) != 3 || values.GetLength(1) != 3)
-        {
-            throw new ArgumentException("Expected a 3x3 matrix.", nameof(values));
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal double Row0(double red, double green, double blue) =>
-        M00 * red + M01 * green + M02 * blue;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal double Row1(double red, double green, double blue) =>
-        M10 * red + M11 * green + M12 * blue;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal double Row2(double red, double green, double blue) =>
-        M20 * red + M21 * green + M22 * blue;
-}

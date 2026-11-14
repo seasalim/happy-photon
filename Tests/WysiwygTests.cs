@@ -43,12 +43,13 @@ public sealed class WysiwygTests
             RenderIntent.Export,
             null,
             new RenderOptions(false, false)));
-        using var proof = RenderFinalizer.FinalizeProof(
+        using var proof = RenderFinalizer.Finalize(
             upstream,
             maxDimension: null,
             OutputColorSpace.Srgb,
             OutputSharpeningMode.Off,
-            settings.Effects);
+            wasResized: false,
+            effects: settings.Effects);
 
         Assert.Equal(
             RenderPipelineTestSupport.ReadPixels(preview.Image),

@@ -122,6 +122,36 @@ public static class ChromaticAdaptation
         { 0, 0, 1.0 }
     };
 
+    // Null when the determinant is not finite or is near zero; the inverse itself may still be non-finite.
+    internal static double[,]? InvertOrNull(double[,] value)
+    {
+        var a = value[0, 0];
+        var b = value[0, 1];
+        var c = value[0, 2];
+        var d = value[1, 0];
+        var e = value[1, 1];
+        var f = value[1, 2];
+        var g = value[2, 0];
+        var h = value[2, 1];
+        var i = value[2, 2];
+        var determinant = a * (e * i - f * h) -
+            b * (d * i - f * g) + c * (d * h - e * g);
+
+        if (!double.IsFinite(determinant) || Math.Abs(determinant) < 1e-12)
+        {
+            return null;
+        }
+
+        var scale = 1 / determinant;
+
+        return new[,]
+        {
+            { (e * i - f * h) * scale, (c * h - b * i) * scale, (b * f - c * e) * scale },
+            { (f * g - d * i) * scale, (a * i - c * g) * scale, (c * d - a * f) * scale },
+            { (d * h - e * g) * scale, (b * g - a * h) * scale, (a * e - b * d) * scale }
+        };
+    }
+
     public static double[] Multiply(double[,] matrix, double[] vector)
     {
         ValidateMatrix(matrix);

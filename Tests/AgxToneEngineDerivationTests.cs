@@ -153,7 +153,7 @@ public sealed class AgxToneEngineDerivationTests
             {
                 var input = (index + fraction) / (AgxToneLut.Length - 1);
                 var analytic = AgxToneEngine.EvaluateTone(input, parameters, fold: 1);
-                var interpolated = AgxToneLut.InterpolateUnchecked(lut, input);
+                var interpolated = ToneLutApplicator.Interpolate(lut, input);
                 var analyticCode = ToneLut.SrgbEncode(analytic);
                 var interpolatedCode = ToneLut.SrgbEncode(interpolated);
                 Assert.True(

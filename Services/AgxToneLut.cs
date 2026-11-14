@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 
 namespace HappyPhoton.Services;
 
@@ -34,9 +33,7 @@ internal static class AgxToneLut
         var slope = AgxToneEngine.Slope(parameters.Contrast);
         var toePower = AgxToneEngine.ToePower(parameters.Shadows);
         var shoulderPower = AgxToneEngine.ShoulderPower(parameters.Highlights);
-        var workers = Math.Min(
-            Environment.ProcessorCount,
-            Math.Max(1, Length / 8192));
+        var workers = ParallelChunks.WorkerCount(Length, 8192);
         workers = execution?.CapWorkers(workers) ?? workers;
         Parallel.For(0, workers, worker =>
         {
@@ -58,47 +55,11 @@ internal static class AgxToneLut
         return lut;
     }
 
-    internal static ToneLuts ComposeCached(
-        AgxToneParameters parameters,
-        double fold)
-    {
-        AgxToneEngine.Validate(parameters, fold);
-        lock (CacheLock)
-        {
-            var index = Cache.FindIndex(entry => entry.Matches(parameters, fold));
-            if (index >= 0)
-            {
-                var hit = Cache[index];
-                Cache.RemoveAt(index);
-                Cache.Insert(0, hit);
-                return hit.Lut;
-            }
-        }
-
-        var composed = Compose(parameters, fold);
-        lock (CacheLock)
-        {
-            var existing = Cache.FindIndex(
-                entry => entry.Matches(parameters, fold));
-            if (existing >= 0)
-            {
-                return Cache[existing].Lut;
-            }
-
-            Cache.Insert(0, new CacheEntry(parameters, fold, composed));
-            if (Cache.Count > CacheCapacity)
-            {
-                Cache.RemoveAt(Cache.Count - 1);
-            }
-        }
-        return composed;
-    }
-
     // Cancellable composition uses the current refinement worker budget.
     internal static ToneLuts ComposeCached(
         AgxToneParameters parameters,
         double fold,
-        RenderExecutionOptions execution)
+        RenderExecutionOptions? execution = null)
     {
         AgxToneEngine.Validate(parameters, fold);
         lock (CacheLock)
@@ -114,7 +75,7 @@ internal static class AgxToneLut
         }
 
         var composed = Compose(parameters, fold, execution);
-        execution.ThrowIfCancellationRequested();
+        execution?.ThrowIfCancellationRequested();
         lock (CacheLock)
         {
             var existing = Cache.FindIndex(
@@ -123,27 +84,15 @@ internal static class AgxToneLut
             {
                 return Cache[existing].Lut;
             }
+
             Cache.Insert(0, new CacheEntry(parameters, fold, composed));
             if (Cache.Count > CacheCapacity)
             {
                 Cache.RemoveAt(Cache.Count - 1);
             }
         }
+
         return composed;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static double InterpolateUnchecked(double[] lut, double value)
-    {
-        var position = Math.Clamp(value, 0, 1) * (Length - 1);
-        var lower = (int)position;
-        if (lower >= Length - 1)
-        {
-            return lut[^1];
-        }
-
-        var fraction = position - lower;
-        return lut[lower] + (lut[lower + 1] - lut[lower]) * fraction;
     }
 
     private sealed class CacheEntry

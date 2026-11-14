@@ -108,7 +108,7 @@ public static class RawSensorHistogram
         var workRows = sourceSaturation?.Height ?? height;
         var workers = Math.Min(
             workRows,
-            workerLimit ?? WorkerCount(checked(width * height)));
+            workerLimit ?? ParallelChunks.WorkerCount(checked(width * height), 8192));
         var sync = new object();
         Parallel.For(
             0,
@@ -116,13 +116,13 @@ public static class RawSensorHistogram
             new ParallelOptions { CancellationToken = cancellationToken },
             worker =>
             {
-                var (workStart, workEnd) = ChunkRange(workRows, worker, workers);
+                var (workStart, workEnd) = ParallelChunks.ChunkRange(workRows, worker, workers);
                 var startRow = sourceSaturation == null
                     ? workStart
-                    : CeilingDivide((long)workStart * height, workRows);
+                    : ParallelChunks.CeilingDivide((long)workStart * height, workRows);
                 var endRow = sourceSaturation == null
                     ? workEnd
-                    : CeilingDivide((long)workEnd * height, workRows);
+                    : ParallelChunks.CeilingDivide((long)workEnd * height, workRows);
                 var workerRed = new int[red.Length];
                 var workerGreen = new int[green.Length];
                 var workerBlue = new int[blue.Length];
@@ -222,19 +222,6 @@ public static class RawSensorHistogram
         return new RawSensorArtifacts(histogram, sourceSaturation);
     }
 
-    private static int WorkerCount(int pixelCount) =>
-        Math.Min(Environment.ProcessorCount, Math.Max(1, pixelCount / 8192));
-
-    private static (int Start, int End) ChunkRange(
-        int rows,
-        int worker,
-        int workers) =>
-        ((int)((long)rows * worker / workers),
-            (int)((long)rows * (worker + 1) / workers));
-
-    private static int CeilingDivide(long numerator, int denominator) =>
-        checked((int)((numerator + denominator - 1) / denominator));
-
     internal static bool UsesFusedLookup(
         int cfaRows,
         int cfaColumns,
@@ -333,9 +320,7 @@ public static class RawSensorHistogram
 
     private static byte EncodeUnit(double value)
     {
-        var encoded = value <= 0.0031308
-            ? 12.92 * value
-            : 1.055 * Math.Pow(value, 1.0 / 2.4) - 0.055;
+        var encoded = ToneLut.SrgbEncode(value);
         return (byte)Math.Clamp(
             Math.Round(encoded * 255, MidpointRounding.AwayFromZero),
             0,
