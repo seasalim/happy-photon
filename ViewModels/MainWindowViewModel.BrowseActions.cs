@@ -281,10 +281,6 @@ public partial class MainWindowViewModel
         SetFlagStateAsync(ImageFlag.Unflagged);
 
     [RelayCommand]
-    private Task RejectImageAsync() =>
-        SetFlagStateAsync(ImageFlag.Rejected);
-
-    [RelayCommand]
     private Task ToggleRejectedImageAsync() =>
         SetFlagStateAsync(ImageFlag.Rejected);
 

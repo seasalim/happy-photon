@@ -310,7 +310,8 @@ public sealed class WideGamutColorimetryTests
             outputSharpening
                 ? OutputSharpeningMode.Screen
                 : OutputSharpeningMode.Off,
-            wasResized: true);
+            wasResized: true,
+            RenderKernelSupport.DefaultBandPixelLimit);
         return prepared;
     }
 

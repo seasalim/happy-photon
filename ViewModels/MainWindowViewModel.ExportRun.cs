@@ -340,34 +340,11 @@ public partial class MainWindowViewModel
         ExportJob Job,
         bool HydrationApproved);
 
-    public Task<ExportBatchResult> ExportBatchAsync(
-        IProgress<(int current, int total, string fileName)>? progress = null,
-        CancellationToken cancellationToken = default) =>
-        ExportBatchAsync(GetSelectedImages().ToList(), progress, cancellationToken);
-
-    public Task<ExportBatchResult> ExportBatchAsync(
-        IReadOnlyList<ImageFile> imagesToExport,
-        IProgress<(int current, int total, string fileName)>? progress = null,
-        CancellationToken cancellationToken = default)
-    {
-        var job = ExportSettings.CreateJob(imagesToExport);
-        return ExportJobAsync(job, false, progress, cancellationToken);
-    }
-
     internal ExportHydrationScope GetExportHydrationScope(
         IReadOnlyList<ImageFile> images) =>
         ImageService.GetExportHydrationScope(images);
 
-    internal Task<ExportBatchResult> ExportBatchApprovedAsync(
-        IReadOnlyList<ImageFile> imagesToExport,
-        IProgress<(int current, int total, string fileName)>? progress = null,
-        CancellationToken cancellationToken = default)
-    {
-        var job = ExportSettings.CreateJob(imagesToExport);
-        return ExportJobAsync(job, true, progress, cancellationToken);
-    }
-
-    private async Task<ExportBatchResult> ExportJobAsync(
+    internal async Task<ExportBatchResult> ExportJobAsync(
         ExportJob job,
         bool hydrationApproved,
         IProgress<(int current, int total, string fileName)>? progress,

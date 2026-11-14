@@ -26,7 +26,7 @@ public sealed partial class DevelopAssessmentBarTests
             var pane = window.FindControl<DevelopViewerPane>("DevelopViewerPane")!;
             var full = pane.FindControl<ImageAssessmentControl>("DevelopImageAssessment")!;
             var footer = window.FindControl<BrowseGridView>("BrowseGridView")!
-                .FindControl<ImageAssessmentControl>("ImageAssessment")!;
+                .FindFooterControl<ImageAssessmentControl>("ImageAssessment")!;
             var active = vm.SelectedImage!;
 
             vm.Browse.ToggleSelection(other);
@@ -88,7 +88,7 @@ public sealed partial class DevelopAssessmentBarTests
 
             var pane = window.FindControl<DevelopViewerPane>("DevelopViewerPane")!;
             var footer = window.FindControl<BrowseGridView>("BrowseGridView")!
-                .FindControl<ImageAssessmentControl>("ImageAssessment")!;
+                .FindFooterControl<ImageAssessmentControl>("ImageAssessment")!;
 
             await vm.SetRatingCommand.ExecuteAsync(3);
             var rotation = vm.Rotation;

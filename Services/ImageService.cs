@@ -36,45 +36,6 @@ public class ImageService : IAsyncDisposable
 
     internal SourceHydrationService SourceHydration => _sourceHydrationService;
 
-    public ImageService(CatalogService catalogService)
-        : this(catalogService, LibRawNativeSupport.Health)
-    {
-    }
-
-    private ImageService(
-        CatalogService catalogService,
-        LibRawRuntimeHealth rawRuntimeHealth)
-        : this(
-            catalogService,
-            new BaseLoaderRouter(
-                new RawBaseLoader(rawRuntimeHealth),
-                new StandardBaseLoader()),
-            new SourceAvailabilityService(),
-            rawRuntimeHealth)
-    {
-    }
-
-    internal ImageService(
-        CatalogService catalogService,
-        IBaseImageLoader baseLoader) : this(
-            catalogService,
-            baseLoader,
-            new SourceAvailabilityService(),
-            LibRawNativeSupport.Health)
-    {
-    }
-
-    internal ImageService(
-        CatalogService catalogService,
-        IBaseImageLoader baseLoader,
-        ISourceAvailabilityService availabilityService) : this(
-            catalogService,
-            baseLoader,
-            availabilityService,
-            LibRawNativeSupport.Health)
-    {
-    }
-
     internal ImageService(
         CatalogService catalogService,
         IBaseImageLoader baseLoader,
@@ -127,14 +88,6 @@ public class ImageService : IAsyncDisposable
     }
 
     // ===== Thumbnail Methods (delegated to ThumbnailService) =====
-
-    public Task<ThumbnailLoadResult> LoadThumbnailAsync(
-        ImageFile imageFile,
-        CancellationToken cancellationToken)
-        => LoadThumbnailAsync(
-            imageFile,
-            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
-            cancellationToken);
 
     public Task<ThumbnailLoadResult> LoadThumbnailAsync(
         ImageFile imageFile,

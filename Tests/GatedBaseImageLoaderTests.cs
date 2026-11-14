@@ -82,7 +82,8 @@ public sealed class GatedBaseImageLoaderTests
                 catalog,
                 inner,
                 new TestSourceAvailabilityService(
-                    SourceAvailability.RequiresHydration));
+                    SourceAvailability.RequiresHydration),
+                LibRawNativeSupport.Health);
 
             var (preview, _) = await service.Previews.LoadPreviewWithHistogramAsync(
                 new ImageFile(Path.Combine(root, "photo.jpg")),

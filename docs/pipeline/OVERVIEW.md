@@ -75,7 +75,7 @@ Render: BaseImage × EditSettings × RenderIntent ▶ pixels + stats  (edit-depe
    manually zoomed view selects a resting render target and is never part of base
    identity.
 9. **Background work does not hydrate cloud sources.** A live source-availability gate
-   wraps base loaders and guards metadata, thumbnails, and path-based statistics.
+   wraps base loaders and guards metadata and thumbnails.
    Cached output may be displayed without source content. Only a single-image
    **Download and open** action or a confirmed export batch may use approved hydration
    intent.

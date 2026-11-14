@@ -95,17 +95,6 @@ public sealed class ThumbnailCacheService : IAsyncDisposable
                LongEdge(dimensions) >= request.MinimumDimension;
     }
 
-    public Bitmap? LoadFromCache(ImageFile imageFile)
-    {
-        return LoadFromCache(
-            imageFile,
-            new ThumbnailSizeRequest(
-                ThumbnailService.ThumbnailSize,
-                ThumbnailService.ThumbnailSize),
-            out _,
-            out _);
-    }
-
     public Bitmap? LoadFromCache(
         ImageFile imageFile,
         ThumbnailSizeRequest request,

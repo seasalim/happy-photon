@@ -16,14 +16,3 @@ public interface IBaseImageLoader
         BaseDecodeSettings decode,
         CancellationToken cancellationToken);
 }
-
-public static class BaseImageLoaderExtensions
-{
-    public static BaseImage? LoadPreviewBase(
-        this IBaseImageLoader loader,
-        ImageFile file,
-        BaseDecodeSettings decode,
-        CancellationToken cancellationToken) =>
-        loader.LoadPreviewBaseWithOutcome(file, decode, cancellationToken)
-            .DetachInteractiveImage();
-}

@@ -24,7 +24,7 @@ public sealed class AssessmentFeedbackTests : IDisposable
         Assert.Equal("Unset flag: Picked", vm.AssessmentFeedback);
         await vm.ToggleRejectedImageCommand.ExecuteAsync(null);
         Assert.Equal("Set flag: Rejected", vm.AssessmentFeedback);
-        await vm.RejectImageCommand.ExecuteAsync(null);
+        await vm.ToggleRejectedImageCommand.ExecuteAsync(null);
         Assert.Equal("Set flag: Rejected", vm.AssessmentFeedback);
         await vm.UnpickImageCommand.ExecuteAsync(null);
         Assert.Equal("Unset flag: Rejected", vm.AssessmentFeedback);

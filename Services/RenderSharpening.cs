@@ -17,18 +17,6 @@ internal static class RenderSharpening
     private const int MaximumOutputLongEdge = 2560;
     internal static readonly RenderScratchSlot<float> Scratch = new();
 
-    public static void ApplyCapture(
-        MagickImage image,
-        BaseImageInfo info,
-        DetailSettings detail,
-        int bandPixelLimit = DefaultBandPixelLimit) =>
-        ApplyCapture(
-            image,
-            info,
-            detail,
-            RenderIntent.Export,
-            bandPixelLimit);
-
     internal static void ApplyCapture(
         MagickImage image,
         BaseImageInfo info,
@@ -75,16 +63,6 @@ internal static class RenderSharpening
             ? Math.Max(sigma, PreviewFloorSigma)
             : sigma;
     }
-
-    public static void ApplyOutput(
-        MagickImage image,
-        OutputSharpeningMode mode,
-        bool wasResized) =>
-        ApplyOutput(
-            image,
-            mode,
-            wasResized,
-            DefaultBandPixelLimit);
 
     internal static void ApplyOutput(
         MagickImage image,

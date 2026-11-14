@@ -8,4 +8,6 @@ public sealed class WaveformData
     public ushort[] Luminance { get; } =
         new ushort[ColumnCount * LevelCount];
     public ushort[] ColumnSampleCounts { get; } = new ushort[ColumnCount];
+
+    internal static int ToLevel(int value8) => value8 >> 1;
 }

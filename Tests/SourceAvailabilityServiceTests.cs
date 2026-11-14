@@ -46,7 +46,7 @@ public sealed class SourceAvailabilityServiceTests : IDisposable
         File.WriteAllBytes(path, [1]);
 
         ImageFile image = Assert.Single(
-            new FolderService().GetImagesInFolder(_root));
+            new FolderService().ScanFolder(_root).Images);
 
         var expected = OperatingSystem.IsWindows()
             ? SourceAvailability.AvailableLocally

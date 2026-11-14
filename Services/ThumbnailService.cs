@@ -41,14 +41,6 @@ public class ThumbnailService : IAsyncDisposable
 
     public async Task<ThumbnailLoadResult> LoadThumbnailAsync(
         ImageFile imageFile,
-        CancellationToken cancellationToken = default)
-        => await LoadThumbnailAsync(
-            imageFile,
-            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
-            cancellationToken);
-
-    public async Task<ThumbnailLoadResult> LoadThumbnailAsync(
-        ImageFile imageFile,
         ThumbnailSizeRequest request,
         CancellationToken cancellationToken = default)
         => await LoadThumbnailAsync(
@@ -159,27 +151,6 @@ public class ThumbnailService : IAsyncDisposable
             return source;
         }
     }
-
-    public Task<ThumbnailLoadResult> LoadUneditedThumbnailAsync(
-        ImageFile imageFile,
-        CancellationToken cancellationToken = default) =>
-        LoadUneditedThumbnailAsync(
-            imageFile,
-            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
-            allowUndersizedCachePlaceholder: true,
-            SourceReadIntent.Background,
-            cancellationToken);
-
-    public Task<ThumbnailLoadResult> LoadUneditedThumbnailAsync(
-        ImageFile imageFile,
-        ThumbnailSizeRequest request,
-        CancellationToken cancellationToken = default) =>
-        LoadUneditedThumbnailAsync(
-            imageFile,
-            request,
-            allowUndersizedCachePlaceholder: true,
-            SourceReadIntent.Background,
-            cancellationToken);
 
     internal async Task<ThumbnailLoadResult> LoadUneditedThumbnailAsync(
         ImageFile imageFile,
@@ -356,9 +327,6 @@ public class ThumbnailService : IAsyncDisposable
             return null;
         }
     }
-
-    public bool IsCacheValid(ImageFile imageFile) =>
-        _thumbnailCache.IsCacheValid(imageFile);
 
     public bool IsCacheValid(
         ImageFile imageFile,

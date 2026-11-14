@@ -124,17 +124,11 @@ public sealed class PreviewCacheService : IAsyncDisposable
         catch { return false; }
     }
 
-    public void QueueSaveToCache(
-        ImageFile imageFile,
-        MagickImage image,
-        string settingsHash) =>
-        _writer.Queue(imageFile, image, settingsHash);
-
     internal Task<bool> QueueSaveToCache(
         ImageFile imageFile,
         MagickImage image,
         string settingsHash,
-        PreviewCacheIdentity identity) =>
+        PreviewCacheIdentity? identity) =>
         _writer.Queue(imageFile, image, settingsHash, identity);
 
     internal Task<bool> QueueSaveToCache(
@@ -142,18 +136,11 @@ public sealed class PreviewCacheService : IAsyncDisposable
         PreviewCacheIdentity identity) =>
         _writer.Queue(imageFile, encodedJpeg, settingsHash, identity);
 
-    public void QueueSaveToCache(
-        ImageFile imageFile,
-        Bitmap bitmap,
-        string settingsHash,
-        DateTime? sourceWriteTime = null) =>
-        _writer.Queue(imageFile, bitmap, settingsHash, sourceWriteTime: sourceWriteTime);
-
     internal void QueueSaveToCache(
         ImageFile imageFile,
         Bitmap bitmap,
         string settingsHash,
-        PreviewCacheIdentity identity,
+        PreviewCacheIdentity? identity,
         DateTime? sourceWriteTime,
         bool ownsBitmap) =>
         _writer.Queue(imageFile, bitmap, settingsHash, identity, sourceWriteTime, ownsBitmap);

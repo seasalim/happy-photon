@@ -108,11 +108,6 @@ public partial class MainWindowViewModel
         UpdateSelectedCount();
     }
 
-    public IEnumerable<ImageFile> GetSelectedImages()
-    {
-        return Browse.GetSelectedImages();
-    }
-
     /// <summary>
     /// Handles Escape key: cancels crop or exits develop mode.
     /// Does nothing in Browse view when no transient workspace mode is active.

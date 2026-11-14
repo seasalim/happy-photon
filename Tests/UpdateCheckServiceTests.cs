@@ -41,14 +41,21 @@ public sealed class UpdateCheckServiceTests
     [InlineData("1.2.3+local", "v1.2.3", false)]
     [InlineData("1.2.2", "v1.2.3", true)]
     [InlineData("1.3.0", "v1.2.3", false)]
-    public void IsUpdateAvailable_ComparesStableCoreVersions(
+    public async Task IsUpdateAvailable_ComparesStableCoreVersions(
         string current,
         string latest,
         bool expected)
     {
+        var service = new UpdateCheckService(
+            current,
+            Repository,
+            (_, _) => Task.FromResult(ReleaseJson(latest)));
+
+        var result = await service.CheckAsync();
+
         Assert.Equal(
             expected,
-            UpdateCheckService.IsUpdateAvailable(current, latest));
+            result.Status == UpdateCheckStatus.UpdateAvailable);
     }
 
     [Fact]

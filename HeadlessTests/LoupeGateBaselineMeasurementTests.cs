@@ -125,7 +125,7 @@ public sealed class LoupeGateBaselineMeasurementTests(ITestOutputHelper output)
             viewModel.HandleEscapeCommand.Execute(null);
             Drain();
             var browse = window.FindControl<BrowseGridView>("BrowseGridView")!;
-            var pairs = browse.FindControl<Button>("PairsButton")!;
+            var pairs = browse.FindFooterControl<Button>("PairsButton")!;
             Assert.False(browse.ShowPairs);
             Assert.True(pairs.Focus());
             bool? pairsSpaceHandled = null;

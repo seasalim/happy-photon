@@ -1561,20 +1561,13 @@
       ]
     },
     {
-      "kind": "trimmed-cases",
+      "kind": "removed-behaviour",
       "project": "Tests/HappyPhoton.Tests.csproj",
-      "removed": "HappyPhoton.Tests.ImageStatsServiceTests.RawSourcePath_IsRejectedBeforeMagickDecode",
-      "reference": "ImageStatsService.Compute(string) rejects all RAW suffixes through one RawExtensions.Contains guard before any content read. Keep lower-case DNG and upper-case NEF representatives; RAF follows that same guard. Cloud-path availability and caller-owned-byte coverage remain separately intact.",
-      "wp": "TESTSUITE-WP4",
-      "date": "2026-10-27",
-      "method": "HappyPhoton.Tests.ImageStatsServiceTests.RawSourcePath_IsRejectedBeforeMagickDecode",
-      "removedCases": [
-        "HappyPhoton.Tests.ImageStatsServiceTests.RawSourcePath_IsRejectedBeforeMagickDecode(fileName: \"source.raf\")"
-      ],
-      "keptCases": [
-        "HappyPhoton.Tests.ImageStatsServiceTests.RawSourcePath_IsRejectedBeforeMagickDecode(fileName: \"source.NEF\")",
-        "HappyPhoton.Tests.ImageStatsServiceTests.RawSourcePath_IsRejectedBeforeMagickDecode(fileName: \"source.dng\")"
-      ]
+      "removed": "HappyPhoton.Tests.ImageStatsServiceTests",
+      "reference": "The class covered only ImageStatsService, which production never called; it supersedes the TESTSUITE-WP4 (2026-10-27) trim of its RAF RawSourcePath case. The thumbnail edit-brightness assertion now reads bitmap pixels directly in ThumbnailServiceTests.",
+      "behaviour": "ImageStatsService path and byte statistics (sharpness, clipping, mean luminance) and BitmapConversionService.CreateEncodedSnapshot are removed from production.",
+      "wp": "SLIM-WP5",
+      "date": "2026-11-14"
     },
     {
       "kind": "trimmed-cases",
@@ -3365,6 +3358,86 @@
         "HappyPhoton.Tests.MoveBackupCrashTests.KilledMover_PreservesSourceBeforeFlip_RecoversVerifiedDestination(point: \"after:copy:archive-3.manifest.json\")",
         "HappyPhoton.Tests.MoveBackupCrashTests.KilledMover_PreservesSourceBeforeFlip_RecoversVerifiedDestination(point: \"phase:CatalogCopied\")"
       ]
+    },
+    {
+      "kind": "removed-behaviour",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.CompareViewTests.SyncMath_MapsSameContentPointAcrossMixedAspects",
+      "reference": "The test covered only SynchronizedViewMath, which production never called; compare sync is still covered through SynchronizedViewService and NormalizedViewport in CompareViewTests.",
+      "behaviour": "SynchronizedViewMath.NormalizePoint/MapPoint and ImagePoint are removed from production.",
+      "wp": "SLIM-WP5",
+      "date": "2026-11-14"
+    },
+    {
+      "kind": "removed-behaviour",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.PreviewServiceRawHistogramRefreshTests.Accessor_ExactOnlyAndNeverStartsIo",
+      "reference": "The test covered only PreviewService.TryGetRawHistogram, which production never called; the raw histogram still reaches production through PreviewArtifacts and PreviewRefreshed, covered by the remaining refresh tests.",
+      "behaviour": "PreviewService.TryGetRawHistogram, a cache-only raw histogram accessor, is removed from production.",
+      "wp": "SLIM-WP5",
+      "date": "2026-11-14"
+    },
+    {
+      "kind": "removed-behaviour",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.PreviewServiceRawHistogramRefreshTests.DisposedAccessor_ReturnsNullWithoutIo",
+      "reference": "The test covered only the disposed-service path of PreviewService.TryGetRawHistogram, which production never called.",
+      "behaviour": "PreviewService.TryGetRawHistogram, a cache-only raw histogram accessor, is removed from production.",
+      "wp": "SLIM-WP5",
+      "date": "2026-11-14"
+    },
+    {
+      "kind": "removed-behaviour",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.CropGeometryTests.Intersect_CropInsideBoundsIsUnchanged",
+      "reference": "The test covered only CropGeometry.Intersect, which production never called.",
+      "behaviour": "CropGeometry.Intersect and its EnsureRange helper are removed from production.",
+      "wp": "SLIM-WP5",
+      "date": "2026-11-14"
+    },
+    {
+      "kind": "removed-behaviour",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.CropGeometryTests.Intersect_CropOutsideBoundsIsClamped",
+      "reference": "The test covered only CropGeometry.Intersect, which production never called.",
+      "behaviour": "CropGeometry.Intersect and its EnsureRange helper are removed from production.",
+      "wp": "SLIM-WP5",
+      "date": "2026-11-14"
+    },
+    {
+      "kind": "removed-behaviour",
+      "project": "Tests/HappyPhoton.Tests.csproj",
+      "removed": "HappyPhoton.Tests.CropGeometryTests.Intersect_DisjointCropYieldsValidRegionWithinBounds",
+      "reference": "The test covered only CropGeometry.Intersect, which production never called.",
+      "behaviour": "CropGeometry.Intersect and its EnsureRange helper are removed from production.",
+      "wp": "SLIM-WP5",
+      "date": "2026-11-14"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.VisualsThumbAppearanceTests.TemperatureMarkSitsOnGradientTrackAndCenterMarkIsAboveTrack",
+      "reference": "Renamed after CompactSlider lost its never-enabled value fill and centre mark; the gradient-track, mark-visibility, mark-colour and mark-straddles-track assertions are unchanged.",
+      "wp": "SLIM-WP5",
+      "date": "2026-11-14",
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.VisualsThumbAppearanceTests.TemperatureMarkSitsOnGradientTrack"
+      },
+      "result": "new"
+    },
+    {
+      "kind": "folded",
+      "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+      "removed": "HappyPhoton.Tests.CompactSliderInputGateTests.OutOfRangeValueKeepsFillAndThumbWithinTrack",
+      "reference": "Renamed after CompactSlider lost its never-enabled value fill; the same four cases keep the thumb-position and value assertions.",
+      "wp": "SLIM-WP5",
+      "date": "2026-11-14",
+      "survivor": {
+        "project": "HeadlessTests/HappyPhoton.Headless.Tests.csproj",
+        "test": "HappyPhoton.Tests.CompactSliderInputGateTests.OutOfRangeValueKeepsThumbWithinTrack"
+      },
+      "result": "new"
     }
   ]
 }

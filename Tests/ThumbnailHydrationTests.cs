@@ -264,7 +264,8 @@ public sealed class ThumbnailHydrationTests : IDisposable
         await using var imageService = new ImageService(
             catalog,
             new NullBaseLoader(),
-            availability);
+            availability,
+            LibRawNativeSupport.Health);
         try
         {
             viewModel.Browse.SetImages([image]);

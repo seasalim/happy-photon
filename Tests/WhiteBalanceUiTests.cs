@@ -103,7 +103,7 @@ public sealed class WhiteBalanceUiTests : IDisposable
         TestImages.WriteJpeg(sourcePath, width: 320, height: 200);
 
         using var catalog = await _fx.CreateCatalogAsync();
-        await using var imageService = new ImageService(catalog);
+        await using var imageService = ServiceTestConveniences.CreateImageService(catalog);
         var image = new ImageFile(sourcePath);
         using (var result = await imageService.Thumbnails.LoadUneditedThumbnailAsync(
             image,

@@ -34,9 +34,4 @@ public class FolderService
         sidecars.Sort(StringComparer.OrdinalIgnoreCase);
         return new FolderScanResult(images, sidecars);
     }
-
-    public IEnumerable<ImageFile> GetImagesInFolder(string folderPath)
-    {
-        return ScanFolder(folderPath).Images;
-    }
 }

@@ -128,16 +128,6 @@ public static class BitmapConversionService
     }
 
     /// <summary>
-    /// Encodes an Avalonia bitmap for non-UI image processing.
-    /// </summary>
-    public static byte[] CreateEncodedSnapshot(Bitmap bitmap)
-    {
-        using var stream = new MemoryStream();
-        bitmap.Save(stream, PngBitmapEncoderOptions.Default);
-        return stream.ToArray();
-    }
-
-    /// <summary>
     /// Converts a MagickImage to an Avalonia Bitmap using direct pixel copy.
     /// </summary>
     public static Bitmap? ConvertToBitmap(MagickImage image)

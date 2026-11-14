@@ -88,7 +88,7 @@ public sealed class BrowseShellExportStyleTests
         }
 
         var rating = browse.FindControl<BrowseRatingFilter>("RatingFilter")!;
-        var assessment = browse.FindControl<ImageAssessmentControl>("ImageAssessment")!;
+        var assessment = browse.FindFooterControl<ImageAssessmentControl>("ImageAssessment")!;
         Assert.Equal(rating.FindControl<Button>("RatingFilter1Button")!.Bounds.Size,
             assessment.FindControl<Button>("Rating1Button")!.Bounds.Size);
         var swatches = panel.GetVisualDescendants().OfType<Button>()

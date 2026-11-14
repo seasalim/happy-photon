@@ -153,38 +153,6 @@ internal static class CropGeometry
             referenceRatio.Value;
     }
 
-    public static CropRegion Intersect(CropRegion crop, CropRegion bounds)
-    {
-        var left = Math.Max(crop.Left, bounds.Left);
-        var top = Math.Max(crop.Top, bounds.Top);
-        var right = Math.Min(crop.Right, bounds.Right);
-        var bottom = Math.Min(crop.Bottom, bounds.Bottom);
-
-        EnsureRange(ref left, ref right, bounds.Left, bounds.Right);
-        EnsureRange(ref top, ref bottom, bounds.Top, bounds.Bottom);
-
-        return new CropRegion
-        {
-            Left = left,
-            Top = top,
-            Right = right,
-            Bottom = bottom
-        };
-    }
-
-    private static void EnsureRange(ref double start, ref double end, double min, double max)
-    {
-        if (end > start)
-        {
-            return;
-        }
-
-        var center = Math.Clamp((start + end) / 2, min, max);
-        var halfSize = Math.Min(0.005, (max - min) / 2);
-        start = Math.Clamp(center - halfSize, min, max);
-        end = Math.Clamp(center + halfSize, min, max);
-    }
-
 }
 
 internal readonly record struct CenterCropRectangle(

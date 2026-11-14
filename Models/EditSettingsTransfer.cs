@@ -136,9 +136,6 @@ public static class EditSettingsTransfer
             (source, target) => target.Repairs = source.Repairs?.Select(repair => repair with { }).ToList())
     ]);
 
-    public static IReadOnlyList<string> NeverTransfers { get; } =
-        Array.AsReadOnly(new[] { "version", "rotation", "applied_preset_id" });
-
     public static IReadOnlyList<EditSettingsGroup> DefaultGroups { get; } =
         Array.AsReadOnly(Groups.Where(group => group.IsDefault).ToArray());
 

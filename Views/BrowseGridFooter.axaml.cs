@@ -8,20 +8,6 @@ namespace HappyPhoton.Views;
 
 public partial class BrowseGridFooter : UserControl
 {
-    private static readonly string[] ControlNames =
-    [
-        "ThumbnailSizePanel",
-        "LoupeViewButton",
-        "CompareViewButton",
-        "BurstsButton",
-        "PairsButton",
-        "SmallThumbnailButton",
-        "MediumThumbnailButton",
-        "LargeThumbnailButton",
-        "ImageAssessment",
-        "OnlineOnlyMessage"
-    ];
-
     public static readonly StyledProperty<bool> ShowBurstsProperty =
         AvaloniaProperty.Register<BrowseGridFooter, bool>(
             nameof(ShowBursts),
@@ -121,29 +107,4 @@ public partial class BrowseGridFooter : UserControl
 
     private void OnLargeThumbnailClick(object? sender, RoutedEventArgs e) =>
         ThumbnailSize = BrowseThumbnailSize.Large;
-
-    internal INameScope MergeWith(
-        INameScope parentNameScope,
-        IEnumerable<string> parentControlNames)
-    {
-        var merged = new NameScope();
-        RegisterNames(merged, parentNameScope, parentControlNames);
-        RegisterNames(merged, NameScope.GetNameScope(this)!, ControlNames);
-        merged.Complete();
-        return merged;
-    }
-
-    private static void RegisterNames(
-        INameScope target,
-        INameScope source,
-        IEnumerable<string> names)
-    {
-        foreach (var name in names)
-        {
-            if (source.Find(name) is { } control)
-            {
-                target.Register(name, control);
-            }
-        }
-    }
 }

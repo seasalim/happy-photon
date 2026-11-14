@@ -45,7 +45,7 @@ public sealed class PerceptualChromaLookGateTests
         var settings = new EditSettings { Saturation = 50, Vibrance = 50 };
 
         ApplyFrozenLegacyModulate(legacy, settings);
-        RenderChromaStage.Apply(perceptual, settings);
+        RenderChromaStage.Apply(perceptual, settings, execution: null);
 
         Assert.NotEqual(
             RenderPipelineTestSupport.ReadPixels(legacy),
@@ -60,11 +60,12 @@ public sealed class PerceptualChromaLookGateTests
         using var banded = CopyWithMaterializedPixels(upstream);
         var settings = new EditSettings { Saturation = 73, Vibrance = 61 };
 
-        RenderChromaStage.Apply(reference, settings, int.MaxValue);
+        RenderChromaStage.Apply(reference, settings, int.MaxValue, execution: null);
         RenderChromaStage.Apply(
             banded,
             settings,
-            checked((int)upstream.Width * 2));
+            checked((int)upstream.Width * 2),
+            execution: null);
 
         Assert.Equal(
             RenderPipelineTestSupport.ReadPixels(reference),
@@ -263,7 +264,7 @@ public sealed class PerceptualChromaLookGateTests
         int? maxDimension)
     {
         var image = CopyWithMaterializedPixels(upstream);
-        RenderChromaStage.Apply(image, settings);
+        RenderChromaStage.Apply(image, settings, execution: null);
         return FinishOwned(image, info, settings, maxDimension);
     }
 
@@ -295,7 +296,7 @@ public sealed class PerceptualChromaLookGateTests
         try
         {
             RenderNoiseReduction.Apply(image, info, settings.Detail);
-            RenderSharpening.ApplyCapture(image, info, settings.Detail);
+            RenderSharpening.ApplyCapture(image, info, settings.Detail, RenderIntent.Export);
             return RenderFinalizer.FinalizeOwned(
                 image,
                 maxDimension,

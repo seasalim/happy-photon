@@ -14,12 +14,12 @@ public sealed class RenderChromaStageTests
             [1000, 2000, 3000, 4000, 30000, 20000, 10000, 50000]);
         var before = ReadRgba(image);
 
-        Assert.False(RenderChromaStage.Apply(image, new EditSettings()));
+        Assert.False(RenderChromaStage.Apply(image, new EditSettings(), execution: null));
         Assert.Equal(before, ReadRgba(image));
 
         var disposed = CreateRgbaImage([1000, 2000, 3000, 4000]);
         disposed.Dispose();
-        Assert.False(RenderChromaStage.Apply(disposed, new EditSettings()));
+        Assert.False(RenderChromaStage.Apply(disposed, new EditSettings(), execution: null));
     }
 
     [Theory]
@@ -44,7 +44,8 @@ public sealed class RenderChromaStageTests
             {
                 Saturation = saturation,
                 Vibrance = vibrance
-            }));
+            },
+            execution: null));
 
         Assert.Equal(values, ReadRgba(image));
     }
@@ -60,7 +61,8 @@ public sealed class RenderChromaStageTests
 
         RenderChromaStage.Apply(
             image,
-            new EditSettings { Saturation = -100, Vibrance = 100 });
+            new EditSettings { Saturation = -100, Vibrance = 100 },
+            execution: null);
         var actual = ReadRgba(image);
 
         Assert.Equal(actual[0], actual[1]);
@@ -86,8 +88,8 @@ public sealed class RenderChromaStageTests
         using var bands = CreateRgbaImage(values, width);
         var settings = new EditSettings { Saturation = 87, Vibrance = 63 };
 
-        RenderChromaStage.Apply(single, settings, int.MaxValue);
-        RenderChromaStage.Apply(bands, settings, width * 3);
+        RenderChromaStage.Apply(single, settings, int.MaxValue, execution: null);
+        RenderChromaStage.Apply(bands, settings, width * 3, execution: null);
 
         Assert.Equal(ReadRgba(single), ReadRgba(bands));
     }
@@ -144,7 +146,7 @@ public sealed class RenderChromaStageTests
         foreach (var input in inputs)
         {
             using var image = CreateRgbImage(input);
-            RenderChromaStage.Apply(image, settings);
+            RenderChromaStage.Apply(image, settings, execution: null);
             var actual = RenderPipelineTestSupport.ReadPixels(image);
             var reference = ReferenceQ16(input, settings, quantizeLinear: false);
             var intermediate = ReferenceQ16(input, settings, quantizeLinear: true);
@@ -171,7 +173,8 @@ public sealed class RenderChromaStageTests
 
         RenderChromaStage.Apply(
             image,
-            new EditSettings { Saturation = 50 });
+            new EditSettings { Saturation = 50 },
+            execution: null);
         var actualCodes = RenderPipelineTestSupport.ReadPixels(image);
         var actual = OklabColor.FromEncodedRec2020(Encoded(actualCodes));
 
@@ -202,7 +205,7 @@ public sealed class RenderChromaStageTests
             in mixer);
         using var image = CreateRgbImage(input);
 
-        Assert.True(RenderChromaStage.Apply(image, settings));
+        Assert.True(RenderChromaStage.Apply(image, settings, execution: null));
         var actual = Encoded(RenderPipelineTestSupport.ReadPixels(image));
 
         Assert.InRange(Math.Abs(actual.Red - expected.Red), 0, 2.0 / ushort.MaxValue);
@@ -216,12 +219,13 @@ public sealed class RenderChromaStageTests
         using var identity = CreateRgbImage([12000, 24000, 36000]);
         Assert.False(RenderChromaStage.Apply(
             identity,
-            new EditSettings { Mixer = new ColorMixerSettings() }));
+            new EditSettings { Mixer = new ColorMixerSettings() },
+            execution: null));
 
         var activeSettings = new EditSettings { Mixer = new ColorMixerSettings() };
         activeSettings.Mixer.Red.Hue = 50;
         using var neutral = CreateRgbImage([23000, 23000, 23000]);
-        Assert.True(RenderChromaStage.Apply(neutral, activeSettings));
+        Assert.True(RenderChromaStage.Apply(neutral, activeSettings, execution: null));
         Assert.Equal(
             [23000, 23000, 23000],
             RenderPipelineTestSupport.ReadPixels(neutral));

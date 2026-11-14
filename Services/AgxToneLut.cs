@@ -132,24 +132,6 @@ internal static class AgxToneLut
         return composed;
     }
 
-    internal static double Interpolate(double[] lut, double value)
-    {
-        ArgumentNullException.ThrowIfNull(lut);
-        if (lut.Length != Length)
-        {
-            throw new ArgumentException(
-                $"Expected a {Length}-entry LUT.",
-                nameof(lut));
-        }
-        if (!double.IsFinite(value))
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(value),
-                "LUT input must be finite.");
-        }
-        return InterpolateUnchecked(lut, value);
-    }
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static double InterpolateUnchecked(double[] lut, double value)
     {

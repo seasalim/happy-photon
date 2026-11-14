@@ -15,35 +15,6 @@ public sealed class PreviewServiceRawHistogramRefreshTests : IDisposable, IClass
         _fixture = fixture;
 
     [WindowsFact]
-    public async Task Accessor_ExactOnlyAndNeverStartsIo()
-    {
-        _fixture.RequireWindows();
-        Directory.CreateDirectory(_root);
-        using var catalog = new CatalogService(Path.Combine(_root, "catalog"));
-        await catalog.InitializeAsync();
-        var loader = new HistogramLoader();
-        var file = new ImageFile(Path.Combine(_root, "held.dng"));
-        await using var service = CreateService(catalog, loader);
-        var (preview, _) = await service.LoadPreviewWithHistogramAsync(
-            file, new EditSettings(), skipHistogram: true);
-        preview?.Dispose();
-        var decodeCount = loader.DecodeCount;
-
-        Assert.Same(loader.LastHistogram, service.TryGetRawHistogram(
-            file, BaseDecodeSettings.Default));
-        Assert.Null(service.TryGetRawHistogram(
-            new ImageFile(Path.Combine(_root, "other.dng")),
-            BaseDecodeSettings.Default));
-        Assert.Null(service.TryGetRawHistogram(file,
-            new BaseDecodeSettings(HlReconstructionMode.Blend)));
-        Assert.Equal(decodeCount, loader.DecodeCount);
-
-        service.ClearPreviewCache();
-        Assert.Null(service.TryGetRawHistogram(file, BaseDecodeSettings.Default));
-        Assert.Equal(decodeCount, loader.DecodeCount);
-    }
-
-    [WindowsFact]
     public async Task ReplacementRefresh_CarriesReplacementHistogramByIdentity()
     {
         _fixture.RequireWindows();
@@ -133,22 +104,6 @@ public sealed class PreviewServiceRawHistogramRefreshTests : IDisposable, IClass
         {
             loader.ReleaseReplacement.Set();
         }
-    }
-
-    [WindowsFact]
-    public async Task DisposedAccessor_ReturnsNullWithoutIo()
-    {
-        _fixture.RequireWindows();
-        Directory.CreateDirectory(_root);
-        using var catalog = new CatalogService(Path.Combine(_root, "disposed-catalog"));
-        await catalog.InitializeAsync();
-        var loader = new HistogramLoader();
-        var file = new ImageFile(Path.Combine(_root, "disposed.dng"));
-        var service = CreateService(catalog, loader);
-        await service.DisposeAsync();
-
-        Assert.Null(service.TryGetRawHistogram(file, BaseDecodeSettings.Default));
-        Assert.Equal(0, loader.DecodeCount);
     }
 
     public void Dispose()

@@ -161,28 +161,6 @@ public sealed class CompareViewTests : IDisposable
         Assert.All(images, image => Assert.True(vm.Browse.Contains(image)));
     }
 
-    [Theory]
-    [InlineData(6000, 4000, 3000, 6000)]
-    [InlineData(4000, 6000, 8000, 3000)]
-    public void SyncMath_MapsSameContentPointAcrossMixedAspects(
-        double sourceWidth,
-        double sourceHeight,
-        double targetWidth,
-        double targetHeight)
-    {
-        var normalized = SynchronizedViewMath.NormalizePoint(
-            new ImagePoint(sourceWidth * 0.23, sourceHeight * 0.71),
-            sourceWidth,
-            sourceHeight);
-        var mapped = SynchronizedViewMath.MapPoint(
-            normalized,
-            targetWidth,
-            targetHeight);
-
-        Assert.Equal(targetWidth * 0.23, mapped.X, 8);
-        Assert.Equal(targetHeight * 0.71, mapped.Y, 8);
-    }
-
     [Fact]
     public void Service_ClampsAndSuppressesEquivalentUpdates()
     {

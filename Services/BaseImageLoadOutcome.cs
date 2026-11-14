@@ -34,28 +34,4 @@ public sealed record BaseImageLoadOutcome(
 
     public static BaseImageLoadOutcome Failed(BaseImageLoadFailure failure) =>
         new(null, failure);
-
-    public static BaseImageLoadOutcome FromImage(
-        BaseImage? image,
-        BaseImageLoadFailure failure) =>
-        image != null ? Loaded(image) : Failed(failure);
-
-    internal static BaseImageLoadOutcome FromImage(
-        BaseImage? image,
-        BaseImageLoadFailure failure,
-        PreviewSourceAnalysis analysis) =>
-        image != null
-            ? Loaded(new PreviewBasePair(image, large: null), analysis)
-            : Failed(failure);
-
-    internal BaseImage? DetachInteractiveImage()
-    {
-        if (Pair == null)
-        {
-            return null;
-        }
-
-        using var pair = Pair;
-        return pair.DetachInteractive();
-    }
 }

@@ -168,7 +168,7 @@ public sealed class BrowseImageStateTests
         Assert.True(state.Contains(first));
         Assert.False(state.Contains(equalPathDifferentInstance));
 
-        state.Remove(first);
+        state.RemoveRange([first]);
 
         Assert.False(state.Contains(first));
     }

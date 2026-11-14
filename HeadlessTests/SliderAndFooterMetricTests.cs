@@ -252,10 +252,10 @@ public sealed class SliderAndFooterMetricTests
         using var windowScope = new TestUiScope(window);
         Dispatcher.UIThread.RunJobs();
 
-        var pairsButton = browse.FindControl<Button>("PairsButton")!;
+        var pairsButton = browse.FindFooterControl<Button>("PairsButton")!;
         var pairGlyph = Assert.IsType<Viewbox>(pairsButton.Content);
         var compareGlyph = Assert.IsType<Viewbox>(
-            browse.FindControl<ToggleButton>("CompareViewButton")!.Content);
+            browse.FindFooterControl<ToggleButton>("CompareViewButton")!.Content);
         var tileGlyph = Assert.IsType<TextBlock>(Assert.Single(
             browse.GetVisualDescendants().OfType<Border>(),
             border => border.Name == "RawJpegPairChip" &&

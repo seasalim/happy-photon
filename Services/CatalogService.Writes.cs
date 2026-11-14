@@ -18,10 +18,6 @@ public partial class CatalogService
     public Task SaveEditSettingsAsync(long catalogId, EditSettings settings) =>
         SaveEditSettingsWithHistoryAsync(catalogId, settings, null);
 
-    /// <summary>Saves edit settings atomically for a group of images without history rows.</summary>
-    public Task SaveEditSettingsBatchAsync(IReadOnlyList<CatalogEditSettingsUpdate> updates) =>
-        SaveEditSettingsBatchWithHistoryAsync(updates, operation: string.Empty);
-
     private Microsoft.Data.Sqlite.SqliteCommand CreateSaveEditSettingsCommand()
     {
         var cmd = _connection!.CreateCommand();

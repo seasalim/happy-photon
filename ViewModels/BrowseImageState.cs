@@ -224,15 +224,6 @@ public partial class BrowseImageState : ObservableObject
     public IReadOnlyList<ImageFile> GetRejectedImages() =>
         _allImages.Where(image => image.Flag == ImageFlag.Rejected).ToList();
 
-    public void Remove(ImageFile image)
-    {
-        _allImages.Remove(image);
-        _allImageSet.Remove(image);
-        VisibleImages.Remove(image);
-        ReplaceThumbnail(image, null);
-        NotifyCountsChanged();
-    }
-
     public void InsertVersion(ImageFile image)
     {
         var index = _allImages.FindLastIndex(candidate =>

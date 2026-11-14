@@ -114,7 +114,11 @@ public sealed class NativeRuntimeIsolationTests
         using var directory = new TemporaryDirectory();
         using var catalog = new CatalogService(Path.Combine(directory.Path, "catalog"));
         await catalog.InitializeAsync();
-        await using var imageService = new ImageService(catalog, router);
+        await using var imageService = new ImageService(
+            catalog,
+            router,
+            new SourceAvailabilityService(),
+            LibRawNativeSupport.Health);
         var rawService = typeof(ImageService).GetField("_rawService",
             BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(imageService);
         var libRawService = Assert.IsType<LibRawProcessingService>(rawService);

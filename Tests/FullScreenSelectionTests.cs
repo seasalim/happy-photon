@@ -238,7 +238,7 @@ public sealed class FullScreenSelectionTests : IDisposable
         Assert.Same(images[2], vm.SelectedImage);
         Assert.Equal("Selection · 1 / 2", vm.FullScreenSelectionBadgeText);
 
-        vm.Browse.Remove(images[2]);
+        vm.Browse.RemoveRange([images[2]]);
 
         Assert.False(vm.IsFullScreenSelectionRestricted);
     }

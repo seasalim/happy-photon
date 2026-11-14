@@ -46,7 +46,7 @@ public sealed partial class DevelopAssessmentBarTests
             var slot = pane.FindControl<Grid>("DevelopAssessmentSlot")!;
 
             var footer = window.FindControl<BrowseGridView>("BrowseGridView")!
-                .FindControl<ImageAssessmentControl>("ImageAssessment")!;
+                .FindFooterControl<ImageAssessmentControl>("ImageAssessment")!;
             var controls = views.GetVisualDescendants().OfType<Button>()
                 .Prepend(pane.FindControl<Button>("RotateLeftButton")!).ToArray();
             pane.Width = 1000;

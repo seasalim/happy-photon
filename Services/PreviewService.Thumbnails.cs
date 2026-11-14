@@ -8,13 +8,6 @@ namespace HappyPhoton.Services;
 public sealed partial class PreviewService
 {
     public Task<Bitmap?> TryPromoteRenderedThumbnailAsync(
-        ImageFile imageFile,
-        EditSettings settings,
-        CancellationToken cancellationToken = default) =>
-        TryPromoteRenderedThumbnailAsync(imageFile, settings,
-            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium), cancellationToken);
-
-    public Task<Bitmap?> TryPromoteRenderedThumbnailAsync(
         ImageFile imageFile, EditSettings settings, ThumbnailSizeRequest request,
         CancellationToken cancellationToken = default) =>
         TrackDisposalTask(() => PromoteRenderedThumbnailAsync(

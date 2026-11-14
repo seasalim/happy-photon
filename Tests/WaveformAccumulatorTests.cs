@@ -42,7 +42,7 @@ public sealed class WaveformAccumulatorTests
         byte value,
         int expectedLevel)
     {
-        Assert.Equal(expectedLevel, WaveformAccumulator.ToLevel(value));
+        Assert.Equal(expectedLevel, WaveformData.ToLevel(value));
     }
 
     [Theory]

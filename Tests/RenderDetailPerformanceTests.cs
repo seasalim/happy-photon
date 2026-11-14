@@ -200,7 +200,8 @@ public sealed class RenderNoiseReductionPerformanceTests
                 RenderSharpening.ApplyCapture(
                     warmup,
                     CreateInfo(256, 256, isRaw: true),
-                    new DetailSettings());
+                    new DetailSettings(),
+                    RenderIntent.Export);
             }
         }
         await Task.Delay(100);
@@ -221,7 +222,8 @@ public sealed class RenderNoiseReductionPerformanceTests
             RenderSharpening.ApplyCapture(
                 image,
                 CreateInfo(width, height, isRaw: true),
-                new DetailSettings()));
+                new DetailSettings(),
+                RenderIntent.Export));
         while (!render.IsCompleted)
         {
             await Task.Delay(5);

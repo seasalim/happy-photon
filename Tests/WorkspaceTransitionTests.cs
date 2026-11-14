@@ -246,7 +246,7 @@ public sealed class WorkspaceTransitionTests : IDisposable
             vm.SelectedImage = second;
             Assert.Null(vm.PreviewImage);
             Assert.Null(vm.Histogram);
-            Assert.False(vm.IsClippingStatsAvailable);
+            Assert.Null(vm.DisplayClippingStats);
             await secondStarted.Task.WaitAsync(TestWaits.Condition);
             Assert.Null(vm.PreviewImage);
             Assert.Null(vm.Histogram);
@@ -255,7 +255,7 @@ public sealed class WorkspaceTransitionTests : IDisposable
             await TestWaits.UntilAsync(() =>
                 vm.PreviewImage != null && vm.Histogram != null);
             Assert.Same(second, vm.SelectedImage);
-            Assert.True(vm.IsClippingStatsAvailable);
+            Assert.NotNull(vm.DisplayClippingStats);
         }
         finally
         {

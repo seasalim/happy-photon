@@ -54,11 +54,11 @@ public sealed class ProfileDecodeGuardTests : IDisposable
         // coordinator; the guard above would throw if it did not. A missing
         // profile file resolves to a rejected outcome, which still satisfies
         // the guard — only the unresolved selection is forbidden.
-        var context = await service.GetWhiteBalanceContextAsync(
+        var sample = await service.GetAutoWhiteBalanceSampleAsync(
             new ImageFile(Path.Combine(_root.Path, "photo.cr2")),
             settings);
 
-        Assert.Null(context);
+        Assert.Null(sample);
     }
 
     public void Dispose()

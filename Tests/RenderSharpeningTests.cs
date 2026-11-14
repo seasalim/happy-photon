@@ -64,7 +64,8 @@ public sealed class RenderSharpeningTests
         RenderSharpening.ApplyCapture(
             rawDefault,
             CreateInfo(source, isRaw: true),
-            new DetailSettings());
+            new DetailSettings(),
+            RenderIntent.Export);
         RenderSharpening.ApplyCapture(
             rawExplicit,
             CreateInfo(source, isRaw: true),
@@ -73,11 +74,13 @@ public sealed class RenderSharpeningTests
                 CaptureSharpen =
                     DetailSettings.GetCaptureSharpenDefault(
                         isRawSource: true)
-            });
+            },
+            RenderIntent.Export);
         RenderSharpening.ApplyCapture(
             standardDefault,
             CreateInfo(source, isRaw: false),
-            new DetailSettings());
+            new DetailSettings(),
+            RenderIntent.Export);
 
         Assert.Equal(ReadRgb(rawExplicit), ReadRgb(rawDefault));
         Assert.NotEqual(before, ReadRgb(rawDefault));
@@ -97,7 +100,8 @@ public sealed class RenderSharpeningTests
         RenderSharpening.ApplyCapture(
             image,
             info,
-            new DetailSettings { CaptureSharpen = 100 });
+            new DetailSettings { CaptureSharpen = 100 },
+            RenderIntent.Export);
 
         Assert.Equal(before, ReadRgb(image));
         Assert.Equal(ColorSpace.sRGB, image.ColorSpace);
@@ -113,7 +117,8 @@ public sealed class RenderSharpeningTests
         RenderSharpening.ApplyCapture(
             image,
             CreateInfo(image, isRaw: false),
-            new DetailSettings { CaptureSharpen = 100 });
+            new DetailSettings { CaptureSharpen = 100 },
+            RenderIntent.Export);
 
         var after = ReadRgb(image);
         Assert.Equal(alpha, ReadAlpha(image));
@@ -151,19 +156,23 @@ public sealed class RenderSharpeningTests
         RenderSharpening.ApplyOutput(
             disabled,
             OutputSharpeningMode.Off,
-            wasResized: true);
+            wasResized: true,
+            RenderKernelSupport.DefaultBandPixelLimit);
         RenderSharpening.ApplyOutput(
             unresized,
             OutputSharpeningMode.Screen,
-            wasResized: false);
+            wasResized: false,
+            RenderKernelSupport.DefaultBandPixelLimit);
         RenderSharpening.ApplyOutput(
             eligible,
             OutputSharpeningMode.Screen,
-            wasResized: true);
+            wasResized: true,
+            RenderKernelSupport.DefaultBandPixelLimit);
         RenderSharpening.ApplyOutput(
             tooLarge,
             OutputSharpeningMode.Screen,
-            wasResized: true);
+            wasResized: true,
+            RenderKernelSupport.DefaultBandPixelLimit);
 
         Assert.Equal(before, ReadRgb(disabled));
         Assert.Equal(before, ReadRgb(unresized));
@@ -182,11 +191,13 @@ public sealed class RenderSharpeningTests
         RenderSharpening.ApplyOutput(
             screen,
             OutputSharpeningMode.Screen,
-            wasResized: false);
+            wasResized: false,
+            RenderKernelSupport.DefaultBandPixelLimit);
         RenderSharpening.ApplyOutput(
             print,
             OutputSharpeningMode.Print,
-            wasResized: false);
+            wasResized: false,
+            RenderKernelSupport.DefaultBandPixelLimit);
 
         Assert.Equal(before, ReadRgb(screen));
         Assert.NotEqual(before, ReadRgb(print));
@@ -196,11 +207,13 @@ public sealed class RenderSharpeningTests
         RenderSharpening.ApplyOutput(
             resizedScreen,
             OutputSharpeningMode.Screen,
-            wasResized: true);
+            wasResized: true,
+            RenderKernelSupport.DefaultBandPixelLimit);
         RenderSharpening.ApplyOutput(
             resizedPrint,
             OutputSharpeningMode.Print,
-            wasResized: true);
+            wasResized: true,
+            RenderKernelSupport.DefaultBandPixelLimit);
         Assert.NotEqual(ReadRgb(resizedScreen), ReadRgb(resizedPrint));
     }
 
@@ -238,11 +251,13 @@ public sealed class RenderSharpeningTests
             singleBand,
             info,
             detail,
+            RenderIntent.Export,
             int.MaxValue);
         RenderSharpening.ApplyCapture(
             multipleBands,
             info,
             detail,
+            RenderIntent.Export,
             forcedBandLimit);
 
         Assert.Equal(ReadRgba(singleBand), ReadRgba(multipleBands));

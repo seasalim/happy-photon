@@ -1,8 +1,11 @@
 using HappyPhoton.Models;
 
-namespace HappyPhoton.Services;
+namespace HappyPhoton.Tests;
 
-public static class WaveformAccumulator
+/// <summary>
+/// Sequential waveform reference: the independent oracle for the fused histogram pass.
+/// </summary>
+internal static class WaveformAccumulator
 {
     public static WaveformData Accumulate(
         ReadOnlySpan<ushort> rgb,
@@ -32,7 +35,7 @@ public static class WaveformAccumulator
                 luminance = Math.Clamp(luminance, 0, 255);
 
                 var column = x * WaveformData.ColumnCount / width;
-                var level = ToLevel(luminance);
+                var level = luminance >> 1;
                 waveform.Luminance[level * WaveformData.ColumnCount + column]++;
                 waveform.ColumnSampleCounts[column]++;
             }
@@ -45,8 +48,6 @@ public static class WaveformAccumulator
 
         return waveform;
     }
-
-    internal static int ToLevel(int value8) => value8 >> 1;
 
     private static void BackFillColumns(WaveformData waveform)
     {

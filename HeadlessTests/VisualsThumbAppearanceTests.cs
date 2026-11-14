@@ -87,7 +87,7 @@ public sealed class VisualsThumbAppearanceTests
     [AvaloniaTheory]
     [InlineData(false)]
     [InlineData(true)]
-    public void TemperatureMarkSitsOnGradientTrackAndCenterMarkIsAboveTrack(bool gray)
+    public void TemperatureMarkSitsOnGradientTrack(bool gray)
     {
         var panel = new DevelopEditPanel();
         var window = new Window { Width = 200, Height = 2400, Content = panel };
@@ -112,10 +112,6 @@ public sealed class VisualsThumbAppearanceTests
         mark.IsVisible = true;
         AssertColor(mark, "TextSecondary");
 
-        slider.ShowValueFill = true;
-        window.UpdateLayout();
-        var center = slider.FindControl<Border>("CenterMark")!;
-        Assert.True(center.Bounds.Bottom <= track.Bounds.Top);
         Assert.True(mark.Bounds.Top < track.Bounds.Top);
         Assert.True(mark.Bounds.Bottom > track.Bounds.Bottom);
     }

@@ -69,48 +69,4 @@ public partial class CropGeometryTests
                 expectedHeight),
             crop);
     }
-
-    [Fact]
-    public void Intersect_CropInsideBoundsIsUnchanged()
-    {
-        var crop = new CropRegion { Left = 0.2, Top = 0.2, Right = 0.8, Bottom = 0.8 };
-        var bounds = new CropRegion { Left = 0.1, Top = 0.1, Right = 0.9, Bottom = 0.9 };
-
-        var result = CropGeometry.Intersect(crop, bounds);
-
-        Assert.Equal(0.2, result.Left);
-        Assert.Equal(0.2, result.Top);
-        Assert.Equal(0.8, result.Right);
-        Assert.Equal(0.8, result.Bottom);
-    }
-
-    [Fact]
-    public void Intersect_CropOutsideBoundsIsClamped()
-    {
-        var crop = new CropRegion { Left = 0.0, Top = 0.0, Right = 1.0, Bottom = 1.0 };
-        var bounds = new CropRegion { Left = 0.1, Top = 0.15, Right = 0.9, Bottom = 0.85 };
-
-        var result = CropGeometry.Intersect(crop, bounds);
-
-        Assert.Equal(0.1, result.Left);
-        Assert.Equal(0.15, result.Top);
-        Assert.Equal(0.9, result.Right);
-        Assert.Equal(0.85, result.Bottom);
-    }
-
-    [Fact]
-    public void Intersect_DisjointCropYieldsValidRegionWithinBounds()
-    {
-        var crop = new CropRegion { Left = 0.0, Top = 0.0, Right = 0.05, Bottom = 0.05 };
-        var bounds = new CropRegion { Left = 0.3, Top = 0.3, Right = 0.7, Bottom = 0.7 };
-
-        var result = CropGeometry.Intersect(crop, bounds);
-
-        Assert.True(result.Left < result.Right);
-        Assert.True(result.Top < result.Bottom);
-        Assert.InRange(result.Left, bounds.Left, bounds.Right);
-        Assert.InRange(result.Right, bounds.Left, bounds.Right);
-        Assert.InRange(result.Top, bounds.Top, bounds.Bottom);
-        Assert.InRange(result.Bottom, bounds.Top, bounds.Bottom);
-    }
 }

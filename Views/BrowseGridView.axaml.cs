@@ -11,40 +11,6 @@ namespace HappyPhoton.Views;
 
 public partial class BrowseGridView : UserControl
 {
-    private static readonly string[] RootControlNames =
-    [
-        "Root",
-        "SelectionBar",
-        "FilterLabel",
-        "FilterScrollViewer",
-        "FilterRawButton",
-        "FilterJpegButton",
-        "FlagFilterPickedButton",
-        "FlagFilterRejectedButton",
-        "RatingFilter",
-        "ColorLabelFilterControl",
-        "FilterLeftFade",
-        "FilterRightFade",
-        "BrowseActionsPanel",
-        "BrowseActionsButton",
-        "SelectAllMenuItem",
-        "DeselectAllMenuItem",
-        "FilteredEmptyState",
-        "FilteredEmptyClearButton",
-        "ThumbnailScrollViewer",
-        "ThumbnailGrid",
-        "ThumbnailTile",
-        "NewVersionMenuItem",
-        "DeleteVersionMenuItem",
-        "DeleteImageMenuItem",
-        "EmptyState",
-        "EmptyHeading",
-        "EmptyMessage",
-        "CompareView",
-        "LoupeView",
-        "BrowseGridFooter"
-    ];
-
     public static readonly StyledProperty<ObservableCollection<ImageFile>?> ImagesProperty =
         AvaloniaProperty.Register<BrowseGridView, ObservableCollection<ImageFile>?>(nameof(Images));
 
@@ -204,11 +170,6 @@ public partial class BrowseGridView : UserControl
     public BrowseGridView()
     {
         InitializeComponent();
-        NameScope.SetNameScope(
-            this,
-            BrowseGridFooter.MergeWith(
-                NameScope.GetNameScope(this)!,
-                RootControlNames));
         UpdateFilterBar();
         FilterScrollViewer.ScrollChanged += OnFilterScrollChanged;
         FilterScrollViewer.SizeChanged += OnFilterScrollViewerSizeChanged;

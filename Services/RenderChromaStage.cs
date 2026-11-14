@@ -14,22 +14,13 @@ internal static class RenderChromaStage
     /// ImageMagick copy-on-write clones; see the pixel-write rule documented by
     /// <see cref="DcpHueSatRenderer.Apply(MagickImage, DcpHueSatMap?)"/>.
     /// </summary>
-    public static bool Apply(MagickImage image, EditSettings settings)
-        => Apply(image, settings, DefaultBandPixelLimit, execution: null);
-
-    internal static bool Apply(
-        MagickImage image,
-        EditSettings settings,
-        int bandPixelLimit)
-        => Apply(image, settings, bandPixelLimit, execution: null);
-
     internal static bool Apply(
         MagickImage image,
         EditSettings settings,
         RenderExecutionOptions? execution)
         => Apply(image, settings, DefaultBandPixelLimit, execution);
 
-    private static bool Apply(
+    internal static bool Apply(
         MagickImage image,
         EditSettings settings,
         int bandPixelLimit,

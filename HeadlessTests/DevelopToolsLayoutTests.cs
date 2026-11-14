@@ -186,7 +186,7 @@ public sealed class DevelopToolsLayoutTests
             {
                 var slider = rows[i + 3];
                 var brush = Assert.IsType<LinearGradientBrush>(slider.TrackBrush);
-                Assert.False(slider.ShowValueFill);
+                Assert.Null(slider.FindControl<Border>("FillBar"));
                 Assert.Equal(new RelativePoint(0, .5, RelativeUnit.Relative), brush.StartPoint);
                 Assert.Equal(new RelativePoint(1, .5, RelativeUnit.Relative), brush.EndPoint);
                 Assert.Equal(new[] { 0d, .5, 1 }, brush.GradientStops.Select(s => s.Offset));

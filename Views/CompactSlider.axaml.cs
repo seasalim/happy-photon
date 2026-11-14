@@ -68,9 +68,6 @@ public partial class CompactSlider : UserControl
     public static readonly StyledProperty<IBrush?> TrackBrushProperty =
         AvaloniaProperty.Register<CompactSlider, IBrush?>(nameof(TrackBrush));
 
-    public static readonly StyledProperty<bool> ShowValueFillProperty =
-        AvaloniaProperty.Register<CompactSlider, bool>(nameof(ShowValueFill), false);
-
     public string Label
     {
         get => GetValue(LabelProperty);
@@ -131,18 +128,10 @@ public partial class CompactSlider : UserControl
         set => SetValue(TrackBrushProperty, value);
     }
 
-    public bool ShowValueFill
-    {
-        get => GetValue(ShowValueFillProperty);
-        set => SetValue(ShowValueFillProperty, value);
-    }
-
     private const double DragThreshold = 2;
 
     private Grid? _layoutGrid;
     private Grid? _trackGrid;
-    private Border? _fillBar;
-    private Border? _centerMark;
     private TextBlock? _labelText;
     private TextBlock? _valueText;
 
@@ -166,8 +155,6 @@ public partial class CompactSlider : UserControl
 
         _layoutGrid = this.FindControl<Grid>("LayoutGrid");
         _trackGrid = this.FindControl<Grid>("TrackGrid");
-        _fillBar = this.FindControl<Border>("FillBar");
-        _centerMark = this.FindControl<Border>("CenterMark");
         _labelText = this.FindControl<TextBlock>("LabelText");
         _valueText = this.FindControl<TextBlock>("ValueText");
         _thumbMark = this.FindControl<Avalonia.Controls.Shapes.Path>("ThumbMark");
@@ -232,7 +219,6 @@ public partial class CompactSlider : UserControl
             change.Property == MaximumProperty ||
             change.Property == StringFormatProperty ||
             change.Property == DisplayTextProperty ||
-            change.Property == ShowValueFillProperty ||
             change.Property == LabelProperty)
         {
             UpdateDisplay();
@@ -242,7 +228,7 @@ public partial class CompactSlider : UserControl
     protected override void OnSizeChanged(SizeChangedEventArgs e)
     {
         base.OnSizeChanged(e);
-        UpdateFillBar();
+        UpdateThumbPosition();
     }
 
     private void UpdateDisplay()
@@ -257,12 +243,12 @@ public partial class CompactSlider : UserControl
             _valueText.Text = DisplayText ?? string.Format(StringFormat, Value);
         }
 
-        UpdateFillBar();
+        UpdateThumbPosition();
     }
 
-    private void UpdateFillBar()
+    private void UpdateThumbPosition()
     {
-        if (_trackGrid == null || _fillBar == null || _centerMark == null) return;
+        if (_trackGrid == null) return;
 
         var trackWidth = _trackGrid.Bounds.Width;
         if (trackWidth <= 0) return;
@@ -270,38 +256,7 @@ public partial class CompactSlider : UserControl
         var range = Maximum - Minimum;
         if (range <= 0) return;
 
-        var normalizedValue = Math.Clamp((Value - Minimum) / range, 0, 1);
-        var normalizedZero = (0 - Minimum) / range;
-
-        bool isBipolar = Minimum < 0 && Maximum > 0;
-
-        double valueX;
-        if (isBipolar)
-        {
-            _centerMark.IsVisible = ShowValueFill;
-
-            var centerX = normalizedZero * trackWidth;
-            valueX = normalizedValue * trackWidth;
-
-            if (Value >= 0)
-            {
-                _fillBar.Margin = new Thickness(centerX, 0, 0, 0);
-                _fillBar.Width = Math.Max(0, valueX - centerX);
-            }
-            else
-            {
-                _fillBar.Margin = new Thickness(valueX, 0, 0, 0);
-                _fillBar.Width = Math.Max(0, centerX - valueX);
-            }
-        }
-        else
-        {
-            _centerMark.IsVisible = false;
-            _fillBar.Margin = new Thickness(0);
-            valueX = normalizedValue * trackWidth;
-            _fillBar.Width = valueX;
-        }
-        _fillBar.IsVisible = ShowValueFill;
+        var valueX = Math.Clamp((Value - Minimum) / range, 0, 1) * trackWidth;
 
         if (_thumbMark != null)
         {

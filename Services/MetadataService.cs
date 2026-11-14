@@ -20,12 +20,6 @@ internal sealed class MetadataService
 
     public int InFlightCount => Volatile.Read(ref _inFlightCount);
 
-    public MetadataService(IRawProcessingService rawService) : this(
-        rawService,
-        new SourceAvailabilityService())
-    {
-    }
-
     internal MetadataService(
         IRawProcessingService rawService,
         ISourceAvailabilityService availabilityService,
@@ -95,16 +89,8 @@ internal sealed class MetadataService
 
     internal static ImageMetadata ExtractMetadata(
         ImageFile imageFile,
-        IRawProcessingService rawService) =>
-        ExtractMetadataCore(
-            imageFile,
-            rawService,
-            new SourceAvailabilityService()).Metadata;
-
-    internal static ImageMetadata ExtractMetadata(
-        ImageFile imageFile,
         IRawProcessingService rawService,
-        Func<string, RawExifSupplement> rawSupplementReader) =>
+        Func<string, RawExifSupplement>? rawSupplementReader = null) =>
         ExtractMetadataCore(
             imageFile,
             rawService,

@@ -13,24 +13,6 @@ internal static partial class ToneLutApplicator
         ApplyCore(image, null, new ToneLuts(lut, lut, lut), execution);
     }
 
-    public static void Apply(MagickImage image, ToneLuts luts)
-    {
-        ApplyCore(image, null, luts);
-    }
-
-    internal static void Apply(
-        MagickImage image,
-        double[,] matrix,
-        double[] lut)
-    {
-        ArgumentNullException.ThrowIfNull(matrix);
-        if (matrix.GetLength(0) != 3 || matrix.GetLength(1) != 3)
-        {
-            throw new ArgumentException("Expected a 3x3 RGB matrix.", nameof(matrix));
-        }
-        ApplyCore(image, matrix, new ToneLuts(lut, lut, lut));
-    }
-
     internal static void Apply(
         MagickImage image,
         double[,] matrix,

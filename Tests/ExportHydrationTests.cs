@@ -28,7 +28,8 @@ public sealed class ExportHydrationTests : IDisposable
         await using var imageService = new ImageService(
             catalog,
             new CountingBaseLoader(),
-            availability);
+            availability,
+            LibRawNativeSupport.Health);
 
         var scope = imageService.GetExportHydrationScope(
             [new ImageFile(cloudA), new ImageFile(local), new ImageFile(cloudB)]);

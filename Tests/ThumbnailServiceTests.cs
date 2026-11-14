@@ -26,7 +26,7 @@ public sealed class ThumbnailServiceTests : IDisposable, IClassFixture<AvaloniaT
 
         using var catalog = new CatalogService(Path.Combine(_tempDirectory, "catalog"));
         await catalog.InitializeAsync();
-        await using var imageService = new ImageService(catalog);
+        await using var imageService = ServiceTestConveniences.CreateImageService(catalog);
         var image = new ImageFile(sourcePath)
         {
             EditSettings = new EditSettings { Exposure = 3 }
@@ -42,12 +42,20 @@ public sealed class ThumbnailServiceTests : IDisposable, IClassFixture<AvaloniaT
 
         Assert.NotNull(unedited);
         Assert.NotNull(edited);
-        var stats = new ImageStatsService();
-        var uneditedStats = stats.Compute(
-            BitmapConversionService.CreateEncodedSnapshot(unedited));
-        var editedStats = stats.Compute(
-            BitmapConversionService.CreateEncodedSnapshot(edited));
-        Assert.True(uneditedStats.MeanLuminance < editedStats.MeanLuminance);
+        Assert.True(MeanColorValue(unedited) < MeanColorValue(edited));
+    }
+
+    private static double MeanColorValue(Avalonia.Media.Imaging.Bitmap bitmap)
+    {
+        var bgra = BitmapConversionService.CopyBgraPixels(bitmap);
+        long total = 0;
+
+        for (var offset = 0; offset < bgra.Length; offset += 4)
+        {
+            total += bgra[offset] + bgra[offset + 1] + bgra[offset + 2];
+        }
+
+        return total / (bgra.Length / 4 * 3.0);
     }
 
     [WindowsFact]
@@ -138,7 +146,7 @@ public sealed class ThumbnailServiceTests : IDisposable, IClassFixture<AvaloniaT
         using var catalog = new CatalogService(
             Path.Combine(_tempDirectory, $"catalog-{size}"));
         await catalog.InitializeAsync();
-        await using var imageService = new ImageService(catalog);
+        await using var imageService = ServiceTestConveniences.CreateImageService(catalog);
         var image = new ImageFile(sourcePath);
         var request = ThumbnailSizeRequest.For(size);
 
@@ -171,7 +179,7 @@ public sealed class ThumbnailServiceTests : IDisposable, IClassFixture<AvaloniaT
         Directory.CreateDirectory(Path.GetDirectoryName(cachePath)!);
         TestImages.WriteJpeg(cachePath, width: 150, height: 100);
         File.SetLastWriteTimeUtc(cachePath, DateTime.UtcNow);
-        await using var imageService = new ImageService(catalog);
+        await using var imageService = ServiceTestConveniences.CreateImageService(catalog);
         var request = ThumbnailSizeRequest.For(BrowseThumbnailSize.Large);
 
         using var placeholder = await imageService.LoadThumbnailAsync(
@@ -204,7 +212,7 @@ public sealed class ThumbnailServiceTests : IDisposable, IClassFixture<AvaloniaT
         using var catalog = new CatalogService(
             Path.Combine(_tempDirectory, "cropped-catalog"));
         await catalog.InitializeAsync();
-        await using var imageService = new ImageService(catalog);
+        await using var imageService = ServiceTestConveniences.CreateImageService(catalog);
         var image = new ImageFile(sourcePath)
         {
             EditSettings = new EditSettings

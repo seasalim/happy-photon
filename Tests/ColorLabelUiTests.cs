@@ -87,10 +87,10 @@ public sealed partial class ColorLabelUiTests
         var rejected = control.FindControl<Button>("FlagFilterRejectedButton")!;
         var raw = control.FindControl<Button>("FilterRawButton")!;
         var jpeg = control.FindControl<Button>("FilterJpegButton")!;
-        var bursts = control.FindControl<Avalonia.Controls.Primitives.ToggleButton>("BurstsButton")!;
-        var pairs = control.FindControl<Avalonia.Controls.Primitives.ToggleButton>("PairsButton")!;
+        var bursts = control.FindFooterControl<Avalonia.Controls.Primitives.ToggleButton>("BurstsButton")!;
+        var pairs = control.FindFooterControl<Avalonia.Controls.Primitives.ToggleButton>("PairsButton")!;
         var filterLabel = control.FindControl<TextBlock>("FilterLabel")!;
-        var medium = control.FindControl<RadioButton>("MediumThumbnailButton")!;
+        var medium = control.FindFooterControl<RadioButton>("MediumThumbnailButton")!;
         Assert.Equal(
             ThemeResourceTests.Brush("ControlActive", Avalonia.Styling.ThemeVariant.Dark).Color,
             Assert.IsAssignableFrom<ISolidColorBrush>(medium.Background).Color);
@@ -99,7 +99,7 @@ public sealed partial class ColorLabelUiTests
         Assert.DoesNotContain("filter", bursts.Classes);
         Assert.Contains(
             bursts,
-            control.FindControl<StackPanel>("ThumbnailSizePanel")!
+            control.FindFooterControl<StackPanel>("ThumbnailSizePanel")!
                 .GetLogicalDescendants().OfType<Button>());
         Assert.Equal("Filter", filterLabel.Text);
         Assert.Equal("Picked", picked.Content);

@@ -219,7 +219,7 @@ public class HistogramService
 
                     var column = waveformColumns[x];
                     waveform.Luminance[
-                        WaveformAccumulator.ToLevel(luminance) *
+                        WaveformData.ToLevel(luminance) *
                         WaveformData.ColumnCount + column]++;
                     waveform.ColumnSampleCounts[column]++;
                 }

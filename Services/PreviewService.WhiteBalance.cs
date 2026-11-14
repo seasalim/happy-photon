@@ -5,23 +5,6 @@ namespace HappyPhoton.Services;
 
 public sealed partial class PreviewService
 {
-    public async Task<WhiteBalanceBaseContext?> GetWhiteBalanceContextAsync(
-        ImageFile imageFile,
-        EditSettings settings,
-        CancellationToken cancellationToken = default)
-    {
-        using var snapshot = await _baseCoordinator.GetPreviewAsync(
-            imageFile,
-            await ResolveDecodeAsync(imageFile, settings, cancellationToken),
-            cancellationToken);
-        return snapshot == null
-            ? null
-            : new WhiteBalanceBaseContext(
-                snapshot.Base.Info.AsShotKelvin,
-                snapshot.Base.Info.AsShotTint,
-                snapshot.Base.Info.IsRawSource);
-    }
-
     internal Task<WhiteBalanceSample?> GetAutoWhiteBalanceSampleAsync(
         ImageFile imageFile,
         EditSettings settings,

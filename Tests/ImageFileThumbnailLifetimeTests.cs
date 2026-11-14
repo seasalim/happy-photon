@@ -72,7 +72,7 @@ public sealed class ImageFileThumbnailLifetimeTests
         Dispatcher.UIThread.RunJobs();
         Assert.Throws<ObjectDisposedException>(() => _ = firstBitmap.PixelSize);
 
-        browse.Remove(second);
+        browse.RemoveRange([second]);
         Assert.Null(second.Thumbnail);
         Assert.Equal(4, secondBitmap.PixelSize.Width);
         Dispatcher.UIThread.RunJobs();

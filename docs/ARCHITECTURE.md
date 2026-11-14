@@ -378,7 +378,7 @@ providers may dehydrate files after enumeration.
 Thumbnails, metadata, previews, Bursts and unconfirmed exports use
 `SourceReadIntent.Background`: local/unknown sources pass; hydration returns a typed
 deferral. Warm caches are checked first and remain usable. `GatedBaseImageLoader` wraps
-default and injected loaders; metadata/path-based statistics gate their own reads.
+default and injected loaders; metadata gates its own reads.
 
 Only two user actions grant `UserApprovedHydration`: **Download and open** for one
 selected image, and the Export workspace after it reports the immutable job's exact

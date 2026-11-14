@@ -45,7 +45,7 @@ public sealed class ReplacementBaseRefreshStalenessTests : IDisposable
             clippingMask: staleMask);
 
         Assert.Same(previous, vm.PreviewImage);
-        Assert.False(vm.IsClippingStatsAvailable);
+        Assert.Null(vm.DisplayClippingStats);
         Assert.Throws<ObjectDisposedException>(() => _ = staleRefresh.PixelSize);
         Assert.Throws<ObjectDisposedException>(() => _ = staleMask.Flags.Length);
 

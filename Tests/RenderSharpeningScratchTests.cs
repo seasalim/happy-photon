@@ -73,7 +73,7 @@ public sealed class RenderSharpeningScratchTests : IDisposable
     {
         using var image = new MagickImage("gradient:#182a48-#edce91",
             new MagickReadSettings { Width = (uint)width, Height = (uint)height });
-        RenderSharpening.ApplyOutput(image, OutputSharpeningMode.Screen, wasResized: true);
+        RenderSharpening.ApplyOutput(image, OutputSharpeningMode.Screen, wasResized: true, RenderKernelSupport.DefaultBandPixelLimit);
         var scratch = RenderSharpening.Scratch.Take(1);
         RenderSharpening.Scratch.Return(scratch);
         using var pixels = image.GetPixelsUnsafe();

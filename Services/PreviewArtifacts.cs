@@ -83,17 +83,6 @@ public sealed class PreviewArtifacts : IDisposable
         }
     }
 
-    internal (Bitmap? preview, HistogramData histogram) DetachLegacyResult()
-    {
-        var bitmap = DetachBitmap();
-        if (bitmap != null)
-        {
-            Interlocked.Exchange(ref _promotionLease, null)?.Commit(bitmap);
-        }
-        Interlocked.Exchange(ref _clippingMask, null)?.Dispose();
-        return (bitmap, Histogram);
-    }
-
     public void Dispose()
     {
         Interlocked.Exchange(ref _clippingMask, null)?.Dispose();

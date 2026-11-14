@@ -7,43 +7,6 @@ public readonly record struct NormalizedPoint(double X, double Y)
         Math.Clamp(double.IsFinite(Y) ? Y : 0.5, 0, 1));
 }
 
-public readonly record struct ImagePoint(double X, double Y);
-
-public static class SynchronizedViewMath
-{
-    public static NormalizedPoint NormalizePoint(
-        ImagePoint point,
-        double imageWidth,
-        double imageHeight)
-    {
-        ValidateDimensions(imageWidth, imageHeight);
-        return new NormalizedPoint(
-            point.X / imageWidth,
-            point.Y / imageHeight).Clamp();
-    }
-
-    public static ImagePoint MapPoint(
-        NormalizedPoint point,
-        double imageWidth,
-        double imageHeight)
-    {
-        ValidateDimensions(imageWidth, imageHeight);
-        point = point.Clamp();
-        return new ImagePoint(
-            point.X * imageWidth,
-            point.Y * imageHeight);
-    }
-
-    private static void ValidateDimensions(double width, double height)
-    {
-        if (!double.IsFinite(width) || !double.IsFinite(height) ||
-            width <= 0 || height <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(width));
-        }
-    }
-}
-
 public readonly record struct NormalizedViewport(
     NormalizedPoint Center,
     double ZoomRelativeToFit)

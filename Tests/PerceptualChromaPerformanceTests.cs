@@ -68,13 +68,13 @@ public sealed class PerceptualChromaPerformanceTests
         settings.Mixer.Blue.Saturation = 40;
         settings.Mixer.Magenta.Luminance = -20;
         Reset(image, source);
-        RenderChromaStage.Apply(image, settings);
+        RenderChromaStage.Apply(image, settings, execution: null);
         var samples = new double[5];
         for (var iteration = 0; iteration < samples.Length; iteration++)
         {
             Reset(image, source);
             var stopwatch = Stopwatch.StartNew();
-            RenderChromaStage.Apply(image, settings);
+            RenderChromaStage.Apply(image, settings, execution: null);
             stopwatch.Stop();
             samples[iteration] = stopwatch.Elapsed.TotalMilliseconds;
         }

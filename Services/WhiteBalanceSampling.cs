@@ -3,11 +3,6 @@ using ImageMagick;
 
 namespace HappyPhoton.Services;
 
-public sealed record WhiteBalanceBaseContext(
-    double AsShotKelvin,
-    double AsShotTint,
-    bool IsRawSource);
-
 internal sealed record WhiteBalanceSample(
     double[] Gains,
     object BaseToken);

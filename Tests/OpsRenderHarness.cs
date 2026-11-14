@@ -30,7 +30,7 @@ internal static class OpsRenderHarness
             {
                 field = Fused(image, basis.Info, settings, arm, refine, workers, bandRows, analysis);
                 RenderColorEncoding.RetagAsSrgb(image);
-                if (!basis.Info.IsMonochrome) RenderChromaStage.Apply(image, settings);
+                if (!basis.Info.IsMonochrome) RenderChromaStage.Apply(image, settings, execution: null);
                 RenderNoiseReduction.Apply(image, basis.Info, settings.Detail);
             }
             catch { image.Dispose(); throw; }

@@ -12,7 +12,6 @@ public partial class MainWindowViewModel
     private long _clippingMaskSerial;
 
     public ClippingStats? DisplayClippingStats { get; private set; }
-    public bool IsClippingStatsAvailable => DisplayClippingStats != null;
     public bool IsHighlightClippingAvailable =>
         DisplayClippingStats?.IsHighAvailable == true;
 
@@ -234,7 +233,6 @@ public partial class MainWindowViewModel
             clippingMask?.Dispose();
         }
         OnPropertyChanged(nameof(DisplayClippingStats));
-        OnPropertyChanged(nameof(IsClippingStatsAvailable));
         OnPropertyChanged(nameof(IsHighlightClippingAvailable));
         OnPropertyChanged(nameof(VisibleClippingOverlaySides));
     }

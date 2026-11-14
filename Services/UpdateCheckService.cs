@@ -124,13 +124,6 @@ public sealed class UpdateCheckService
         return true;
     }
 
-    public static bool IsUpdateAvailable(
-        string currentVersion,
-        string latestVersion) =>
-        TryParseVersion(currentVersion, out var current) &&
-        TryParseVersion(latestVersion, out var latest) &&
-        latest > current;
-
     private static UpdateCheckResult CreateResult(
         Version currentVersion,
         Version latestVersion,

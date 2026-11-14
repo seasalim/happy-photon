@@ -62,21 +62,6 @@
                         Height="{Binding Height, ElementName=TrackLine}"
                         VerticalAlignment="Center"/>
 
-                <!-- Fill bar (shows value position) - uses margin for positioning -->
-                <Border x:Name="FillBar"
-                        Background="{DynamicResource TextMuted}"
-                        Height="2"
-                        VerticalAlignment="Center"
-                        HorizontalAlignment="Left"/>
-
-                <!-- Center mark (for bipolar sliders) -->
-                <Border x:Name="CenterMark"
-                        Background="{DynamicResource Outline}"
-                        Width="1"
-                        Height="3" Margin="0,6,0,0"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Top"/>
-
                 <!-- The arrowhead sits on the track, its tip marking the value. -->
                 <Path x:Name="ThumbMark" Theme="{StaticResource SliderThumbTheme}"
                       Data="M 0,7 L 4.5,0 L 9,7 Z" Width="9" Height="7"

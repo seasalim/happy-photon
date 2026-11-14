@@ -355,7 +355,7 @@ public sealed class CloudSourceViewTests
         {
             var download = window.FindControl<Button>("DownloadAndOpenButton")!;
             var grid = window.FindControl<BrowseGridView>("BrowseGridView")!;
-            var message = grid.FindControl<TextBlock>("OnlineOnlyMessage")!;
+            var message = grid.FindFooterControl<TextBlock>("OnlineOnlyMessage")!;
             var develop = window.FindControl<DevelopEditPanel>(
                 "DevelopEditPanel")!;
             var presets = window.FindControl<PresetsPanel>("PresetsPanel")!;

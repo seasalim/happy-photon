@@ -26,7 +26,6 @@ public sealed record ExportBatchResult
     public int TotalTargetCount { get; }
     public string DestinationFolder { get; }
     public int ExportedCount { get; }
-    public IReadOnlyList<ImageFile> FailedImages { get; }
     public IReadOnlyList<ExportTargetOutcome> Outcomes { get; }
     public IReadOnlyList<ExportTargetOutcome> FailedTargets { get; }
     public int SuccessfulTargetCount { get; }
@@ -45,10 +44,6 @@ public sealed record ExportBatchResult
         FailedTargets = Array.AsReadOnly(
             outcomes.Where(outcome => !outcome.Succeeded).ToArray());
         SuccessfulTargetCount = Outcomes.Count(outcome => outcome.Succeeded);
-        FailedImages = Array.AsReadOnly(job.Captures
-            .Where(capture => FailedTargets.Any(outcome =>
-                ReferenceEquals(outcome.Capture, capture)))
-            .ToArray());
         ExportedCount = job.Captures.Count(capture =>
         {
             var captureOutcomes = outcomes.Where(outcome =>
@@ -116,41 +111,6 @@ public sealed class ImageExportService
             progress,
             SourceReadIntent.Background,
             cancellationToken);
-
-    public async Task<int> ExportBatchAsync(
-        IEnumerable<ImageFile> images,
-        ExportSettings settings,
-        IReadOnlyList<ExportVariant> variants,
-        bool useSubfolders,
-        IProgress<(int current, int total, string fileName)>? progress = null,
-        CancellationToken cancellationToken = default,
-        IProgress<ExportWarning>? warningProgress = null)
-    {
-        var job = settings.CreateJob(images, variants, useSubfolders);
-        var result = await ExportBatchAsync(
-            job,
-            progress,
-            cancellationToken);
-        foreach (var warning in result.Warnings)
-        {
-            warningProgress?.Report(warning);
-        }
-        return result.ExportedCount;
-    }
-
-    internal Task<ExportBatchResult> ExportBatchApprovedAsync(
-        IEnumerable<ImageFile> images,
-        ExportSettings settings,
-        IProgress<(int current, int total, string fileName)>? progress,
-        CancellationToken cancellationToken)
-    {
-        var job = settings.CreateJob(images);
-        return ExportBatchCoreAsync(
-            job,
-            progress,
-            SourceReadIntent.UserApprovedHydration,
-            cancellationToken);
-    }
 
     internal Task<ExportBatchResult> ExportBatchApprovedAsync(
         ExportJob job,

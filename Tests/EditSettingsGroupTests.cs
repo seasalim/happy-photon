@@ -124,10 +124,13 @@ public sealed class EditSettingsGroupTests
             .Where(property => property.GetCustomAttribute<JsonIgnoreAttribute>()?.Condition != JsonIgnoreCondition.Always)
             .Select(property => property.GetCustomAttribute<JsonPropertyNameAttribute>()?.Name ?? property.Name);
 
+    // Fields that no transfer group copies.
+    private static readonly string[] NeverTransfers = ["version", "rotation", "applied_preset_id"];
+
     private static void AssertCoverage(IEnumerable<string> fields)
     {
         var assigned = EditSettingsTransfer.Groups.SelectMany(group => group.Fields)
-            .Concat(EditSettingsTransfer.NeverTransfers).ToArray();
+            .Concat(NeverTransfers).ToArray();
         Assert.Equal(assigned.Length, assigned.Distinct().Count());
         Assert.Equal(fields.Order(), assigned.Order());
     }

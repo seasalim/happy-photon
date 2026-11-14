@@ -32,7 +32,7 @@ public sealed class ToneLutApplicatorTests
         using var source = CreateAllQuantumValues();
         var sourceSamples = RenderPipelineTestSupport.ReadPixels(source);
         using var actual = (MagickImage)source.Clone();
-        ToneLutApplicator.Apply(actual, lut);
+        ToneLutApplicator.Apply(actual, lut.Red);
         var expected = sourceSamples
             .Select(sample => ToQuantum(ToneLut.Evaluate(
                 parameters,
@@ -67,7 +67,7 @@ public sealed class ToneLutApplicatorTests
                 0,
                 0,
                 false,
-                new CurveData())));
+                new CurveData())).Red);
 
         var actual = image.GetPixelsUnsafe().ToShortArray(PixelMapping.RGBA) ??
             throw new InvalidOperationException("Unable to read RGBA pixels.");

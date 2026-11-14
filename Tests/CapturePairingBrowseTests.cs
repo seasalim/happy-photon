@@ -86,7 +86,7 @@ public sealed class CapturePairingBrowseTests : IDisposable
             Assert.Equal("pair-b.jpg", viewModel.SelectedImage?.FileName);
             Assert.Equal(
                 ["pair-a.jpg", "pair-b.jpg"],
-                viewModel.GetSelectedImages().Select(image => image.FileName)
+                viewModel.Browse.GetSelectedImages().Select(image => image.FileName)
                     .Order(StringComparer.Ordinal).ToArray());
             Assert.DoesNotContain(viewModel.Browse.VisibleImages, image => image.IsRaw &&
                 image.FileName.StartsWith("pair-", StringComparison.Ordinal));

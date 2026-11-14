@@ -40,13 +40,6 @@ public sealed class RenderedThumbnailCacheService : IAsyncDisposable
             writerInHandGate: writerInHandGate);
     }
 
-    public Bitmap? LoadMatching(ImageFile imageFile, string settingsHash)
-        => LoadMatching(
-            imageFile,
-            settingsHash,
-            ThumbnailSizeRequest.For(BrowseThumbnailSize.Medium),
-            out _);
-
     public Bitmap? LoadMatching(
         ImageFile imageFile,
         string settingsHash,

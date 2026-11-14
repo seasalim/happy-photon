@@ -305,12 +305,12 @@ public sealed class BrowseSelectionMenuTests
         Dispatcher.UIThread.RunJobs();
 
         var panel = control.FindControl<StackPanel>("BrowseActionsPanel")!;
-        var thumbnailControls = control.FindControl<StackPanel>(
+        var thumbnailControls = control.FindFooterControl<StackPanel>(
             "ThumbnailSizePanel")!;
         var loupeView = Assert.IsType<ToggleButton>(
-            control.FindControl<ToggleButton>("LoupeViewButton"));
+            control.FindFooterControl<ToggleButton>("LoupeViewButton"));
         var compareView = Assert.IsType<ToggleButton>(
-            control.FindControl<ToggleButton>("CompareViewButton"));
+            control.FindFooterControl<ToggleButton>("CompareViewButton"));
         var actions = control.FindControl<Button>("BrowseActionsButton")!;
         var flyout = Assert.IsType<MenuFlyout>(actions.Flyout);
         flyout.ShowAt(actions);
