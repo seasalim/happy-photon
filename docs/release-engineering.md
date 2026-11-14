@@ -82,14 +82,17 @@ All four publish profiles trim in partial mode: the framework, Avalonia and
 other trimmable assemblies are trimmed, while the app assembly and untrimmed
 packages stay whole. `JsonSerializerIsReflectionEnabledByDefault=true` keeps
 the app's reflection-based JSON working (trimming turns it off by default).
-Composite ReadyToRun follows the SDK default: on for the single-file builds,
-off for the Store layout. The Store profile also leaves out the runtime's
+All four profiles set `PublishReadyToRunComposite=true` explicitly, so the
+framework and app compile into one composite ReadyToRun image in every package,
+the Store layout included; none relies on the SDK default, which is off for the
+Store layout. The Store profile also leaves out the runtime's
 debugger and dump files (`createdump.exe`, `mscordbi.dll`, `mscordaccore*.dll`,
 `Microsoft.DiaSymReader.Native.amd64.dll`), which the single-file builds never
 carried; the MSIX script rejects a package that contains one. The two Windows layouts share
 `obj/Release/net10.0/win-x64/R2R`; the MSIX and startup scripts clear it before
-publishing the Store layout, because composite component stubs left there fail
-fast at launch.
+publishing the Store layout, because component stubs left there by the
+single-file publish would ship without their composite image and fail fast at
+launch.
 
 Trimming failures appear only at run time, so `HappyPhoton --self-check <folder>`
 qualifies each published build. It runs before the single-instance guard and
