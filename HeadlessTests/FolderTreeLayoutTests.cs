@@ -242,6 +242,43 @@ public sealed class FolderTreeLayoutTests
         }
     }
 
+    [AvaloniaFact]
+    public void ItemExpansionAndSelectionBindBothWays()
+    {
+        var (window, tree, scope) = ShowFolderTree(childCount: 2);
+        using var windowScope = scope;
+
+        var root = Assert.IsType<FolderNode>(tree.Items[0]);
+        var first = root.Children[0];
+        var second = root.Children[1];
+        var rootItem = Assert.IsType<TreeViewItem>(tree.ContainerFromItem(root));
+        var firstItem = Assert.IsType<TreeViewItem>(rootItem.ContainerFromItem(first));
+        var secondItem = Assert.IsType<TreeViewItem>(rootItem.ContainerFromItem(second));
+
+        Assert.True(rootItem.IsExpanded);
+
+        root.IsExpanded = false;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(rootItem.IsExpanded);
+
+        rootItem.IsExpanded = true;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(root.IsExpanded);
+
+        first.IsSelected = true;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(firstItem.IsSelected);
+
+        secondItem.IsSelected = true;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(second.IsSelected);
+        window.Close();
+    }
+
     private static (Window Window, TreeView Tree, TestUiScope Scope) ShowFolderTree(int childCount)
     {
         var root = new FolderNode("root") { IsExpanded = true };

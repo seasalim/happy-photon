@@ -173,6 +173,73 @@ public sealed class RawProfilePickerControlTests : IDisposable
     }
 
     [AvaloniaFact]
+    public async Task MenuItemsBindEnabledStateAndStatusTooltip()
+    {
+        using var catalog = await _fx.CreateCatalogAsync("item-bindings");
+        await using var vm = _fx.CreateViewModel(
+            catalog,
+            new NullBaseLoader(),
+            loadMetadataAsync: _ => Task.CompletedTask,
+            availabilityService: new TestSourceAvailabilityService(
+                SourceAvailability.AvailableLocally));
+        vm.IsDevelopMode = true;
+        var usable = new RawProfileOptionViewModel(new DcpProfileOption(
+            "Usable",
+            new RawProfileSelection
+            {
+                Source = RawProfileSource.UserFile,
+                Location = _fx.Path("usable.dcp"),
+                ContentHash = new string('c', 64)
+            },
+            DcpProfileErrorCode.None,
+            null));
+        var corrupt = new RawProfileOptionViewModel(new DcpProfileOption(
+            "Corrupt",
+            new RawProfileSelection
+            {
+                Source = RawProfileSource.UserFile,
+                Location = _fx.Path("corrupt.dcp"),
+                ContentHash = new string('d', 64)
+            },
+            DcpProfileErrorCode.Corrupt,
+            "This profile file is damaged."));
+        var header = RawProfileOptionViewModel.GroupHeader("CHOSEN FILES");
+        var picker = new RawProfilePicker { DataContext = vm };
+        var window = new Window { Width = 260, Height = 240, Content = picker };
+        using var windowScope = new TestUiScope(window);
+
+        try
+        {
+            vm.RawProfilePickerState = new RawProfilePickerState(
+                IsVisible: true,
+                IsLoading: false,
+                [header, usable, corrupt, RawProfileOptionViewModel.BuiltIn()],
+                usable,
+                "RAW CAMERA · 2 PROFILES");
+            Dispatcher.UIThread.RunJobs();
+            var comboBox = picker.FindControl<ComboBox>(
+                "RawProfileComboBox")!;
+            comboBox.IsDropDownOpen = true;
+            Dispatcher.UIThread.RunJobs();
+
+            var usableItem = Assert.IsType<ComboBoxItem>(comboBox.ContainerFromItem(usable));
+            var corruptItem = Assert.IsType<ComboBoxItem>(comboBox.ContainerFromItem(corrupt));
+            var headerItem = Assert.IsType<ComboBoxItem>(comboBox.ContainerFromItem(header));
+
+            Assert.True(usableItem.IsEnabled);
+            Assert.Null(ToolTip.GetTip(usableItem));
+            Assert.False(corruptItem.IsEnabled);
+            Assert.Equal("This profile file is damaged.", ToolTip.GetTip(corruptItem));
+            Assert.False(headerItem.IsEnabled);
+        }
+        finally
+        {
+            window.Close();
+            picker.DataContext = null;
+        }
+    }
+
+    [AvaloniaFact]
     public async Task HintLinkBindsVisibilityCommandAndCollapsesItsRow()
     {
         using var catalog = await _fx.CreateCatalogAsync("link");

@@ -149,7 +149,10 @@ public partial class CatalogService : IDisposable
                 }
             }
 
-            LightroomCatalogReader.SweepOrphanedSnapshots();
+            if (!SkipSnapshotSweep)
+            {
+                LightroomCatalogReader.SweepOrphanedSnapshots();
+            }
 
             if (!UpgradeWithoutBackup && !SkipUpgradeBackupForTests &&
                 await CatalogUpgradeProbe.NeedsUpgradeAsync(_databasePath))

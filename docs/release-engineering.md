@@ -71,6 +71,39 @@ Release versions may be final (`0.1.0`) or include a prerelease suffix
 is rejected because the SDK appends the source revision to the assembly's
 informational version.
 
+## Trimming and the packaged self-check
+
+All four publish profiles trim in partial mode: the framework, Avalonia and
+other trimmable assemblies are trimmed, while the app assembly and untrimmed
+packages stay whole. `JsonSerializerIsReflectionEnabledByDefault=true` keeps
+the app's reflection-based JSON working (trimming turns it off by default).
+Composite ReadyToRun follows the SDK default: on for the single-file builds,
+off for the Store layout. The two Windows layouts share
+`obj/Release/net10.0/win-x64/R2R`; the MSIX and startup scripts clear it before
+publishing the Store layout, because composite component stubs left there fail
+fast at launch.
+
+Trimming failures appear only at run time, so `HappyPhoton --self-check <folder>`
+qualifies each published build. It runs before the single-instance guard and
+before Avalonia, shows no window, and works only on copies of one RAW and one
+JPEG in a temporary root. It exercises edit-settings and catalog JSON, app
+settings, built-in looks, metadata, RAW and JPEG decode, a render, a JPEG
+export, an XMP sidecar write and read, and a backup with verification, then
+prints `self-check: ok (<n> steps)` (exit 0), `self-check: FAIL <step>: …`
+(exit 1) or a usage line (exit 2). The Windows executable is a GUI-subsystem
+app and prints only to redirected output. `scripts/run-self-check.ps1` runs it
+against the CC0 fixtures; CI runs it on every platform build and the Store
+payload, and the release workflow on every package. Limits: it reads sources
+under the background-read rule (unknown availability passes, so off Windows a
+cloud placeholder is not detected); the fixtures exercise neither XmpCore,
+Adobe camera profiles nor the MetadataExtractor RAW supplement; a watchdog
+timeout leaves its temporary folder behind.
+UI paths on a trimmed build are covered by the startup harness reaching a
+populated grid and by the clean-machine checks below.
+
+Expected trim warnings are the reflection-JSON IL2026 set, the `ViewLocator`
+IL2026 and IL2104 for `Avalonia.DesignerSupport`; any other is a defect.
+
 ## ImageMagick packages and native prerequisites
 
 `MagickFlavor` selects `Magick.NET-Q16-OpenMP-x64` 14.17.2 for win-x64 and

@@ -102,8 +102,8 @@
             </TreeView.ItemTemplate>
             <TreeView.Styles>
                 <Style Selector="TreeViewItem" x:DataType="models:FolderNode">
-                    <Setter Property="IsExpanded" Value="{ReflectionBinding IsExpanded, Mode=TwoWay}"/>
-                    <Setter Property="IsSelected" Value="{ReflectionBinding IsSelected, Mode=TwoWay}"/>
+                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
                     <Setter Property="Template">
                         <ControlTemplate>
                             <StackPanel>

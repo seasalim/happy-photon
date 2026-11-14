@@ -128,6 +128,13 @@ if (-not $NoRestore) {
     }
 }
 
+# The composite single-file publish shares this folder; its component stubs would ship
+# without their composite image, and the package would fail fast at launch.
+$readyToRunIntermediates = Join-Path $repositoryRoot 'obj\Release\net10.0\win-x64\R2R'
+if (Test-Path -LiteralPath $readyToRunIntermediates) {
+    Remove-Item -LiteralPath $readyToRunIntermediates -Recurse -Force
+}
+
 $publishArguments = @(
     'publish'
     $projectPath

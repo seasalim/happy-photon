@@ -143,6 +143,20 @@ jobs:
           "source-revision=$sourceRevision" >> $env:GITHUB_OUTPUT
           "build-timestamp=$buildTimestamp" >> $env:GITHUB_OUTPUT
 
+      # Release order: the MSIX is built before the single-file publish (release.yml).
+      - name: Build Store MSIX
+        if: matrix.rid == 'win-x64'
+        shell: pwsh
+        run: |
+          # MSIX takes a final x.y.z version; CI packages use the project version's core.
+          $version = ((dotnet msbuild HappyPhoton.csproj -nologo -getProperty:Version).Trim() -split '-')[0]
+          ./scripts/package-windows-msix.ps1 `
+            -Version $version `
+            -SourceRevision ${{ steps.source-identity.outputs.source-revision }} `
+            -BuildTimestampUtc ${{ steps.source-identity.outputs.build-timestamp }} `
+            -ContinuousIntegrationBuild `
+            -NoRestore
+
       - name: Publish platform build
         run: >
           dotnet publish HappyPhoton.csproj
@@ -164,6 +178,67 @@ jobs:
           done
           otool -D artifacts/ci/osx-arm64/libraw.25.dylib | grep -q '@loader_path/libraw.25.dylib'
           otool -L artifacts/ci/osx-arm64/libhappyphoton_libraw_bridge.dylib | grep -q '@loader_path/libraw.25.dylib'
+
+      # Release-layout archives, built as release.yml builds them, so package size is
+      # tracked on every change.
+      - name: Build release-layout archive
+        shell: pwsh
+        run: |
+          $rid = '${{ matrix.rid }}'
+          $publish = "artifacts/ci/$rid"
+          $sizes = [ordered]@{}
+
+          $version = (dotnet msbuild HappyPhoton.csproj -nologo -getProperty:Version).Trim()
+          $manifest = if ($rid -eq 'osx-arm64') { "$env:RUNNER_TEMP/DEPENDENCIES.json" } else { "$publish/DEPENDENCIES.json" }
+          ./scripts/write-dependency-manifest.ps1 -OutputPath $manifest -Version $version -RuntimeIdentifier $rid
+
+          switch ($rid) {
+            'win-x64' {
+              Compress-Archive -Path "$publish/*" -DestinationPath artifacts/ci/package.zip -CompressionLevel Optimal
+              $sizes['Windows ZIP'] = (Get-Item artifacts/ci/package.zip).Length
+              $sizes['Store MSIX'] = (Get-Item artifacts/windows-msix/package/*.msix).Length
+            }
+            'linux-x64' {
+              chmod +x "$publish/HappyPhoton"
+              $epoch = git log -1 --format=%ct
+              bash -c "tar --sort=name --mtime=@$epoch --owner=0 --group=0 --numeric-owner -C '$publish' -cf - . | gzip -n > artifacts/ci/package.tar.gz"
+              $sizes['Linux tarball'] = (Get-Item artifacts/ci/package.tar.gz).Length
+            }
+            'osx-arm64' {
+              $env:APPLE_SIGNING_IDENTITY = '-'
+              $env:HAPPY_PHOTON_CI_BUILD = '1'
+              $env:HAPPY_PHOTON_NO_RESTORE = '1'
+              $env:HAPPY_PHOTON_DEPENDENCY_MANIFEST = $manifest
+              $env:HAPPY_PHOTON_SOURCE_REVISION = '${{ steps.source-identity.outputs.source-revision }}'
+              $env:HAPPY_PHOTON_BUILD_TIMESTAMP = '${{ steps.source-identity.outputs.build-timestamp }}'
+              ./scripts/package-macos.sh arm64
+              if ($LASTEXITCODE) { throw 'package-macos.sh failed' }
+              ditto -c -k --sequesterRsrc --keepParent 'artifacts/osx-arm64/Happy Photon.app' artifacts/ci/package.zip
+              $sizes['macOS zip'] = (Get-Item artifacts/ci/package.zip).Length
+            }
+          }
+
+          foreach ($entry in $sizes.GetEnumerator()) {
+            $line = "PACKAGE-SIZE $($entry.Key): $($entry.Value) bytes"
+            Write-Output $line
+            $line | Out-File -LiteralPath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          }
+
+      # Trimming failures only show at run time in the published build.
+      - name: Self-check packaged builds
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          $executables = switch ('${{ matrix.rid }}') {
+            'win-x64' { 'artifacts/ci/win-x64/HappyPhoton.exe', 'artifacts/windows-msix/inspection/HappyPhoton.exe' }
+            'linux-x64' { 'artifacts/ci/linux-x64/HappyPhoton' }
+            'osx-arm64' { 'artifacts/osx-arm64/Happy Photon.app/Contents/MacOS/HappyPhoton' }
+          }
+
+          foreach ($executable in $executables) {
+            Write-Output "Self-check: $executable"
+            ./scripts/run-self-check.ps1 -Executable $executable
+          }
 
       - name: Upload test results
         if: always()
