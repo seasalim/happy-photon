@@ -118,7 +118,7 @@ public sealed class CatalogImportViewModelTests : IDisposable
     }
 
     private LightroomCatalogContents Source(string firstPath, string secondPath) =>
-        new(_fx.Path("source.lrcat"), 1303001, 13, true,
+        new(_fx.Path("source.lrcat"), 13, true,
             AssessmentAxes.All, [new CatalogSourceRoot("D:/Photos/", 2)],
             [
                 new CatalogImportRecord(

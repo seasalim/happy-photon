@@ -97,13 +97,4 @@ public partial class MainWindowViewModel
         return Browse.VisibleImages[Math.Clamp(oldIndex, 0,
             Browse.VisibleImages.Count - 1)];
     }
-
-    private static StringComparer PathComparison => OperatingSystem.IsWindows()
-        ? StringComparer.OrdinalIgnoreCase
-        : StringComparer.Ordinal;
-
-    private static StringComparison PathStringComparison =>
-        OperatingSystem.IsWindows()
-            ? StringComparison.OrdinalIgnoreCase
-            : StringComparison.Ordinal;
 }

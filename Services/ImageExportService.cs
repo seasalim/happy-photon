@@ -138,34 +138,6 @@ public sealed class ImageExportService
         return result.ExportedCount;
     }
 
-    internal Task<ExportBatchResult> ExportBatchVariantsAsync(
-        IEnumerable<ImageFile> images,
-        ExportSettings settings,
-        IReadOnlyList<ExportVariant> variants,
-        bool useSubfolders,
-        CancellationToken cancellationToken)
-    {
-        var job = settings.CreateJob(images, variants, useSubfolders);
-        return ExportBatchAsync(job, progress: null, cancellationToken);
-    }
-
-    internal async Task<int> ExportBatchApprovedAsync(
-        IEnumerable<ImageFile> images,
-        ExportSettings settings,
-        IReadOnlyList<ExportVariant> variants,
-        bool useSubfolders,
-        IProgress<(int current, int total, string fileName)>? progress,
-        CancellationToken cancellationToken)
-    {
-        var job = settings.CreateJob(images, variants, useSubfolders);
-        var result = await ExportBatchCoreAsync(
-            job,
-            progress,
-            SourceReadIntent.UserApprovedHydration,
-            cancellationToken);
-        return result.ExportedCount;
-    }
-
     internal Task<ExportBatchResult> ExportBatchApprovedAsync(
         IEnumerable<ImageFile> images,
         ExportSettings settings,

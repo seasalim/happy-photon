@@ -10,7 +10,11 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>
+  <ItemGroup>
+    <GlobalAnalyzerConfigFiles Include="..\..\UnusedMembers.globalconfig" />
+  </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="HappyPhoton.LibRaw.Interop.Tests" />
     <InternalsVisibleTo Include="HappyPhoton.Tests" />

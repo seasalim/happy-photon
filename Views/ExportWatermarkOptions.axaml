@@ -32,7 +32,7 @@
                 <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1" ColumnSpacing="2"/></ItemsPanelTemplate></ListBox.ItemsPanel>
                 <ListBoxItem Content="White"/><ListBoxItem Content="Black"/>
             </ListBox>
-            <views:CompactSlider Label="Opacity" Minimum="5" Maximum="100" SmallChange="1" StringFormat="{}{0:0}%" Value="{Binding ExportSettings.Watermark.Opacity, Mode=TwoWay}"/>
+            <views:CompactSlider Label="Opacity" Minimum="5" StringFormat="{}{0:0}%" Value="{Binding ExportSettings.Watermark.Opacity, Mode=TwoWay}"/>
             <TextBlock Text="Edge" Classes="section-label"/>
             <ListBox x:Name="WatermarkEdgeBox" Classes="segmented" SelectedIndex="{Binding ExportSettings.Watermark.Edge, Mode=TwoWay}" SelectionMode="Single,AlwaysSelected">
                 <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1" ColumnSpacing="2"/></ItemsPanelTemplate></ListBox.ItemsPanel>

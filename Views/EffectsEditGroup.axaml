@@ -26,7 +26,6 @@
         <views:CompactSlider x:Name="VignetteSlider"
                              Label="Vignette"
                              Value="{Binding Vignette}"
-                             Minimum="-100" Maximum="100" SmallChange="1"
                              StringFormat="{}{0:+0;-0;0}"
                              EnableDoubleClickReset="True"/>
         <Grid x:Name="MidpointRow"
@@ -36,14 +35,14 @@
             <views:CompactSlider x:Name="MidpointSlider"
                                  Label="Midpoint"
                                  Value="{Binding Midpoint}"
-                                 Minimum="0" Maximum="100" SmallChange="1"
+                                 Minimum="0"
                                  DefaultValue="50"
                                  EnableDoubleClickReset="True"/>
         </Grid>
         <views:CompactSlider x:Name="GrainSlider"
                              Label="Grain"
                              Value="{Binding Grain}"
-                             Minimum="0" Maximum="100" SmallChange="1"
+                             Minimum="0"
                              Margin="0,8,0,0"
                              EnableDoubleClickReset="True"/>
         <Grid x:Name="GrainSizeRow"

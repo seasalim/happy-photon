@@ -11,18 +11,18 @@
         <views:CompactSlider x:Name="CaptureSharpenSlider"
                              Label="Sharpen"
                              Value="{Binding CaptureSharpen}"
-                             Minimum="0" Maximum="100" SmallChange="1"
+                             Minimum="0"
                              DefaultValue="{Binding CaptureSharpenDefault}"
                              EnableDoubleClickReset="True"/>
         <views:CompactSlider x:Name="LuminanceNrSlider"
                              Label="Luma NR"
                              Value="{Binding LuminanceNr}"
-                             Minimum="0" Maximum="100" SmallChange="1"
+                             Minimum="0"
                              EnableDoubleClickReset="True"/>
         <views:CompactSlider x:Name="ChromaNrSlider"
                              Label="Chroma NR"
                              Value="{Binding ChromaNr}"
-                             Minimum="0" Maximum="100" SmallChange="1"
+                             Minimum="0"
                              EnableDoubleClickReset="True"/>
     </StackPanel>
 </UserControl>

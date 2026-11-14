@@ -34,7 +34,7 @@ internal static partial class RenderNoiseReduction
             {
                 var nextWidth = (currentWidth + 1) / 2;
                 var nextRows = (currentRows + 1) / 2;
-                DownsampleChroma(previous, workspace, currentWidth, currentRows,
+                DownsampleChroma(previous, workspace, currentWidth,
                     planeSamples, nextWidth, nextRows, execution);
                 (previous, workspace) = (workspace, previous);
                 currentWidth = nextWidth;
@@ -74,7 +74,7 @@ internal static partial class RenderNoiseReduction
                 AccumulateFinestChroma(previous, workspace, adjustment,
                     currentWidth, validStart, validEnd, nextValidStart,
                     nextValidEnd, bandStart - sourceStart, outputRows,
-                    planeSamples, outputSamples, scale, execution);
+                    planeSamples, outputSamples, execution);
             else
                 AccumulateDecimatedChroma(previous, workspace, current,
                     currentWidth, validStart, validEnd, nextValidStart,
@@ -90,7 +90,7 @@ internal static partial class RenderNoiseReduction
     }
 
     private static void DownsampleChroma(
-        float[] source, float[] destination, int sourceWidth, int sourceRows,
+        float[] source, float[] destination, int sourceWidth,
         int sourceSamples, int targetWidth, int targetRows,
         RenderExecutionOptions? execution) =>
         ForRows(targetRows, execution, (start, end) =>
@@ -132,7 +132,6 @@ internal static partial class RenderNoiseReduction
         float[] previous, float[] horizontal, float[] adjustment, int width,
         int sourceStartRow, int sourceEndRow, int startRow, int endRow,
         int coreStartRow, int coreRows, int planeSamples, int outputSamples,
-        WaveletScale scale,
         RenderExecutionOptions? execution)
     {
         ForRows(endRow - startRow, execution, (start, end) =>

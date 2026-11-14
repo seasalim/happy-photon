@@ -178,7 +178,7 @@ public sealed partial class CatalogImportServiceTests
             new EditSettings { Crop = Crop() });
         await catalog.SaveEditSettingsAsync(states[paths[1]].Single().CatalogId,
             new EditSettings { Rotation = 90 });
-        var source = new LightroomCatalogContents(_root.Path + ".lrcat", 1504001, 15,
+        var source = new LightroomCatalogContents(_root.Path + ".lrcat", 15,
             false, AssessmentAxes.All, [new CatalogSourceRoot("D:/", 3)],
             paths.Select((path, index) => Record("D:/", Path.GetFileName(path),
                 crop: CropFact(index == 2 ? "BC" : "AB"))).ToArray(), []);
@@ -222,7 +222,7 @@ public sealed partial class CatalogImportServiceTests
         var catalog = await CreateCatalogAsync();
         var paths = new[] { tonalPath }.Concat(racedPaths).ToArray();
         var states = await catalog.LoadOrCreateImageStatesAsync(paths);
-        var source = new LightroomCatalogContents(_root.Path + ".lrcat", 1504001, 15,
+        var source = new LightroomCatalogContents(_root.Path + ".lrcat", 15,
             false, AssessmentAxes.All, [new CatalogSourceRoot("D:/", paths.Length)],
             paths.Select(path => Record("D:/", Path.GetFileName(path), crop: CropFact())).ToArray(), []);
         var import = CropImport(catalog);
@@ -260,7 +260,7 @@ public sealed partial class CatalogImportServiceTests
         await catalog.GetOrCreateImageAsync(Path.Combine(photos, "raw.raf"));
         await catalog.GetOrCreateImageAsync(Path.Combine(photos, "rotated.jpg"));
         var source = new LightroomCatalogContents(
-            Path.Combine(_root.Path, "source.lrcat"), 1303001, 13, true,
+            Path.Combine(_root.Path, "source.lrcat"), 13, true,
             AssessmentAxes.All, [new CatalogSourceRoot(photos, 2)],
             [Record(photos, "raw.raf", crop: CropFact()),
              Record(photos, "rotated.jpg", crop: CropFact())], []);

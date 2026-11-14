@@ -53,9 +53,6 @@ public sealed class ThumbnailLoadResult : IDisposable
             betterResultDeferredForHydration,
             sourceCannotProvideRequestedQuality);
 
-    internal static ThumbnailLoadResult Loaded(Bitmap bitmap) =>
-        Loaded(bitmap, new ThumbnailSizeRequest(150, 150));
-
     internal static ThumbnailLoadResult Deferred(
         ThumbnailSizeRequest request) =>
         new(ThumbnailLoadStatus.DeferredForHydration, request);

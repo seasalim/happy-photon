@@ -62,7 +62,7 @@ public sealed partial class CatalogImportServiceTests : IDisposable
         File.WriteAllBytes(Path.Combine(photos, "keeper.jpg"), [1]);
         const string sourceRoot = "D:/Photos/";
         var source = new LightroomCatalogContents(
-            Path.Combine(_root.Path, "source.lrcat"), 1303001, 13, true,
+            Path.Combine(_root.Path, "source.lrcat"), 13, true,
             AssessmentAxes.All, [new CatalogSourceRoot(sourceRoot, 2)],
             [
                 Record(sourceRoot, "keeper.jpg", CatalogImportFact<int>.Mapped(3)),
@@ -146,7 +146,7 @@ public sealed partial class CatalogImportServiceTests : IDisposable
             new AssessmentMutation(states[first].Single().CatalogId, AssessmentAxes.Rating, Rating: 2)
         ]);
         var source = new LightroomCatalogContents(
-            Path.Combine(_root.Path, "source.lrcat"), 1303001, 13, true,
+            Path.Combine(_root.Path, "source.lrcat"), 13, true,
             AssessmentAxes.All, [new CatalogSourceRoot("D:/Photos/", 2)],
             [
                 Record("D:/Photos/", "first.jpg", CatalogImportFact<int>.Mapped(5)),
@@ -290,7 +290,7 @@ public sealed partial class CatalogImportServiceTests : IDisposable
 
         var photos = Directory.CreateDirectory(Path.Combine(_root.Path, "photos")).FullName;
         var mixed = new LightroomCatalogContents(
-            Path.Combine(_root.Path, "mixed.lrcat"), 1600000, 16, false,
+            Path.Combine(_root.Path, "mixed.lrcat"), 16, false,
             AssessmentAxes.All, [new CatalogSourceRoot("D:/", 3)],
             [
                 Record("D:/", "one.jpg", CatalogImportFact<int>.Mapped(4)),
@@ -336,7 +336,7 @@ public sealed partial class CatalogImportServiceTests : IDisposable
         var catalog = await CreateCatalogAsync();
         var photos = Directory.CreateDirectory(Path.Combine(_root.Path, "photos")).FullName;
         var source = new LightroomCatalogContents(
-            Path.Combine(_root.Path, "partial.lrcat"), 1303001, 13, true,
+            Path.Combine(_root.Path, "partial.lrcat"), 13, true,
             AssessmentAxes.All,
             [
                 new CatalogSourceRoot("D:/Matched/", 1),
@@ -373,7 +373,7 @@ public sealed partial class CatalogImportServiceTests : IDisposable
                 CatalogImportFact<int>.Mapped(index % 5 + 1)))
             .ToArray();
         var source = new LightroomCatalogContents(
-            Path.Combine(_root.Path, "large.lrcat"), 1303001, 13, true,
+            Path.Combine(_root.Path, "large.lrcat"), 13, true,
             AssessmentAxes.All,
             [new CatalogSourceRoot(sourceRoot, records.Length)],
             records, []);
@@ -428,12 +428,12 @@ public sealed partial class CatalogImportServiceTests : IDisposable
         CatalogImportFact<ImageFlag>? flag = null,
         CatalogImportFact<ColorLabel>? label = null,
         LightroomCropFact? crop = null) =>
-        new(Path.Combine(_root.Path, "source.lrcat"), 1303001, 13, true,
+        new(Path.Combine(_root.Path, "source.lrcat"), 13, true,
             AssessmentAxes.All, [new CatalogSourceRoot(root, 1)],
             [Record(root, relative, rating, flag, label, crop: crop)], []);
 
     private LightroomCatalogContents EmptySource() =>
-        new(Path.Combine(_root.Path, "empty.lrcat"), 1303001, 13, true,
+        new(Path.Combine(_root.Path, "empty.lrcat"), 13, true,
             AssessmentAxes.All, [], [], []);
 
     private static CatalogImportRecord Record(

@@ -7,6 +7,10 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
+    private const double MinZoom = 0.1;
+
+    private const double MaxZoom = 5.0;
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ZoomReadout))]
     private bool _isZoomFitMode = true;

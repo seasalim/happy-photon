@@ -232,8 +232,7 @@
                                                      Minimum="0"
                                                      Maximum="1"
                                                      SmallChange="0.005"
-                                                     DisplayText="{Binding WhiteBalanceKelvinText}"
-                                                     ShowValueFill="False">
+                                                     DisplayText="{Binding WhiteBalanceKelvinText}">
                                     <views:CompactSlider.TrackBrush>
                                         <LinearGradientBrush StartPoint="0%,50%"
                                                              EndPoint="100%,50%">
@@ -249,11 +248,7 @@
 
                                 <views:CompactSlider Label="Tint"
                                                      Value="{Binding WhiteBalanceTint}"
-                                                     Minimum="-100"
-                                                     Maximum="100"
-                                                     SmallChange="1"
-                                                     DisplayText="{Binding WhiteBalanceTintText}"
-                                                     ShowValueFill="False">
+                                                     DisplayText="{Binding WhiteBalanceTintText}">
                                     <views:CompactSlider.TrackBrush>
                                         <LinearGradientBrush StartPoint="0%,50%"
                                                              EndPoint="100%,50%">
@@ -285,37 +280,25 @@
                                                      Label="Brightness"
                                                      Value="{Binding Brightness}"
                                                      IsEnabled="{Binding IsBrightnessEnabled}"
-                                                     Minimum="-100"
-                                                     Maximum="100"
-                                                     SmallChange="1"
                                                      StringFormat="{}{0:+0;-0;0}"
                                                      EnableDoubleClickReset="True"/>
                                 <views:CompactSlider Label="Contrast"
                                                      Value="{Binding Contrast}"
-                                                     Minimum="-100"
-                                                     Maximum="100"
-                                                     SmallChange="1"
                                                      StringFormat="{}{0:+0;-0;0}"
                                                      EnableDoubleClickReset="True"/>
                                 <views:CompactSlider Label="Highlights"
                                                      Value="{Binding Highlights}"
-                                                     Minimum="-100"
-                                                     Maximum="100"
-                                                     SmallChange="1"
                                                      StringFormat="{}{0:+0;-0;0}"
                                                      EnableDoubleClickReset="True"/>
                                 <views:CompactSlider Label="Shadows"
                                                      Value="{Binding Shadows}"
-                                                     Minimum="-100"
-                                                     Maximum="100"
-                                                     SmallChange="1"
                                                      StringFormat="{}{0:+0;-0;0}"
                                                      EnableDoubleClickReset="True"/>
-                                <views:CompactSlider Label="Whites" Value="{Binding Whites}" Minimum="-100" Maximum="100"
-                                                     SmallChange="1" StringFormat="{}{0:+0;-0;0}"
+                                <views:CompactSlider Label="Whites" Value="{Binding Whites}"
+                                                     StringFormat="{}{0:+0;-0;0}"
                                                      EnableDoubleClickReset="True"/>
-                                <views:CompactSlider Label="Blacks" Value="{Binding Blacks}" Minimum="-100" Maximum="100"
-                                                     SmallChange="1" StringFormat="{}{0:+0;-0;0}"
+                                <views:CompactSlider Label="Blacks" Value="{Binding Blacks}"
+                                                     StringFormat="{}{0:+0;-0;0}"
                                                      EnableDoubleClickReset="True"/>
 
                                 <Grid x:Name="HighlightHandlingRow"

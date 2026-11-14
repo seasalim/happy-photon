@@ -42,17 +42,6 @@ public class CropRegion
     };
 
     /// <summary>
-    /// Resets the crop region to the full image.
-    /// </summary>
-    public void Reset()
-    {
-        Left = 0.0;
-        Top = 0.0;
-        Right = 1.0;
-        Bottom = 1.0;
-    }
-
-    /// <summary>
     /// Converts normalized coordinates to pixel coordinates.
     /// </summary>
     /// <param name="imageWidth">The width of the image in pixels</param>

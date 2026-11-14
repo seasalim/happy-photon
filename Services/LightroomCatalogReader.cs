@@ -140,7 +140,7 @@ public sealed class LightroomCatalogReader
             .ToDictionary(group => group.Key, group => group.Count(), StringComparer.Ordinal);
 
         return new LightroomCatalogContents(
-            sourcePath, version, major, major is 12 or 13, carriedAxes,
+            sourcePath, major, major is 12 or 13, carriedAxes,
             roots.Select(root => new CatalogSourceRoot(
                 root, rootCounts.GetValueOrDefault(root))).ToArray(),
             records, warnings);

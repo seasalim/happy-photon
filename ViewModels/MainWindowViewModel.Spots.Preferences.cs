@@ -24,8 +24,6 @@ public partial class MainWindowViewModel
 
     public bool IsSpotHeal => (SelectedSpot?.Type ?? _brushPreferences.SpotMode) == "heal";
 
-    public bool IsSpotClone => !IsSpotHeal;
-
     public int SpotModeIndex
     {
         get => IsSpotHeal ? 0 : 1;

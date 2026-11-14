@@ -108,6 +108,4 @@ public sealed class SynchronizedViewService
         _viewport = viewport;
         ViewportChanged?.Invoke(this, viewport);
     }
-
-    public NormalizedPoint MapPoint(NormalizedPoint point) => point.Clamp();
 }

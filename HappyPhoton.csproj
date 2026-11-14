@@ -25,8 +25,12 @@
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
     <Version>0.3.4-dev.1</Version>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>
   <Import Project="Magick.props" />
+  <ItemGroup>
+    <GlobalAnalyzerConfigFiles Include="UnusedMembers.globalconfig" />
+  </ItemGroup>
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />

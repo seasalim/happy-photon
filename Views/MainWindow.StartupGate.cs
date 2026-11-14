@@ -22,7 +22,7 @@ public partial class MainWindow
         BackupOnQuitAsync = new CatalogBackupService(catalogService).BackupIfDueAsync;
         _dataLocationService = locationService;
         _locationMigrator = locationMigrator;
-        vm.BindDataLocationService(locationService);
+        vm.UpdateSetupWarning();
         _startupPicturesPath = picturesPath;
         _appSettingsService = new AppSettingsService(catalogService);
         await TryInitializeApplicationAsync(vm);

@@ -148,8 +148,6 @@ public partial class ImageFile : ObservableObject
 
     public bool IsRejected => Flag == ImageFlag.Rejected;
 
-    public bool IsUnflagged => Flag == ImageFlag.Unflagged;
-
     public bool HasRating => Rating > 0;
 
     public bool HasColorLabel => ColorLabel != ColorLabel.None;

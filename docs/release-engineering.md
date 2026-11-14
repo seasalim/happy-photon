@@ -112,8 +112,8 @@ timeout leaves its temporary folder behind.
 UI paths on a trimmed build are covered by the startup harness reaching a
 populated grid and by the clean-machine checks below.
 
-Expected trim warnings are the reflection-JSON IL2026 set, the `ViewLocator`
-IL2026 and IL2104 for `Avalonia.DesignerSupport`; any other is a defect.
+Expected trim warnings are the reflection-JSON IL2026 set and IL2104 for
+`Avalonia.DesignerSupport`; any other is a defect.
 
 ## ImageMagick packages and native prerequisites
 

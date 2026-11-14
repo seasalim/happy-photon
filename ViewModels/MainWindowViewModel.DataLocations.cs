@@ -19,9 +19,6 @@ public partial class MainWindowViewModel
     private StorageSettingsViewModel? _storageSettings;
 
     [ObservableProperty]
-    private bool _isDataLocationBusy;
-
-    [ObservableProperty]
     private bool _isFirstRunStorageReadOnly;
 
     [ObservableProperty]
@@ -51,7 +48,7 @@ public partial class MainWindowViewModel
                                     IsFirstRunStorageCommitted;
         ShowSetupUninstallWarning = false;
         FirstRunErrorMessage = null;
-        BindDataLocationService(service);
+        UpdateSetupWarning();
     }
 
     public void ShowPointerRecovery(string message)
@@ -89,8 +86,7 @@ public partial class MainWindowViewModel
 
     private async Task CompleteStorageSetupAsync()
     {
-        if (CompleteDataLocationSetupAsync == null || IsDataLocationBusy) return;
-        IsDataLocationBusy = true;
+        if (CompleteDataLocationSetupAsync == null) return;
         IsFirstRunBusy = true;
         FirstRunErrorMessage = null;
         try
@@ -103,7 +99,6 @@ public partial class MainWindowViewModel
         }
         finally
         {
-            IsDataLocationBusy = false;
             IsFirstRunBusy = false;
         }
     }
@@ -139,15 +134,7 @@ public partial class MainWindowViewModel
         ChangeSetupCacheCommand.NotifyCanExecuteChanged();
     }
 
-    private AppDataLocationService? _dataLocationService;
-
-    internal void BindDataLocationService(AppDataLocationService service)
-    {
-        _dataLocationService = service;
-        UpdateSetupWarning();
-    }
-
-    private void UpdateSetupWarning()
+    internal void UpdateSetupWarning()
     {
         var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         ShowSetupUninstallWarning = PackagedWindowsDetector.IsPackaged &&

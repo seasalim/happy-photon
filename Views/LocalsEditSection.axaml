@@ -85,13 +85,13 @@
                 <views:CompactSlider Label="Exposure" Value="{Binding LocalExposure}" Minimum="-4" Maximum="4"
                                      SmallChange="0.1" StringFormat="{}{0:+0.00;-0.00;0.00}"
                                      EnableDoubleClickReset="True" IsEnabled="{Binding HasSelectedLocal}"/>
-                <views:CompactSlider Label="Whites" Value="{Binding LocalWhites}" Minimum="-100" Maximum="100"
-                                     SmallChange="1" EnableDoubleClickReset="True" IsEnabled="{Binding HasSelectedLocal}"/>
-                <views:CompactSlider Label="Blacks" Value="{Binding LocalBlacks}" Minimum="-100" Maximum="100"
-                                     SmallChange="1" EnableDoubleClickReset="True" IsEnabled="{Binding HasSelectedLocal}"/>
+                <views:CompactSlider Label="Whites" Value="{Binding LocalWhites}"
+                                     EnableDoubleClickReset="True" IsEnabled="{Binding HasSelectedLocal}"/>
+                <views:CompactSlider Label="Blacks" Value="{Binding LocalBlacks}"
+                                     EnableDoubleClickReset="True" IsEnabled="{Binding HasSelectedLocal}"/>
                 <StackPanel Spacing="8" IsEnabled="{Binding CanEditLocalColor}">
                     <views:CompactSlider Label="Temperature" Value="{Binding LocalTemperature}" Minimum="-50" Maximum="50"
-                                         SmallChange="1" StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True" ShowValueFill="False">
+                                         StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True">
                         <views:CompactSlider.TrackBrush>
                             <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
                                 <GradientStop Color="{StaticResource WhiteBalanceCoolColor}" Offset="0"/>
@@ -101,7 +101,7 @@
                         </views:CompactSlider.TrackBrush>
                     </views:CompactSlider>
                     <views:CompactSlider Label="Tint" Value="{Binding LocalTint}" Minimum="-50" Maximum="50"
-                                         SmallChange="1" StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True" ShowValueFill="False">
+                                         StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True">
                         <views:CompactSlider.TrackBrush>
                             <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
                                 <GradientStop Color="{StaticResource WhiteBalanceTintGreenColor}" Offset="0"/>
@@ -110,8 +110,8 @@
                             </LinearGradientBrush>
                         </views:CompactSlider.TrackBrush>
                     </views:CompactSlider>
-                    <views:CompactSlider Label="Saturation" Value="{Binding LocalSaturation}" Minimum="-100" Maximum="100"
-                                         SmallChange="1" StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True"/>
+                    <views:CompactSlider Label="Saturation" Value="{Binding LocalSaturation}"
+                                         StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True"/>
                 </StackPanel>
                 <TextBlock Classes="hint-text" Text="Monochrome RAW — color controls unavailable" IsVisible="{Binding IsMonochromeSource}"/>
                 <StackPanel Orientation="Horizontal" Spacing="5">
@@ -131,9 +131,9 @@
                                   Command="{Binding SetBrushModeCommand}" CommandParameter="erase" HorizontalAlignment="Stretch"
                                   HorizontalContentAlignment="Center"/>
                 </Grid>
-                <views:CompactSlider x:Name="BrushSizeSlider" ToolTip.Tip="Size ([ / ])" Label="Size" Value="{Binding BrushSize}" Minimum="1" Maximum="100" SmallChange="1"/>
-                <views:CompactSlider x:Name="BrushFeatherSlider" ToolTip.Tip="Feather (Shift+[ / Shift+])" Label="Feather" Value="{Binding BrushFeather}" Minimum="0" Maximum="100" SmallChange="1" StringFormat="{}{0:0}%"/>
-                <views:CompactSlider Label="Flow" Value="{Binding BrushFlow}" Minimum="5" Maximum="100" SmallChange="1" StringFormat="{}{0:0}%"/>
+                <views:CompactSlider x:Name="BrushSizeSlider" ToolTip.Tip="Size ([ / ])" Label="Size" Value="{Binding BrushSize}" Minimum="1"/>
+                <views:CompactSlider x:Name="BrushFeatherSlider" ToolTip.Tip="Feather (Shift+[ / Shift+])" Label="Feather" Value="{Binding BrushFeather}" Minimum="0" StringFormat="{}{0:0}%"/>
+                <views:CompactSlider Label="Flow" Value="{Binding BrushFlow}" Minimum="5" StringFormat="{}{0:0}%"/>
                 <Button Classes="compact-button" Content="Clear strokes" Command="{Binding ClearBrushStrokesCommand}" IsVisible="{Binding !IsBrushCreationArmed}"/>
             </StackPanel>
             <StackPanel Spacing="8" Grid.IsSharedSizeScope="True" IsVisible="{Binding HasLocals}">
@@ -156,13 +156,13 @@
                 </ToggleButton>
                 <StackPanel IsVisible="{Binding IsGradientGeometryExpanded}" IsEnabled="{Binding CanEditLocalGeometry}">
                     <views:CompactSlider x:Name="LocalXSlider" Classes="local-geometry" Label="X"
-                                         Value="{Binding LocalX}" Minimum="-100" Maximum="200" SmallChange="0.1"
+                                         Value="{Binding LocalX}" Maximum="200" SmallChange="0.1"
                                          StringFormat="{}{0:0.0}%" AutomationProperties.Name="Local X"/>
                     <views:CompactSlider x:Name="LocalYSlider" Classes="local-geometry" Label="Y"
-                                         Value="{Binding LocalY}" Minimum="-100" Maximum="200" SmallChange="0.1"
+                                         Value="{Binding LocalY}" Maximum="200" SmallChange="0.1"
                                          StringFormat="{}{0:0.0}%" AutomationProperties.Name="Local Y"/>
                     <views:CompactSlider x:Name="LocalAngleSlider" Classes="local-geometry" Label="Angle"
-                                         Value="{Binding LocalAngle}" Minimum="0" Maximum="360" SmallChange="1"
+                                         Value="{Binding LocalAngle}" Minimum="0" Maximum="360"
                                          WrapValue="True" StringFormat="{}{0:0}°" AutomationProperties.Name="Local angle"/>
                     <views:CompactSlider x:Name="LocalWidthSlider" Classes="local-geometry" Label="Width"
                                          Value="{Binding LocalWidth}" Minimum="{Binding LocalWidthMinimum}" Maximum="200" SmallChange="0.1"
@@ -171,7 +171,7 @@
                                          Value="{Binding LocalHeight}" Minimum="0.2" Maximum="200" SmallChange="0.1"
                                          StringFormat="{}{0:0.0}%" AutomationProperties.Name="Local height"/>
                     <views:CompactSlider x:Name="LocalFeatherSlider" Classes="local-geometry" Label="Feather" IsVisible="{Binding IsRadialLocal}"
-                                         Value="{Binding LocalFeather}" Minimum="0" Maximum="100" SmallChange="1"
+                                         Value="{Binding LocalFeather}" Minimum="0"
                                          StringFormat="{}{0:0.0}%" AutomationProperties.Name="Local feather"/>
                 </StackPanel>
                 <Grid>
@@ -199,7 +199,7 @@
                             </StackPanel.Styles>
                             <views:DualRangeTrack EditIdentity="{Binding LocalRangeEditIdentity}" Lower="{Binding LocalLuminanceLower}" Upper="{Binding LocalLuminanceUpper}"/>
                             <views:CompactSlider Classes="local-range" Label="Softness" Value="{Binding LocalLuminanceSoftness}"
-                                                 Minimum="0" Maximum="50" SmallChange="1" AutomationProperties.Name="Luminance softness"/>
+                                                 Minimum="0" Maximum="50" AutomationProperties.Name="Luminance softness"/>
                         </StackPanel>
                         <TextBlock Classes="hint-text" Text="Ranges follow the base image before local adjustments. Global white balance or profile changes may change the mask."/>
                 </StackPanel>
@@ -235,14 +235,14 @@
                             <Style Selector="StackPanel:disabled"><Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/></Style>
                         </StackPanel.Styles>
                         <views:CompactSlider Classes="local-hue" Label="Center" Value="{Binding LocalHueCenter}"
-                                             Minimum="0" Maximum="360" SmallChange="1" WrapValue="True"
+                                             Minimum="0" Maximum="360" WrapValue="True"
                                              StringFormat="{}{0:0}°" AutomationProperties.Name="Hue center"/>
                         <views:HueRangeStrip Center="{Binding LocalHueCenter}" RangeWidth="{Binding LocalHueWidth}"
                                              Softness="{Binding LocalHueSoftness}" Height="16"/>
                         <views:CompactSlider Classes="local-hue" Label="Width" Value="{Binding LocalHueWidth}"
-                                             Minimum="0" Maximum="360" SmallChange="1" StringFormat="{}{0:0}°" AutomationProperties.Name="Hue width"/>
+                                             Minimum="0" Maximum="360" StringFormat="{}{0:0}°" AutomationProperties.Name="Hue width"/>
                         <views:CompactSlider Classes="local-hue" Label="Softness" Value="{Binding LocalHueSoftness}"
-                                             Minimum="0" Maximum="90" SmallChange="1" StringFormat="{}{0:0}°" AutomationProperties.Name="Hue softness"/>
+                                             Minimum="0" Maximum="90" StringFormat="{}{0:0}°" AutomationProperties.Name="Hue softness"/>
                     </StackPanel>
                     <TextBlock Classes="hint-text" Text="Selects colors before local adjustments. Neutral colors fade out. Global white balance or profile changes may change the mask."/>
                     <TextBlock Classes="hint-text" Text="{Binding LocalHuePickAvailability}"/>

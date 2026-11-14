@@ -167,7 +167,7 @@ public sealed class CatalogImportFlowViewModel : ObservableObject, IDisposable
         await CommitInputsAsync();
     }
 
-    public Task OverrideRootAsync(string sourceRoot) => CommitInputsAsync();
+    public Task OverrideRootAsync() => CommitInputsAsync();
 
     public async Task SetPolicyAsync(CatalogImportPolicy policy)
     {

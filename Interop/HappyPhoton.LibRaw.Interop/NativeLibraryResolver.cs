@@ -9,7 +9,6 @@ internal static class NativeLibraryResolver
 {
     internal static string? LoadedBridgePath { get; private set; }
     internal static string? LoadedLibRawPath { get; private set; }
-    private static nint _libRawHandle;
 
 #pragma warning disable CA2255
     [ModuleInitializer]
@@ -51,9 +50,7 @@ internal static class NativeLibraryResolver
                 LibRawDeploymentStage.Resolution,
                 $"LibRaw companion was not found at '{libRawPath}'.");
 
-        _libRawHandle = Load(
-            libRawPath,
-            LibRawRuntimeComponent.LibRawCompanion);
+        Load(libRawPath, LibRawRuntimeComponent.LibRawCompanion);
         LoadedLibRawPath = libRawPath;
         var handle = Load(bridgePath, LibRawRuntimeComponent.Bridge);
         LoadedBridgePath = bridgePath;

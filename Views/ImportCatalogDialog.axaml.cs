@@ -230,7 +230,7 @@ public partial class ImportCatalogDialog : Window
 
             MappingHelpText.Text =
                 "Choose a different local folder, or leave this location blank to skip its photos.";
-            if (_flow != null) await _flow.OverrideRootAsync(root.SourcePath);
+            if (_flow != null) await _flow.OverrideRootAsync();
         };
         Grid.SetColumn(overrideButton, 1);
         row.Children.Add(overrideButton);

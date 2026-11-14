@@ -115,7 +115,7 @@ public partial class MainWindowViewModel
     {
         foreach (var name in new[] { nameof(Spots), nameof(HasSpots), nameof(SelectedSpot), nameof(SpotCount),
             nameof(CanEditSpots), nameof(SpotDisplayMap), nameof(SpotSize), nameof(SpotFeather), nameof(SpotOpacity),
-            nameof(IsSpotHeal), nameof(IsSpotClone), nameof(SpotModeIndex), nameof(IsSpotsGestureActive) }) OnPropertyChanged(name);
+            nameof(IsSpotHeal), nameof(SpotModeIndex), nameof(IsSpotsGestureActive) }) OnPropertyChanged(name);
         UndoCommand.NotifyCanExecuteChanged();
     }
 

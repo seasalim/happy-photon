@@ -53,7 +53,7 @@ public sealed class ImportChromeShowcaseTests
             new AssessmentMutation(id, AssessmentAxes.Rating, Rating: 4)
         ]);
         var source = new LightroomCatalogContents("C:\\Pictures\\Lightroom\\Sample.lrcat",
-            1303001, 13, true, AssessmentAxes.All, [new CatalogSourceRoot(pictures, 2)],
+            13, true, AssessmentAxes.All, [new CatalogSourceRoot(pictures, 2)],
             [Record(pictures, "changed.jpg", 5), Record(pictures, "unchanged.jpg", 4)], []);
         var service = new CatalogImportService(catalog, _ => true);
         using var flow = new CatalogImportFlowViewModel(new CatalogImportFlowOperations(

@@ -58,7 +58,7 @@
                         <ComboBoxItem Content="TIFF (16-bit)"/>
                     </ComboBox>
                     <views:CompactSlider x:Name="ExportQualitySlider" Label="Quality"
-                                         Minimum="1" Maximum="100" SmallChange="1" StringFormat="{}{0:0}%"
+                                         Minimum="1" StringFormat="{}{0:0}%"
                                          IsVisible="{Binding IsExportQualityAvailable}"
                                          Value="{Binding ExportSettings.Quality, Mode=TwoWay}" Margin="0,4,0,0"/>
 

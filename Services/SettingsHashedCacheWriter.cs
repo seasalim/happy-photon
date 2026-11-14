@@ -11,7 +11,6 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
 {
     private static readonly TimeSpan DefaultDrainTimeout = TimeSpan.FromSeconds(2);
 
-    private readonly CatalogService _catalogService;
     private readonly Func<long, string> _getCachePath;
     private readonly int _jpegQuality;
     private readonly bool _versionedDimensionMetadata;
@@ -47,7 +46,6 @@ internal sealed class SettingsHashedCacheWriter : IAsyncDisposable
         Task? writerInHandGate = null,
         Func<Task>? beforeWrite = null)
     {
-        _catalogService = catalogService;
         _getCachePath = getCachePath;
         _jpegQuality = jpegQuality;
         _versionedDimensionMetadata = versionedDimensionMetadata;

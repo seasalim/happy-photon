@@ -52,7 +52,6 @@ public sealed record CatalogImportRecord(
 
 public sealed record LightroomCatalogContents(
     string CatalogPath,
-    long DatabaseVersion,
     int MajorVersion,
     bool IsVerifiedVersion,
     AssessmentAxes CarriedAxes,
@@ -102,10 +101,8 @@ public sealed record CatalogImportReport(
     CatalogImportAxisSummary Rating,
     CatalogImportAxisSummary Flag,
     CatalogImportAxisSummary ColorLabel,
-    IReadOnlyDictionary<string, int> UnsupportedLabelTokens,
     IReadOnlyList<string> ActionableOutcomes,
     IReadOnlyList<string> InformationalOutcomes,
-    bool IsUnverifiedVersion,
     CatalogImportAxisSummary? Crop = null)
 {
     public bool NothingToImport => SourceVerdictPhotos == 0;
@@ -113,16 +110,12 @@ public sealed record CatalogImportReport(
 }
 
 public sealed record CatalogImportPreview(
-    string SourceCatalogPath,
-    CatalogImportPolicy Policy,
-    IReadOnlyDictionary<string, string> RootMappings,
     IReadOnlyList<CatalogImportChange> Changes,
     CatalogImportReport Report,
     string SettingsKey,
     string? BaselineSettingsJson,
     string SettingsJson,
-    IReadOnlyList<string> ImportedPaths,
-    bool ImportCrops = false);
+    IReadOnlyList<string> ImportedPaths);
 
 public sealed record CatalogImportAdoption(
     long BaselineRevision,

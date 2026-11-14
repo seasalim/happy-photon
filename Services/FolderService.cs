@@ -39,10 +39,4 @@ public class FolderService
     {
         return ScanFolder(folderPath).Images;
     }
-
-    public bool IsSupportedImage(string filePath)
-    {
-        return ImageFile.SupportedExtensions.Contains(
-            Path.GetExtension(filePath));
-    }
 }

@@ -1,0 +1,7 @@
+is_global = true
+
+# Production projects only: keep unused private members, write-only fields and
+# unused parameters from returning. Test projects do not import this file.
+dotnet_diagnostic.IDE0051.severity = warning
+dotnet_diagnostic.IDE0052.severity = warning
+dotnet_diagnostic.IDE0060.severity = warning

@@ -2,12 +2,7 @@ using Microsoft.Data.Sqlite;
 
 namespace HappyPhoton.Services;
 
-public sealed class CatalogSchemaMismatchException(
-    string message,
-    IReadOnlyList<string> missingColumns) : Exception(message)
-{
-    public IReadOnlyList<string> MissingColumns { get; } = missingColumns;
-}
+public sealed class CatalogSchemaMismatchException(string message) : Exception(message);
 
 internal static class CatalogSchema
 {
@@ -97,8 +92,7 @@ internal static class CatalogSchema
             throw new CatalogSchemaMismatchException(
                 $"This catalog uses an unsupported development format " +
                 $"(missing: {string.Join(", ", missing)}). Set the catalog and cache " +
-                $"at '{catalogPath}' aside together, then retry.",
-                missing);
+                $"at '{catalogPath}' aside together, then retry.");
         }
     }
 

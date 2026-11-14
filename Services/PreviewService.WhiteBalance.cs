@@ -22,15 +22,6 @@ public sealed partial class PreviewService
                 snapshot.Base.Info.IsRawSource);
     }
 
-    public Task<double[]?> GetAutoWhiteBalanceAsync(
-        ImageFile imageFile,
-        EditSettings settings,
-        CancellationToken cancellationToken = default) =>
-        GetSampleGainsAsync(GetAutoWhiteBalanceSampleAsync(
-            imageFile,
-            settings,
-            cancellationToken));
-
     internal Task<WhiteBalanceSample?> GetAutoWhiteBalanceSampleAsync(
         ImageFile imageFile,
         EditSettings settings,
@@ -40,19 +31,6 @@ public sealed partial class PreviewService
             settings,
             WhiteBalanceSampling.AutoGains,
             cancellationToken);
-
-    public Task<double[]?> PickWhiteBalanceAsync(
-        ImageFile imageFile,
-        EditSettings settings,
-        double normalizedX,
-        double normalizedY,
-        CancellationToken cancellationToken = default) =>
-        GetSampleGainsAsync(PickWhiteBalanceSampleAsync(
-            imageFile,
-            settings,
-            normalizedX,
-            normalizedY,
-            cancellationToken));
 
     internal Task<WhiteBalanceSample?> PickWhiteBalanceSampleAsync(
         ImageFile imageFile,
@@ -89,10 +67,6 @@ public sealed partial class PreviewService
         ImageFile imageFile, EditSettings settings, object baseToken,
         CancellationToken cancellationToken = default) =>
         IsPreviewBaseCurrentAsync(imageFile, settings, baseToken, cancellationToken);
-
-    private static async Task<double[]?> GetSampleGainsAsync(
-        Task<WhiteBalanceSample?> sample) =>
-        (await sample.ConfigureAwait(false))?.Gains;
 
     // Bases are keyed by the profile selection token, so any decode this
     // service initiates must carry the resolved profile — a selection-only

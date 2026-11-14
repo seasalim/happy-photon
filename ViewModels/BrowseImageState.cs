@@ -200,11 +200,6 @@ public partial class BrowseImageState : ObservableObject
         return null;
     }
 
-    public bool MatchesCurrentFilters(ImageFile image) =>
-        CaptureIsVisible(image) && CaptureMatchesFileType(FileTypeFilter, image) &&
-        MatchesFlagFilter(image) &&
-        image.Rating >= MinimumRating && MatchesColorLabelFilter(image.ColorLabel);
-
     public bool MatchesCurrentFilters(ImageFile image, ImageFlag flag) =>
         CaptureIsVisible(image) && CaptureMatchesFileType(FileTypeFilter, image) &&
         MatchesFlagFilter(flag) &&

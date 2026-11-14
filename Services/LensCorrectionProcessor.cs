@@ -100,7 +100,7 @@ internal static class LensCorrectionProcessor
                     var rows = Math.Min(bandHeight, outputHeight - y);
                     TransformBand(
                         source, sourceWidth, sourceHeight,
-                        buffer, outputWidth, outputHeight, y, rows,
+                        buffer, outputWidth, y, rows,
                         layout, characterization, correction, cancellationToken);
                     pixels.SetArea(0, y, (uint)outputWidth, (uint)rows,
                         buffer.AsSpan(0, checked(samplesPerRow * rows)));
@@ -178,7 +178,6 @@ internal static class LensCorrectionProcessor
         int sourceHeight,
         ushort[] buffer,
         int outputWidth,
-        int outputHeight,
         int bandY,
         int rows,
         RenderKernelSupport.PixelLayout layout,
@@ -427,17 +426,6 @@ internal static class LensCorrectionProcessor
         int channel) =>
         (topLeft[channel] + (topRight[channel] - topLeft[channel]) * fx) * (1 - fy) +
         (bottomLeft[channel] + (bottomRight[channel] - bottomLeft[channel]) * fx) * fy;
-
-    private static (double U, double V) OrientedToSource(
-        double u,
-        double v,
-        int orientation) => orientation switch
-        {
-            1 => (u, v), 2 => (1 - u, v), 3 => (1 - u, 1 - v),
-            4 => (u, 1 - v), 5 => (v, u), 6 => (v, 1 - u),
-            7 => (1 - v, 1 - u), 8 => (1 - v, u),
-            _ => throw new ArgumentOutOfRangeException(nameof(orientation))
-        };
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static ushort Encode(double value) => value <= 0 ? (ushort)0 :

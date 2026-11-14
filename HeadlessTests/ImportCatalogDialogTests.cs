@@ -130,7 +130,7 @@ public sealed class ImportCatalogDialogTests
     private static CatalogImportFlowViewModel CreateCompletedFlow()
     {
         var source = Source();
-        var preview = Preview(source);
+        var preview = Preview();
         return new CatalogImportFlowViewModel(
             new CatalogImportFlowOperations(
                 (_, _) => Task.FromResult(source),
@@ -163,20 +163,17 @@ public sealed class ImportCatalogDialogTests
     }
 
     private static LightroomCatalogContents Source() =>
-        new("source.lrcat", 1303001, 13, true, AssessmentAxes.All,
+        new("source.lrcat", 13, true, AssessmentAxes.All,
             [], [], []);
 
-    private static CatalogImportPreview Preview(LightroomCatalogContents source)
+    private static CatalogImportPreview Preview()
     {
         var axis = new CatalogImportAxisSummary(1, 0, 0, 0, 0);
         var report = new CatalogImportReport(
             1, 1, 1, 1, 0, 0, 0, 0, 0,
-            axis, axis, axis, new Dictionary<string, int>(), [], [], false,
+            axis, axis, axis, [], [],
             new CatalogImportAxisSummary(2, 3, 0, 4, 0));
         return new CatalogImportPreview(
-            source.CatalogPath,
-            CatalogImportPolicy.LightroomWins,
-            new Dictionary<string, string>(),
             [], report, "settings", null, "{}", []);
     }
 

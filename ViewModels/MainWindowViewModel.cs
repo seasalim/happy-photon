@@ -161,12 +161,6 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     private double _zoomLevel = 1.0;
 
     [ObservableProperty]
-    private double _minZoom = 0.1;
-
-    [ObservableProperty]
-    private double _maxZoom = 5.0;
-
-    [ObservableProperty]
     private int _selectedCount;
 
     public string? ActiveFileName => SelectedImage is { } image

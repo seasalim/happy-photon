@@ -10,7 +10,6 @@ namespace HappyPhoton.Services;
 /// </summary>
 public class ImageService : IAsyncDisposable
 {
-    private readonly CatalogService _catalogService;
     private readonly IRawProcessingService _rawService;
     private readonly HistogramService _histogramService;
     private readonly ThumbnailService _thumbnailService;
@@ -82,7 +81,6 @@ public class ImageService : IAsyncDisposable
         ISourceAvailabilityService availabilityService,
         LibRawRuntimeHealth rawRuntimeHealth)
     {
-        _catalogService = catalogService;
         ArgumentNullException.ThrowIfNull(baseLoader);
         _availabilityService = availabilityService ??
             throw new ArgumentNullException(nameof(availabilityService));
@@ -177,17 +175,6 @@ public class ImageService : IAsyncDisposable
     // ===== Export Methods (delegated to ImageExportService) =====
 
     public async Task<ExportBatchResult> ExportBatchAsync(
-        IEnumerable<ImageFile> images,
-        ExportSettings settings,
-        IProgress<(int current, int total, string fileName)>? progress = null,
-        CancellationToken cancellationToken = default)
-    {
-        var imageList = images.ToList();
-        var job = settings.CreateJob(imageList);
-        return await ExportBatchAsync(job, progress, cancellationToken);
-    }
-
-    public async Task<ExportBatchResult> ExportBatchAsync(
         ExportJob job,
         IProgress<(int current, int total, string fileName)>? progress = null,
         CancellationToken cancellationToken = default)
@@ -198,17 +185,6 @@ public class ImageService : IAsyncDisposable
             job,
             progress,
             cancellationToken);
-    }
-
-    internal async Task<ExportBatchResult> ExportBatchApprovedAsync(
-        IEnumerable<ImageFile> images,
-        ExportSettings settings,
-        IProgress<(int current, int total, string fileName)>? progress = null,
-        CancellationToken cancellationToken = default)
-    {
-        var imageList = images.ToList();
-        var job = settings.CreateJob(imageList);
-        return await ExportBatchApprovedAsync(job, progress, cancellationToken);
     }
 
     internal async Task<ExportBatchResult> ExportBatchApprovedAsync(
@@ -221,45 +197,6 @@ public class ImageService : IAsyncDisposable
         return await _exportService.ExportBatchApprovedAsync(
             job,
             progress,
-            cancellationToken);
-    }
-
-    public async Task<int> ExportBatchAsync(
-        IEnumerable<ImageFile> images,
-        ExportSettings settings,
-        IReadOnlyList<ExportVariant> variants,
-        bool useSubfolders,
-        IProgress<(int current, int total, string fileName)>? progress = null,
-        CancellationToken cancellationToken = default,
-        IProgress<ExportWarning>? warningProgress = null)
-    {
-        var imageList = images.ToList();
-        var job = settings.CreateJob(imageList, variants, useSubfolders);
-        await EnsureExportMetadataAsync(imageList, cancellationToken);
-        var result = await _exportService.ExportBatchAsync(
-            job,
-            progress,
-            cancellationToken);
-        foreach (var warning in result.Warnings)
-        {
-            warningProgress?.Report(warning);
-        }
-        return result.ExportedCount;
-    }
-
-    internal async Task<ExportBatchResult> ExportBatchVariantsAsync(
-        IEnumerable<ImageFile> images,
-        ExportSettings settings,
-        IReadOnlyList<ExportVariant> variants,
-        bool useSubfolders,
-        CancellationToken cancellationToken)
-    {
-        var imageList = images.ToList();
-        var job = settings.CreateJob(imageList, variants, useSubfolders);
-        await EnsureExportMetadataAsync(imageList, cancellationToken);
-        return await _exportService.ExportBatchAsync(
-            job,
-            progress: null,
             cancellationToken);
     }
 

@@ -7,12 +7,10 @@
     <StackPanel Spacing="4">
         <views:CompactSlider x:Name="TextureSlider"
                              Label="Texture" Value="{Binding Texture}"
-                             Minimum="-100" Maximum="100" SmallChange="1"
                              StringFormat="{}{0:+0;-0;0}"
                              EnableDoubleClickReset="True"/>
         <views:CompactSlider x:Name="ClaritySlider"
                              Label="Clarity" Value="{Binding Clarity}"
-                             Minimum="-100" Maximum="100" SmallChange="1"
                              StringFormat="{}{0:+0;-0;0}"
                              EnableDoubleClickReset="True"/>
         <views:CompactSlider x:Name="VibranceSlider"
@@ -20,9 +18,6 @@
                              Label="Vibrance"
                              Value="{Binding Vibrance}"
                              IsEnabled="{Binding IsColorEditingEnabled}"
-                             Minimum="-100"
-                             Maximum="100"
-                             SmallChange="1"
                              StringFormat="{}{0:+0;-0;0}"
                              EnableDoubleClickReset="True"/>
         <views:CompactSlider x:Name="SaturationSlider"
@@ -30,9 +25,6 @@
                              Label="Saturation"
                              Value="{Binding Saturation}"
                              IsEnabled="{Binding IsColorEditingEnabled}"
-                             Minimum="-100"
-                             Maximum="100"
-                             SmallChange="1"
                              StringFormat="{}{0:+0;-0;0}"
                              EnableDoubleClickReset="True"/>
     </StackPanel>

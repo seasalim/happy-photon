@@ -101,7 +101,7 @@ public sealed class CatalogImportFlowViewModelTests
         using var flow = harness.CreateFlow();
         await CompleteInitializationAsync(flow, harness);
 
-        await flow.OverrideRootAsync(FlowHarness.SourceRoot);
+        await flow.OverrideRootAsync();
         Assert.Single(harness.Requests);
         var policyRun = flow.SetPolicyAsync(CatalogImportPolicy.FillEmptyOnly);
         Assert.False(flow.CanApply);
@@ -231,7 +231,6 @@ public sealed class CatalogImportFlowViewModelTests
                 (source, mappings, policy, importCrops, token) =>
                 {
                     var request = new PreviewRequest(
-                        source,
                         new Dictionary<string, string>(mappings),
                         policy,
                         importCrops,
@@ -244,12 +243,11 @@ public sealed class CatalogImportFlowViewModelTests
         }
 
         private static LightroomCatalogContents Source() =>
-            new("source.lrcat", 1303001, 13, true, AssessmentAxes.All,
+            new("source.lrcat", 13, true, AssessmentAxes.All,
                 [new CatalogSourceRoot(SourceRoot, 1)], [], []);
     }
 
     private sealed class PreviewRequest(
-        LightroomCatalogContents source,
         IReadOnlyDictionary<string, string> mappings,
         CatalogImportPolicy policy,
         bool importCrops,
@@ -268,9 +266,6 @@ public sealed class CatalogImportFlowViewModelTests
         public void Complete(int updatedPhotos, int matchedPhotos = 1)
         {
             Preview = new CatalogImportPreview(
-                source.CatalogPath,
-                Policy,
-                Mappings,
                 [],
                 Report(updatedPhotos, matchedPhotos),
                 "settings",
@@ -290,8 +285,7 @@ public sealed class CatalogImportFlowViewModelTests
                 updatedPhotos, 0, 0, 0, 0);
             return new CatalogImportReport(
                 1, matchedPhotos, updatedPhotos, matchedPhotos, 0, 0, 0, 0, 0,
-                axis, axis, axis,
-                new Dictionary<string, int>(), [], [], false);
+                axis, axis, axis, [], []);
         }
     }
 }

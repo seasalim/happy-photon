@@ -35,9 +35,9 @@ public sealed class ImportCloseSlotBaselineTests(ITestOutputHelper output)
         async Task MeasureScenarioAsync(string scenario)
         {
             var source = new LightroomCatalogContents(
-                Path.Combine(root.Path, "Sample.lrcat"), 1303001, 13, true,
+                Path.Combine(root.Path, "Sample.lrcat"), 13, true,
                 AssessmentAxes.All, [], [], []);
-            var preview = Preview(source);
+            var preview = Preview();
             var entered = new TaskCompletionSource(
                 TaskCreationOptions.RunContinuationsAsynchronously);
             using var flow = new CatalogImportFlowViewModel(new CatalogImportFlowOperations(
@@ -125,14 +125,12 @@ public sealed class ImportCloseSlotBaselineTests(ITestOutputHelper output)
         }
     }
 
-    private static CatalogImportPreview Preview(LightroomCatalogContents source)
+    private static CatalogImportPreview Preview()
     {
         var axis = new CatalogImportAxisSummary(1, 0, 0, 0, 0);
         var report = new CatalogImportReport(
-            1, 1, 1, 1, 0, 0, 0, 0, 0, axis, axis, axis,
-            new Dictionary<string, int>(), [], [], false);
+            1, 1, 1, 1, 0, 0, 0, 0, 0, axis, axis, axis, [], []);
 
-        return new CatalogImportPreview(source.CatalogPath, CatalogImportPolicy.LightroomWins,
-            new Dictionary<string, string>(), [], report, "settings", null, "{}", []);
+        return new CatalogImportPreview([], report, "settings", null, "{}", []);
     }
 }

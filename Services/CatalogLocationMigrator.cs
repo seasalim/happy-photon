@@ -265,7 +265,7 @@ public sealed class CatalogLocationMigrator
         if (journal.Phase == CatalogLocationMovePhase.ReplacementRootsCreated)
         {
             await _locations.CreateFreshAfterSetAsideAsync();
-            journal = await AdvanceAsync(journal, CatalogLocationMovePhase.PointerFlipped);
+            await AdvanceAsync(journal, CatalogLocationMovePhase.PointerFlipped);
         }
         DeleteJournal();
     }

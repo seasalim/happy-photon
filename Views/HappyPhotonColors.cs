@@ -15,15 +15,10 @@ public static class HappyPhotonColors
         Color.FromArgb(235, 0xff, 0x3b, 0x30);
     public static readonly Color DisplayFloorClipColor =
         Color.FromArgb(235, 0x2f, 0x6f, 0xed);
-    // Proof caption ink is invariant because it is drawn over photograph pixels.
-    public static readonly Color ProofCaptionColor =
-        Color.FromArgb(255, 0xff, 0xff, 0xff);
     public static readonly IBrush SceneHighlightClip =
         new SolidColorBrush(SceneHighlightClipColor);
     public static readonly IBrush DisplayFloorClip =
         new SolidColorBrush(DisplayFloorClipColor);
-    public static readonly IBrush ProofCaption =
-        new SolidColorBrush(ProofCaptionColor);
 
     public static readonly IBrush ControlActive = Brush("#e4e4e4");
 

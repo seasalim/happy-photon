@@ -19,7 +19,7 @@ public partial class ImageFile
 
             OnPropertyChanging(nameof(FileSize));
             _fileSize = value;
-            OnFileSizeChanged(value);
+            OnFileSizeChanged();
             OnPropertyChanged(nameof(FileSize));
         }
     }
@@ -38,7 +38,7 @@ public partial class ImageFile
 
             OnPropertyChanging(nameof(DateTaken));
             _dateTaken = value;
-            OnDateTakenChanged(value);
+            OnDateTakenChanged();
             OnPropertyChanged(nameof(DateTaken));
         }
     }

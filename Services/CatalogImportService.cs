@@ -190,8 +190,8 @@ public sealed class CatalogImportService
             source.Records.Count, changes.Count, updatedPhotos,
             existingRows, changes.Count - existingRows,
             unresolved, unavailableFiles, unsupportedFiles, virtualCopies,
-            rating.Freeze(), flag.Freeze(), label.Freeze(), unsupportedLabels,
-            actionable, informational, !source.IsVerifiedVersion, crop.Freeze());
+            rating.Freeze(), flag.Freeze(), label.Freeze(),
+            actionable, informational, crop.Freeze());
         var settingsKey = GetSettingsKey(source.CatalogPath);
         var baselineSettings = await _catalogService.GetAppSettingAsync(settingsKey);
         var stored = new CatalogImportStoredSettings(
@@ -205,9 +205,8 @@ public sealed class CatalogImportService
             });
         var settingsJson = JsonSerializer.Serialize(stored);
         return new CatalogImportPreview(
-            source.CatalogPath, policy, mappings, changes, report,
-            settingsKey, baselineSettings, settingsJson,
-            changes.Select(change => change.FilePath).ToArray(), importCrops);
+            changes, report, settingsKey, baselineSettings, settingsJson,
+            changes.Select(change => change.FilePath).ToArray());
     }
 
     private async Task<CropRegion?> EvaluateCropAsync(

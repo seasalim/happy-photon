@@ -286,7 +286,6 @@ internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
         PreviewBasePair? decoded = null;
         HeldBase? supersededInteractive = null;
         HeldBase? supersededLarge = null;
-        var failure = BaseImageLoadFailure.DecodeFailed;
         try
         {
             DateTime? sourceWriteTime = null;
@@ -299,7 +298,7 @@ internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
                 decode,
                 session.Cancellation.Token);
             decoded = outcome.Pair;
-            failure = outcome.Failure;
+            var failure = outcome.Failure;
             session.Cancellation.Token.ThrowIfCancellationRequested();
 
             lock (_sync)

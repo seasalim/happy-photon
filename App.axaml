@@ -2,7 +2,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="HappyPhoton.App"
              Name="Happy Photon"
-             xmlns:local="using:HappyPhoton"
              RequestedThemeVariant="Dark">
 
     <Application.Resources>
@@ -13,8 +12,6 @@
             <StaticResource x:Key="ControlContentThemeFontSize" ResourceKey="FontSizeBody"/>
             <StaticResource x:Key="ToolTipContentThemeFontSize" ResourceKey="FontSizeBody"/>
             <SolidColorBrush x:Key="ExpanderHeaderBorderBrush" Color="Transparent"/>
-            <SolidColorBrush x:Key="ExpanderHeaderBorderPointerOverBrush" Color="Transparent"/>
-            <SolidColorBrush x:Key="ExpanderHeaderBorderPressedBrush" Color="Transparent"/>
             <SolidColorBrush x:Key="ExpanderContentBorderBrush" Color="Transparent"/>
             <SolidColorBrush x:Key="ExpanderHeaderBackground" Color="{DynamicResource SurfaceMidColor}"/>
             <SolidColorBrush x:Key="ExpanderHeaderBackgroundPointerOver" Color="{DynamicResource ControlHoverColor}"/>
@@ -24,13 +21,8 @@
             <Thickness x:Key="ExpanderContentPadding">0</Thickness>
             <Thickness x:Key="ExpanderHeaderPadding">8,4</Thickness>
             <x:Double x:Key="ExpanderMinHeight">0</x:Double>
-            <x:Double x:Key="ExpanderHeaderMinHeight">0</x:Double>
         </ResourceDictionary>
     </Application.Resources>
-
-    <Application.DataTemplates>
-        <local:ViewLocator/>
-    </Application.DataTemplates>
 
     <Application.Styles>
         <FluentTheme />
@@ -64,15 +56,6 @@
             <Setter Property="MinHeight" Value="0"/>
             <Setter Property="IsExpanded" Value="True"/>
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-        </Style>
-        <Style Selector="Expander /template/ ToggleButton#PART_toggle">
-            <Setter Property="Background" Value="{DynamicResource SurfaceMid}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="8,4"/>
-            <Setter Property="MinHeight" Value="0"/>
-        </Style>
-        <Style Selector="Expander /template/ ToggleButton#PART_toggle:pointerover">
-            <Setter Property="Background" Value="{DynamicResource ControlHover}"/>
         </Style>
         <Style Selector="Expander /template/ Border#ExpanderContent">
             <Setter Property="BorderThickness" Value="0"/>
