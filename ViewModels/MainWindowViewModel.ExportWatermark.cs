@@ -27,15 +27,22 @@ public partial class MainWindowViewModel
             }, timeProvider: _timeProvider);
     }
 
-    internal void RequestWatermarkSettingsSave()
+    internal void RequestWatermarkSettingsSave() =>
+        DebounceSettingsSave(ref _watermarkSaveDebounce, "watermark settings");
+
+    // Saves app settings 250 ms after the last request through this debounce.
+    private void DebounceSettingsSave(
+        ref CancellationTokenSource? debounce,
+        string operationName,
+        Action<string, Exception>? onError = null)
     {
-        var token = ReplaceDebounce(ref _watermarkSaveDebounce).Token;
-        _ = DebouncedAction.RunAsync("watermark settings", TimeSpan.FromMilliseconds(250), token,
+        var token = ReplaceDebounce(ref debounce).Token;
+        _ = DebouncedAction.RunAsync(operationName, TimeSpan.FromMilliseconds(250), token,
             () =>
             {
                 token.ThrowIfCancellationRequested();
                 return PersistAppSettingsAsync?.Invoke() ?? Task.CompletedTask;
-            }, timeProvider: _timeProvider);
+            }, onError, _timeProvider);
     }
 
     internal void CancelWatermarkSettingsSave() => CancelAndDispose(ref _watermarkSaveDebounce);

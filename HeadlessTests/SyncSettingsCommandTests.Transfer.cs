@@ -279,7 +279,6 @@ public sealed partial class SyncSettingsCommandTests
     }
 
     private static Dictionary<string, object?> CopiedFields(MainWindowViewModel vm) =>
-        new[] { "_copiedSettings", "_copiedSource", "_copiedSourceName", "_copiedProfileSource", "_copiedSpotSource" }
-            .ToDictionary(name => name, name => typeof(MainWindowViewModel)
-                .GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(vm));
+        new[] { "Settings", "Source", "SourceName", "Profiles", "Spots" }
+            .ToDictionary(name => name, name => CopyBufferProbe.Member(vm, name));
 }

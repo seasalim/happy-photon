@@ -59,7 +59,7 @@ public partial class MainWindowViewModel
         }
 
         var identityChanged = false;
-        if (state != null && RawProfilePickerProjector.ProfilesEqual(
+        if (state != null && RawProfileSelection.Matches(
                 image.EditSettings.RawProfile,
                 state.RequestedSelection))
         {
@@ -140,10 +140,7 @@ public partial class MainWindowViewModel
 
         var generation = Interlocked.Increment(
             ref _rawProfileDiscoveryGeneration);
-        var cts = new CancellationTokenSource();
-        var previous = Interlocked.Exchange(ref _rawProfilePickerCts, cts);
-        previous?.Cancel();
-        previous?.Dispose();
+        var cts = ReplaceDebounce(ref _rawProfilePickerCts);
         _isRawProfileDiscoveryActive = true;
         _rawProfileTransientError = null;
         PublishRawProfilePickerState();
@@ -235,7 +232,7 @@ public partial class MainWindowViewModel
         if (image == null || !IsColorEditingEnabled || option == null ||
             !option.IsProfile || !option.CanSelect) return;
 
-        if (RawProfilePickerProjector.ProfilesEqual(
+        if (RawProfileSelection.Matches(
             image.EditSettings.RawProfile,
             option.Selection)) return;
         var previousSettings = image.EditSettings.Clone();
@@ -261,10 +258,7 @@ public partial class MainWindowViewModel
         }
         _lastSavedState = image.EditSettings.Clone();
 
-        var cts = new CancellationTokenSource();
-        var previous = Interlocked.Exchange(ref _rawProfileSelectionCts, cts);
-        previous?.Cancel();
-        previous?.Dispose();
+        var cts = ReplaceDebounce(ref _rawProfileSelectionCts);
         try
         {
             await UpdatePreviewWithCurrentSliders(
@@ -326,7 +320,7 @@ public partial class MainWindowViewModel
         RawProfileSelection? selection,
         RawProfileOptionViewModel? selectedOption = null)
     {
-        var identityChanged = !RawProfilePickerProjector.ProfilesEqual(
+        var identityChanged = !RawProfileSelection.Matches(
             image.EditSettings.RawProfile,
             selection);
         if (identityChanged)
@@ -350,7 +344,7 @@ public partial class MainWindowViewModel
         ImageFile image,
         RawProfileSelection? replacedSelection)
     {
-        if (!RawProfilePickerProjector.ProfilesEqual(
+        if (!RawProfileSelection.Matches(
             replacedSelection,
             image.EditSettings.RawProfile))
         {
@@ -364,9 +358,7 @@ public partial class MainWindowViewModel
     {
         Interlocked.Increment(ref _rawProfileDiscoveryGeneration);
         _isRawProfileDiscoveryActive = false;
-        var cts = Interlocked.Exchange(ref _rawProfilePickerCts, null);
-        cts?.Cancel();
-        cts?.Dispose();
+        CancelAndDispose(ref _rawProfilePickerCts);
     }
 
     private bool IsCurrentRawProfileDiscovery(

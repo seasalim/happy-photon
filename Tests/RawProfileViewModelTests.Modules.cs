@@ -50,8 +50,8 @@ public sealed partial class RawProfileViewModelTests
         Assert.Equal(["Telephoto · back telephoto camera", "Front · front camera"], vm.RawProfilePickerState.Options
             .Where(option => option.IsProfile && option.Selection?.Source == RawProfileSource.Adobe)
             .Select(option => option.Label));
-        Assert.True(RawProfilePickerProjector.ProfilesEqual(selection, vm.RawProfilePickerState.SelectedOption?.Selection));
-        Assert.True(RawProfilePickerProjector.ProfilesEqual(selection, image.EditSettings.RawProfile));
+        Assert.True(RawProfileSelection.Matches(selection, vm.RawProfilePickerState.SelectedOption?.Selection));
+        Assert.True(RawProfileSelection.Matches(selection, image.EditSettings.RawProfile));
         Assert.DoesNotContain("NONE DECLARE", vm.RawProfilePickerState.StatusMessage);
         Assert.False(vm.RawProfilePickerState.ShowGetAdobeProfilesLink);
 
@@ -63,8 +63,8 @@ public sealed partial class RawProfileViewModelTests
         Assert.Equal(["Telephoto · back telephoto camera", "Front · front camera"], vm.RawProfilePickerState.Options
             .Where(option => option.IsProfile && option.Selection?.Source == RawProfileSource.Adobe)
             .Select(option => option.Label));
-        Assert.True(RawProfilePickerProjector.ProfilesEqual(preferred.Selection,
+        Assert.True(RawProfileSelection.Matches(preferred.Selection,
             vm.RawProfilePickerState.SelectedOption?.Selection));
-        Assert.True(RawProfilePickerProjector.ProfilesEqual(preferred.Selection, image.EditSettings.RawProfile));
+        Assert.True(RawProfileSelection.Matches(preferred.Selection, image.EditSettings.RawProfile));
     }
 }

@@ -67,9 +67,7 @@ public partial class MainWindowViewModel
 
     private void CancelDcpHintProbe()
     {
-        _dcpHintProbeCts?.Cancel();
-        _dcpHintProbeCts?.Dispose();
-        _dcpHintProbeCts = null;
+        CancelAndDispose(ref _dcpHintProbeCts);
     }
 
     private async Task LoadDcpHintKeyAsync()

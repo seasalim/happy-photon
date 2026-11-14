@@ -26,7 +26,7 @@ public partial class MainWindowViewModel
     public Dictionary<string, bool> CapturePasteGroups() => new(_pasteGroups);
 
     [RelayCommand(CanExecute = nameof(CanPasteEditSettings))]
-    private Task ChoosePasteSettingsAsync() => PasteEditSettingsCoreAsync(CopiedPasteSnapshot(), showDialog: true);
+    private Task ChoosePasteSettingsAsync() => PasteEditSettingsCoreAsync(_copied, showDialog: true);
 
     private async Task<bool> ChoosePasteGroupsAsync(PasteSnapshot snapshot, IReadOnlyList<ImageFile> targets,
         bool currentPhoto, PasteSettingsMode mode = PasteSettingsMode.Paste)

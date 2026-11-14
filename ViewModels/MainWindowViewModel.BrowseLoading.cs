@@ -272,8 +272,6 @@ public partial class MainWindowViewModel
                 imageFile,
                 surfaceGeneration,
                 intent,
-                RenderOutcomeClass.StateDefining,
-                PreviewPaintSource.FreshRender,
                 artifacts,
                 promotable: true));
             var painted = succeeded && accepted;

@@ -280,10 +280,12 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         ToggleBeforeAfterCommand.NotifyCanExecuteChanged();
     }
 
+    // Installs next (a new source by default) and cancels the one it replaces.
     private static CancellationTokenSource ReplaceDebounce(
-        ref CancellationTokenSource? current)
+        ref CancellationTokenSource? current,
+        CancellationTokenSource? next = null)
     {
-        var next = new CancellationTokenSource();
+        next ??= new CancellationTokenSource();
         var previous = Interlocked.Exchange(ref current, next);
         previous?.Cancel();
         previous?.Dispose();
@@ -361,10 +363,17 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         // A superseded debounce can already be past its cancellation checks
         // inside the autosave, so disposal must drain every unfinished task,
         // not just the newest one.
-        var pending = _previewDebounceTask;
-        _previewDebounceTask = pending is { IsCompleted: false }
-            ? Task.WhenAll(pending, run)
-            : run;
+        ChainPending(ref _previewDebounceTask, run);
+    }
+
+    // Keeps every unfinished task awaitable: the slot holds the newest task,
+    // joined with the previous one while that is still running.
+    private static void ChainPending(ref Task? slot, Task next)
+    {
+        var pending = slot;
+        slot = pending is { IsCompleted: false }
+            ? Task.WhenAll(pending, next)
+            : next;
     }
 
     private void SyncHistoryFlags()

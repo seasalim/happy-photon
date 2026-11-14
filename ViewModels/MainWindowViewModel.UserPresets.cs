@@ -19,7 +19,7 @@ public partial class MainWindowViewModel
     {
         _presetGroups[group] = expanded;
 
-        await PersistBrowsePreferenceAsync("Preset-group");
+        await PersistPreferenceAsync("Preset-group");
     }
 
     public async Task SaveCurrentAsPresetAsync(string name, string? overwriteId = null)
@@ -66,8 +66,7 @@ public partial class MainWindowViewModel
     /// </summary>
     public async Task ApplyPresetAsync(string presetId)
     {
-        DiscardSpotsGesture();
-        DiscardLocalsGesture();
+        DiscardGestures();
         if (!CanEditSelectedImage || SelectedImage == null) return;
         var image = SelectedImage;
 

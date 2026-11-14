@@ -26,8 +26,7 @@ public sealed partial class BatchUndoViewModelTests
         var photos = await PrepareAsync(fixture);
         var vm = fixture.Vm;
         vm.CopyEditSettingsCommand.Execute(null);
-        var buffer = typeof(MainWindowViewModel).GetField("_copiedSettings", BindingFlags.NonPublic | BindingFlags.Instance)!
-            .GetValue(vm);
+        var buffer = CopyBufferProbe.Member(vm, "Settings");
         var original = photos.Skip(1).Select(image => EditSettingsJson.Serialize(image.EditSettings)).ToArray();
 
         if (paste)
@@ -82,8 +81,7 @@ public sealed partial class BatchUndoViewModelTests
         Assert.Equal("Restored 11 photos", vm.TransientStatus);
         await TestWaits.UntilAsync(() => Volatile.Read(ref thumbnailRefreshes) >= 11);
         Assert.True(vm.HasCopiedSettings);
-        Assert.Same(buffer, typeof(MainWindowViewModel).GetField("_copiedSettings", BindingFlags.NonPublic | BindingFlags.Instance)!
-            .GetValue(vm));
+        Assert.Same(buffer, CopyBufferProbe.Member(vm, "Settings"));
         Assert.Equal(groups, vm.CapturePasteGroups());
 
         for (var index = 1; index < photos.Length; index++)

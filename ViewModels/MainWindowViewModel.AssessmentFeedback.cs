@@ -44,9 +44,7 @@ public partial class MainWindowViewModel
 
     private void ClearAssessmentFeedback()
     {
-        var previous = Interlocked.Exchange(ref _assessmentFeedbackCts, null);
-        previous?.Cancel();
-        previous?.Dispose();
+        CancelAndDispose(ref _assessmentFeedbackCts);
         IsAssessmentFeedbackVisible = false;
         AssessmentFeedback = null;
     }
@@ -56,8 +54,7 @@ public partial class MainWindowViewModel
         if (!ReferenceEquals(oldValue, newValue))
         {
             SliderEditsEnding?.Invoke();
-            DiscardSpotsGesture();
-            DiscardLocalsGesture();
+            DiscardGestures();
             ClearAssessmentFeedback();
             ClearAlignmentGrid();
         }
@@ -65,8 +62,7 @@ public partial class MainWindowViewModel
 
     partial void OnIsFullScreenModeChanging(bool value)
     {
-        DiscardSpotsGesture();
-        DiscardLocalsGesture();
+        DiscardGestures();
         if (value)
         {
             ClearAssessmentFeedback();

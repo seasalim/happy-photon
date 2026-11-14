@@ -32,10 +32,10 @@ public sealed partial class RawProfileTransitionTests
         await vm.PasteEditSettingsCommand.ExecuteAsync(null);
 
         Assert.Equal(1, target.EditSettings.Exposure);
-        Assert.True(RawProfilePickerProjector.ProfilesEqual(
+        Assert.True(RawProfileSelection.Matches(
             targetProfile,
             target.EditSettings.RawProfile));
-        Assert.True(RawProfilePickerProjector.ProfilesEqual(
+        Assert.True(RawProfileSelection.Matches(
             targetProfile,
             vm.RawProfilePickerState.SelectedOption?.Selection));
     }

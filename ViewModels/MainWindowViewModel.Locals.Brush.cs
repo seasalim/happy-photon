@@ -18,10 +18,8 @@ public partial class MainWindowViewModel
     [NotifyPropertyChangedFor(nameof(IsEffectiveBrushPaint))]
     private bool _isBrushAltHeld;
     public bool IsEffectiveBrushPaint => IsBrushPaint != IsBrushAltHeld;
-    public bool CanArmBrushFromShortcut => !_renderOutcomeChannelClosed && CanEditSelectedImage && IsDevelopMode &&
-        !IsFullScreenMode && !IsBeforeAfterSplit && !_isBeforeAfterSplitTransitioning &&
-        _requestedPreviewIntent != PreviewSurfaceIntent.Original && !_isHoveringPreset && _hoveredHistoryEntry == null &&
-        !IsWhiteBalancePicking && !IsLocalHuePicking && !IsLocalsGestureActive && Locals.Count < LocalAdjustment.MaximumCount;
+    public bool CanArmBrushFromShortcut => IsInteractiveDevelopSurface && !IsLocalHuePicking && !IsLocalsGestureActive &&
+        Locals.Count < LocalAdjustment.MaximumCount;
     public void StepBrushPreference(bool increase, bool feather)
     {
         if (feather) BrushFeather += increase ? 10 : -10;
@@ -79,13 +77,8 @@ public partial class MainWindowViewModel
     private void BrushPreferenceChanged()
     {
         NotifyBrushState();
-        var token = ReplaceDebounce(ref _brushSaveDebounce).Token;
-        _ = DebouncedAction.RunAsync("brush preferences", TimeSpan.FromMilliseconds(250), token,
-            () =>
-            {
-                token.ThrowIfCancellationRequested();
-                return PersistAppSettingsAsync?.Invoke() ?? Task.CompletedTask;
-            }, onError: (_, _) => ShowTransientStatus("Unable to save brush preferences"), timeProvider: _timeProvider);
+        DebounceSettingsSave(ref _brushSaveDebounce, "brush preferences",
+            (_, _) => ShowTransientStatus("Unable to save brush preferences"));
     }
     private void NotifyBrushState()
     {

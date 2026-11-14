@@ -35,8 +35,7 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanRedoEdit))]
     private async Task RedoAsync()
     {
-        DiscardSpotsGesture();
-        DiscardLocalsGesture();
+        DiscardGestures();
         var image = SelectedImage;
         var generation = Volatile.Read(ref _historySubjectGeneration);
         if (!IsDevelopMode || IsFullScreenMode ||
@@ -58,17 +57,13 @@ public partial class MainWindowViewModel
         int position,
         CatalogEditHistoryMutation? mutation = null)
     {
-        DiscardSpotsGesture();
-        DiscardLocalsGesture();
+        DiscardGestures();
         CancelHistoryHover();
         var cropWriteContext = CaptureCropWriteContext(image);
         var apply = ApplyHistoryStateCoreAsync(
             image, historyGeneration, state, position, mutation,
             cropWriteContext);
-        _serializedHistoryCommit = apply;
-        _serializedHistoryImage = image;
-        _serializedHistorySettings = image.EditSettings.Clone();
-        TrackHistoryCommit(apply);
+        TrackSerializedHistoryCommit(apply, image, image.EditSettings.Clone());
         return apply;
     }
 
@@ -132,8 +127,7 @@ public partial class MainWindowViewModel
         bool preserveProfile,
         string historyLabel, bool preserveSpatialEdits = false)
     {
-        DiscardSpotsGesture();
-        DiscardLocalsGesture();
+        DiscardGestures();
         if (!CanEditSelectedImage || SelectedImage == null) return;
         var image = SelectedImage;
         var previousSettings = CaptureLiveEditState();
@@ -231,8 +225,7 @@ public partial class MainWindowViewModel
     /// </summary>
     public async Task PreviewPresetHoverAsync(string presetId)
     {
-        DiscardSpotsGesture();
-        DiscardLocalsGesture();
+        DiscardGestures();
         if (SelectedImage == null) return;
         var preset = PresetService.GetById(presetId);
         if (preset == null) return;
@@ -264,24 +257,13 @@ public partial class MainWindowViewModel
             if (preset.IsBuiltIn) EditSettingsLook.Apply(preset.Settings, previewSettings);
             else EditSettingsTransfer.ApplyGroups(preset.Settings, previewSettings, EditSettingsTransfer.LookGroups);
 
-            using var artifacts = await ImageService.Previews.ApplyEditsToPreviewArtifactsAsync(
+            await RenderAndApplyAsync(
                 image,
                 previewSettings,
-                BrowseThumbnailRequest,
-                skipHistogram: false,
-                RequestedClippingOverlaySides,
-                token,
-                generation,
-                computeWaveform: IsWaveformScopeEffective);
-            token.ThrowIfCancellationRequested();
-            ApplyRenderOutcome(RenderOutcome.FromArtifacts(
-                image,
                 generation,
                 PreviewSurfaceIntent.Edited,
-                RenderOutcomeClass.StateDefining,
-                PreviewPaintSource.FreshRender,
-                artifacts,
-                promotable: false));
+                promotable: false,
+                token: token);
         }
         catch (OperationCanceledException) { }
     }
@@ -311,22 +293,12 @@ public partial class MainWindowViewModel
             _preHoverSettings = null;
             try
             {
-                using var artifacts = await ImageService.Previews.ApplyEditsToPreviewArtifactsAsync(
+                await RenderAndApplyAsync(
                     image,
                     preHoverSettings,
-                    BrowseThumbnailRequest,
-                    skipHistogram: false,
-                    RequestedClippingOverlaySides,
-                    surfaceGeneration: generation,
-                    computeWaveform: IsWaveformScopeEffective);
-                ApplyRenderOutcome(RenderOutcome.FromArtifacts(
-                    image,
                     generation,
                     PreviewSurfaceIntent.Edited,
-                    RenderOutcomeClass.StateDefining,
-                    PreviewPaintSource.FreshRender,
-                    artifacts,
-                    promotable: true));
+                    promotable: true);
             }
             catch (OperationCanceledException) { }
         }
@@ -335,8 +307,7 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanToggleBeforeAfter))]
     private async Task ToggleBeforeAfterAsync()
     {
-        DiscardSpotsGesture();
-        DiscardLocalsGesture();
+        DiscardGestures();
         if (!CanToggleBeforeAfter() || SelectedImage == null) return;
 
         var image = SelectedImage;
@@ -354,23 +325,13 @@ public partial class MainWindowViewModel
             var tempSettings = BuildOriginalRenderSettings(image);
 
             // Show original preview without any edits (same size as edited preview)
-            using var artifacts = await ImageService.Previews.ApplyEditsToPreviewArtifactsAsync(
+            await RenderAndApplyAsync(
                 image,
                 tempSettings,
-                BrowseThumbnailRequest,
-                skipHistogram: false,
-                RequestedClippingOverlaySides,
-                surfaceGeneration: generation,
-                computeWaveform: IsWaveformScopeEffective);
-            ApplyRenderOutcome(RenderOutcome.FromArtifacts(
-                image,
                 generation,
                 PreviewSurfaceIntent.Original,
-                RenderOutcomeClass.StateDefining,
-                PreviewPaintSource.FreshRender,
-                artifacts,
                 promotable: false,
-                rollbackRequestedIntent: previousIntent));
+                rollbackRequestedIntent: previousIntent);
         }
         else
         {
@@ -379,6 +340,36 @@ public partial class MainWindowViewModel
                 generation: generation,
                 rollbackRequestedIntent: previousIntent);
         }
+    }
+
+    // Renders settings at preview size and applies the fresh, state-defining
+    // outcome. A cancelled token stops before the outcome is applied.
+    private async Task RenderAndApplyAsync(
+        ImageFile image,
+        EditSettings settings,
+        long generation,
+        PreviewSurfaceIntent intent,
+        bool promotable,
+        PreviewSurfaceIntent? rollbackRequestedIntent = null,
+        CancellationToken token = default)
+    {
+        using var artifacts = await ImageService.Previews.ApplyEditsToPreviewArtifactsAsync(
+            image,
+            settings,
+            BrowseThumbnailRequest,
+            skipHistogram: false,
+            RequestedClippingOverlaySides,
+            token,
+            generation,
+            computeWaveform: IsWaveformScopeEffective);
+        token.ThrowIfCancellationRequested();
+        ApplyRenderOutcome(RenderOutcome.FromArtifacts(
+            image,
+            generation,
+            intent,
+            artifacts,
+            promotable,
+            rollbackRequestedIntent));
     }
 
     // Reverts tone and color from live edit state; the full-canvas crop keeps any

@@ -86,13 +86,6 @@ public partial class MainWindowViewModel
         NotifyMixerStateChanged();
     }
 
-    private void ResetMixerUi()
-    {
-        _liveMixer = new ColorMixerSettings();
-        LoadActiveMixerBand();
-        NotifyMixerStateChanged();
-    }
-
     private void LoadActiveMixerBand()
     {
         var band = _liveMixer.GetBand(ActiveMixerBand);

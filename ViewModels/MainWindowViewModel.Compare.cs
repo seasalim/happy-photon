@@ -49,15 +49,7 @@ public partial class MainWindowViewModel
         _compareSelectionSnapshot = members.ToList();
         foreach (var member in members)
         {
-            ComparePanes.Add(new ComparePaneViewModel(member, _timeProvider)
-            {
-                DisplayTransform = DisplayTransform,
-                OriginalViewPixelSize =
-                    RenderGeometry.CalculateOriginalViewSize(
-                        member.PixelWidth,
-                        member.PixelHeight,
-                        member.EditSettings)
-            });
+            ComparePanes.Add(CreatePreviewPane(member));
         }
 
         IsCompareMode = true;
@@ -161,9 +153,7 @@ public partial class MainWindowViewModel
     {
         if (!IsCompareMode && ComparePanes.Count == 0) return;
 
-        var cancellation = Interlocked.Exchange(ref _compareLoadingCts, null);
-        cancellation?.Cancel();
-        cancellation?.Dispose();
+        CancelAndDispose(ref _compareLoadingCts);
         IsCompareMode = false;
         NotifySyncSettingsChanged();
 
@@ -246,4 +236,14 @@ public partial class MainWindowViewModel
         ToggleCompareCommand.NotifyCanExecuteChanged();
     }
 
+    // A compare or loupe pane for image, sized to its uncropped view.
+    private ComparePaneViewModel CreatePreviewPane(ImageFile image) =>
+        new(image, _timeProvider)
+        {
+            DisplayTransform = DisplayTransform,
+            OriginalViewPixelSize = RenderGeometry.CalculateOriginalViewSize(
+                image.PixelWidth,
+                image.PixelHeight,
+                image.EditSettings)
+        };
 }

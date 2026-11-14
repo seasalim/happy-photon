@@ -157,28 +157,10 @@ public partial class MainWindowViewModel
     {
         try
         {
-            if (_sourceAvailabilityService.GetAvailability(
-                    image.FilePath).IsOnlineOnly())
+            var failure = await TryMoveToTrashAsync(image.FilePath, "file");
+            if (failure != null)
             {
-                failures.Add(new FileOperationFailure(
-                    image.FilePath, "The file is online-only and was not downloaded."));
-                return;
-            }
-
-            var pathAssessment = _fileOperationService.AssessTrashPath(
-                image.FilePath);
-            if (!pathAssessment.IsSupported)
-            {
-                failures.Add(new FileOperationFailure(
-                    image.FilePath, pathAssessment.Reason ??
-                    "The file cannot be moved to Trash safely."));
-                return;
-            }
-
-            if (!await _fileOperationService.MoveToTrashAsync(image.FilePath))
-            {
-                failures.Add(new FileOperationFailure(
-                    image.FilePath, "The file could not be moved to Trash."));
+                failures.Add(new FileOperationFailure(image.FilePath, failure));
                 return;
             }
 
@@ -241,27 +223,10 @@ public partial class MainWindowViewModel
 
             try
             {
-                if (_sourceAvailabilityService.GetAvailability(
-                        sidecar.Path).IsOnlineOnly())
+                var failure = await TryMoveToTrashAsync(sidecar.Path, "sidecar");
+                if (failure != null)
                 {
-                    failures.Add(new FileOperationFailure(
-                        sidecar.Path, "The sidecar is online-only and was not downloaded."));
-                    continue;
-                }
-
-                var pathAssessment = _fileOperationService.AssessTrashPath(sidecar.Path);
-                if (!pathAssessment.IsSupported)
-                {
-                    failures.Add(new FileOperationFailure(
-                        sidecar.Path, pathAssessment.Reason ??
-                        "The sidecar cannot be moved to Trash safely."));
-                    continue;
-                }
-
-                if (!await _fileOperationService.MoveToTrashAsync(sidecar.Path))
-                {
-                    failures.Add(new FileOperationFailure(
-                        sidecar.Path, "The sidecar could not be moved to Trash."));
+                    failures.Add(new FileOperationFailure(sidecar.Path, failure));
                 }
             }
             catch (Exception exception)
@@ -270,6 +235,26 @@ public partial class MainWindowViewModel
                     sidecar.Path, exception.Message));
             }
         }
+    }
+
+    // Moves one path to Trash and returns why it was not moved, or null. The
+    // noun ("file" or "sidecar") keeps each caller's failure messages.
+    private async Task<string?> TryMoveToTrashAsync(string path, string noun)
+    {
+        if (_sourceAvailabilityService.GetAvailability(path).IsOnlineOnly())
+        {
+            return $"The {noun} is online-only and was not downloaded.";
+        }
+
+        var pathAssessment = _fileOperationService.AssessTrashPath(path);
+        if (!pathAssessment.IsSupported)
+        {
+            return pathAssessment.Reason ?? $"The {noun} cannot be moved to Trash safely.";
+        }
+
+        return await _fileOperationService.MoveToTrashAsync(path)
+            ? null
+            : $"The {noun} could not be moved to Trash.";
     }
 
     [RelayCommand]
@@ -288,87 +273,10 @@ public partial class MainWindowViewModel
     private Task ToggleFlagAsync() =>
         SetFlagStateAsync(ImageFlag.Picked, toggleUniform: true);
 
-    private async Task SetFlagStateAsync(
+    private Task SetFlagStateAsync(
         ImageFlag flag,
-        bool toggleUniform = false)
-    {
-        if (IsFullScreenMode) return;
-        CullPerf?.Record("PickReceipt", SelectedImage?.CatalogId ?? 0, operation: -1);
-        var resolution = ResolveAssessmentTargets();
-        var targets = resolution.Targets;
-        var participants = targets.Concat(resolution.Companions).ToArray();
-        if (targets.Count == 0) return;
-        var actedOnImage = targets.Count == 1 ? targets[0] : null;
-        var previousFlag = actedOnImage?.Flag ?? ImageFlag.Unflagged;
-
-        var next = toggleUniform && flag != ImageFlag.Unflagged &&
-                   targets.All(image => image.Flag == flag)
-            ? ImageFlag.Unflagged
-            : flag;
-        if (targets.All(image => image.Flag == next))
-        {
-            if (actedOnImage != null)
-            {
-                ShowAssessmentFeedback(
-                    actedOnImage,
-                    DescribeFlagFeedback(next, previousFlag));
-            }
-            return;
-        }
-
-        var selectedImage = SelectedImage;
-        var representative = VisibleRepresentative(selectedImage);
-        var replacement = selectedImage != null &&
-                          targets.Contains(selectedImage) &&
-                          representative != null &&
-                          !Browse.MatchesCurrentFilters(representative, next)
-            ? Browse.ReplacementAfterRemoval(representative)
-            : null;
-
-        try
-        {
-            foreach (var target in participants)
-            {
-                await target.EnsureCatalogIdAsync(_catalogService);
-            }
-
-            await CommitAssessmentAsync(participants.Select(target =>
-                new AssessmentMutation(
-                    target.CatalogId, AssessmentAxes.Flag, Flag: next)).ToArray());
-            CullPerf?.Record("CatalogCommit", actedOnImage?.CatalogId ?? 0);
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine(
-                $"Flag update failed: {ex.Message}");
-            ShowTransientStatus("Unable to update flags");
-            return;
-        }
-
-        Browse.RefreshFilters();
-        if (!IsCompareMode && replacement != null && Browse.ContainsVisible(replacement))
-        {
-            SelectedImage = replacement;
-        }
-        UpdateSelectedCount();
-        if (targets.Count > 1)
-        {
-            var action = next switch
-            {
-                ImageFlag.Picked => "Picked",
-                ImageFlag.Rejected => "Rejected",
-                _ => "Unflagged"
-            };
-            ShowTransientStatus($"{action} {targets.Count} photos");
-        }
-        else if (actedOnImage != null &&
-                 ReferenceEquals(SelectedImage, actedOnImage))
-        {
-            ShowAssessmentFeedback(
-                actedOnImage,
-                DescribeFlagFeedback(next, previousFlag));
-        }
-    }
+        bool toggleUniform = false) =>
+        SetAssessmentAsync(FlagAxis, flag, toggleUniform);
 
     private static string DescribeFlagFeedback(
         ImageFlag next,
@@ -380,79 +288,8 @@ public partial class MainWindowViewModel
                 : "Unset flag";
 
     [RelayCommand]
-    private async Task SetRatingAsync(int rating)
-    {
-        if (IsFullScreenMode) return;
-        CullPerf?.Record("PickReceipt", SelectedImage?.CatalogId ?? 0, operation: -1);
-        rating = Math.Clamp(rating, 0, 5);
-        var resolution = ResolveAssessmentTargets();
-        var targets = resolution.Targets;
-        var participants = targets.Concat(resolution.Companions).ToArray();
-        if (targets.Count == 0) return;
-        var actedOnImage = targets.Count == 1 ? targets[0] : null;
-        var previousRating = actedOnImage?.Rating ?? 0;
-        var next = rating > 0 && targets.All(image => image.Rating == rating)
-            ? 0
-            : rating;
-        if (targets.All(image => image.Rating == next))
-        {
-            if (actedOnImage != null)
-            {
-                ShowAssessmentFeedback(
-                    actedOnImage,
-                    DescribeRatingFeedback(next, previousRating));
-            }
-            return;
-        }
-
-        var selectedImage = SelectedImage;
-        var representative = VisibleRepresentative(selectedImage);
-        var replacement = selectedImage != null &&
-                          targets.Contains(selectedImage) &&
-                          representative != null &&
-                          !Browse.MatchesCurrentFilters(representative, next)
-            ? Browse.ReplacementAfterRemoval(representative)
-            : null;
-
-        try
-        {
-            foreach (var target in participants)
-            {
-                await target.EnsureCatalogIdAsync(_catalogService);
-            }
-
-            await CommitAssessmentAsync(participants.Select(target =>
-                new AssessmentMutation(
-                    target.CatalogId, AssessmentAxes.Rating,
-                    Rating: next)).ToArray());
-            CullPerf?.Record("CatalogCommit", actedOnImage?.CatalogId ?? 0);
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine(
-                $"Rating update failed: {ex.Message}");
-            ShowTransientStatus("Unable to update ratings");
-            return;
-        }
-
-        Browse.RefreshFilters();
-        if (!IsCompareMode && replacement != null && Browse.ContainsVisible(replacement))
-        {
-            SelectedImage = replacement;
-        }
-        UpdateSelectedCount();
-        if (targets.Count > 1)
-        {
-            ShowTransientStatus($"Rated {targets.Count} photos");
-        }
-        else if (actedOnImage != null &&
-                 ReferenceEquals(SelectedImage, actedOnImage))
-        {
-            ShowAssessmentFeedback(
-                actedOnImage,
-                DescribeRatingFeedback(next, previousRating));
-        }
-    }
+    private Task SetRatingAsync(int rating) =>
+        SetAssessmentAsync(RatingAxis, Math.Clamp(rating, 0, 5), toggles: true);
 
     private static string DescribeRatingFeedback(int next, int previous) =>
         next > 0

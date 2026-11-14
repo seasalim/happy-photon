@@ -52,7 +52,7 @@ public partial class MainWindowViewModel
         RefreshDevelopGroupEdits();
         RebindLocalSelection();
 
-        if (!RawProfilePickerProjector.ProfilesEqual(previousProfile, settings.RawProfile))
+        if (!RawProfileSelection.Matches(previousProfile, settings.RawProfile))
         {
             SupersedeRawProfileDiscovery();
         }

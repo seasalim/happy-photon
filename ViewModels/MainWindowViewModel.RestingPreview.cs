@@ -336,10 +336,6 @@ public partial class MainWindowViewModel
 
     private void CancelRestingTimerOnly()
     {
-        var cancellation = Interlocked.Exchange(
-            ref _restingRenderCts,
-            null);
-        cancellation?.Cancel();
-        cancellation?.Dispose();
+        CancelAndDispose(ref _restingRenderCts);
     }
 }

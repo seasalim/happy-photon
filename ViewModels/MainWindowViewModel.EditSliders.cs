@@ -152,26 +152,7 @@ public partial class MainWindowViewModel
 
     private void LoadSlidersFrom(EditSettings source)
     {
-        Exposure = source.Exposure;
-        LoadWhiteBalanceFrom(source);
-        LoadHighlightReconstructionFrom(source);
-        LoadDetailFrom(source);
-        LoadEffectsFrom(source);
-        LoadMixerFrom(source);
-        LoadLensFrom(source);
-        LoadGeometryFrom(source);
-        Brightness = source.Brightness;
-        Contrast = source.Contrast;
-        Saturation = source.Saturation;
-        Vibrance = source.Vibrance;
-        Shadows = source.Shadows;
-        Highlights = source.Highlights;
-        Whites = source.Whites;
-        Blacks = source.Blacks;
-        Texture = source.Texture;
-        Clarity = source.Clarity;
-        Rotation = source.Rotation;
-        HorizonRotation = source.HorizonRotation;
+        LoadSliderValuesFrom(source);
         CurrentCrop = source.Crop?.Clone();
         LoadCurrentCurveFrom(source);
         ActivePresetId = source.AppliedPresetId != null &&
@@ -183,5 +164,33 @@ public partial class MainWindowViewModel
         {
             source.AppliedPresetId = null;
         }
+    }
+
+    // Every slider-backed value, without the crop, the curve or the preset.
+    private void LoadSliderValuesFrom(EditSettings source)
+    {
+        Exposure = source.Exposure;
+
+        LoadWhiteBalanceFrom(source);
+        LoadHighlightReconstructionFrom(source);
+        LoadDetailFrom(source);
+        LoadEffectsFrom(source);
+        LoadMixerFrom(source);
+        LoadLensFrom(source);
+        LoadGeometryFrom(source);
+
+        Brightness = source.Brightness;
+        Contrast = source.Contrast;
+        Saturation = source.Saturation;
+        Vibrance = source.Vibrance;
+        Shadows = source.Shadows;
+        Highlights = source.Highlights;
+        Whites = source.Whites;
+        Blacks = source.Blacks;
+        Texture = source.Texture;
+        Clarity = source.Clarity;
+
+        Rotation = source.Rotation;
+        HorizonRotation = source.HorizonRotation;
     }
 }

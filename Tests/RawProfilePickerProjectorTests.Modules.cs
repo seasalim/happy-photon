@@ -32,7 +32,7 @@ public sealed partial class RawProfilePickerProjectorTests
                 .Where(option => option.IsProfile && option.Selection?.Source == RawProfileSource.Adobe)
                 .Select(option => option.Label));
         Assert.Same(replacement, projected.SelectedOption);
-        Assert.True(RawProfilePickerProjector.ProfilesEqual(preferred, projected.SelectedOption?.Selection));
+        Assert.True(RawProfileSelection.Matches(preferred, projected.SelectedOption?.Selection));
         Assert.Single(projected.Options.Where(option => option.IsBuiltIn));
     }
 
@@ -57,7 +57,7 @@ public sealed partial class RawProfilePickerProjectorTests
         Assert.Equal(["Wide", retained.Label], projected.Options
             .Where(option => option.IsProfile && option.Selection?.Source == RawProfileSource.Adobe)
             .Select(option => option.Label));
-        Assert.True(RawProfilePickerProjector.ProfilesEqual(selected, projected.SelectedOption?.Selection));
+        Assert.True(RawProfileSelection.Matches(selected, projected.SelectedOption?.Selection));
         Assert.DoesNotContain("NONE DECLARE", projected.StatusMessage);
     }
 

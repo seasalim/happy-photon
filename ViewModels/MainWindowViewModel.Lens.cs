@@ -34,7 +34,7 @@ public partial class MainWindowViewModel
         }
     }
 
-    partial void OnLensProfileOverrideChanged(string? value) => OnLensValueChanged();
+    partial void OnLensProfileOverrideChanged(string? value) => OnEditValueChanged();
 
     public bool IsOpticsEnabled => IsHighlightHandlingEnabled;
     public bool HasLensDistortion => LensPrescription?.HasDistortion == true;
@@ -49,9 +49,9 @@ public partial class MainWindowViewModel
             ? $"{LensPrescription.LensName} · No correction data · Manual"
             : "No correction data for this lens";
 
-    partial void OnLensDistortionChanged(bool value) => OnLensValueChanged();
-    partial void OnLensChromaticAberrationChanged(bool value) => OnLensValueChanged();
-    partial void OnLensVignettingChanged(bool value) => OnLensValueChanged();
+    partial void OnLensDistortionChanged(bool value) => OnEditValueChanged();
+    partial void OnLensChromaticAberrationChanged(bool value) => OnEditValueChanged();
+    partial void OnLensVignettingChanged(bool value) => OnEditValueChanged();
 
     partial void OnLensPrescriptionChanged(LensPrescriptionSummary? value)
     {
@@ -70,13 +70,6 @@ public partial class MainWindowViewModel
 
     private IReadOnlyList<string>? _lensChoicesSource;
 
-    private void OnLensValueChanged()
-    {
-        if (_isLoadingImage || !CanEditSelectedImage) return;
-        UpdateCanReset();
-        SchedulePreviewUpdate();
-    }
-
     private void SaveLensTo(EditSettings target)
     {
         target.Lens.ProfileOverride = LensProfileOverride;
@@ -91,14 +84,6 @@ public partial class MainWindowViewModel
         LensDistortion = source.Lens.Distortion;
         LensChromaticAberration = source.Lens.ChromaticAberration;
         LensVignetting = source.Lens.Vignetting;
-    }
-
-    private void ResetLensUi()
-    {
-        LensProfileOverride = null;
-        LensDistortion = LensSettings.DefaultDistortion;
-        LensChromaticAberration = LensSettings.DefaultChromaticAberration;
-        LensVignetting = LensSettings.DefaultVignetting;
     }
 
     internal void ApplyLensPrescription(

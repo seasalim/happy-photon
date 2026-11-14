@@ -33,13 +33,7 @@ public class CropRegion
     /// <summary>
     /// Creates a deep copy of this CropRegion.
     /// </summary>
-    public CropRegion Clone() => new()
-    {
-        Left = Left,
-        Top = Top,
-        Right = Right,
-        Bottom = Bottom
-    };
+    public CropRegion Clone() => (CropRegion)MemberwiseClone();
 
     /// <summary>True when both are null, or both have identical edges.</summary>
     public static bool Matches(CropRegion? left, CropRegion? right) =>

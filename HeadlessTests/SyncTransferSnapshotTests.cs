@@ -27,8 +27,7 @@ public sealed class SyncTransferSnapshotTests
         settings.Repairs = [new Repair { Id = new string('b', 32), Radius = .02 }];
         var source = await fixture.ImageAsync("copy-source", settings);
         await fixture.CopyAsync(source);
-        var field = typeof(MainWindowViewModel).GetField("_copiedSettings", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        var snapshot = Assert.IsType<EditSettings>(field.GetValue(fixture.Vm));
+        var snapshot = Assert.IsType<EditSettings>(CopyBufferProbe.Member(fixture.Vm, "Settings"));
         var expected = EditSettingsJson.Serialize(source.EditSettings);
         Assert.Equal(expected, EditSettingsJson.Serialize(snapshot));
         Assert.NotSame(source.EditSettings, snapshot);

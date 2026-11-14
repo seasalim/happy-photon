@@ -5,13 +5,7 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
-    private ImageFile? _copiedSource;
-
     private PhotoFrameFactsReader? _pasteFrameReader;
-
-    private PhotoProfileSnapshot? _copiedProfileSource;
-
-    private PhotoSpotSnapshot? _copiedSpotSource;
 
     private PhotoCameraFacts? RememberLoadedCamera(ImageFile image)
     {
@@ -28,9 +22,6 @@ public partial class MainWindowViewModel
 
         return facts;
     }
-
-    private PasteSnapshot? CopiedPasteSnapshot() => _copiedSettings == null ? null :
-        new(_copiedSource!, _copiedSourceName!, _copiedSettings, _copiedProfileSource!, _copiedSpotSource!);
 
     private PasteSnapshot CapturePasteSnapshot(ImageFile image)
     {

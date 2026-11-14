@@ -147,10 +147,7 @@ public partial class MainWindowViewModel
         CancelAndDispose(ref _watermarkProofDebounce);
         var task = RenderExportProofAsync(
             image, settings, generation, cancellationToken);
-        var pending = _proofTask;
-        _proofTask = pending is { IsCompleted: false }
-            ? Task.WhenAll(pending, task)
-            : task;
+        ChainPending(ref _proofTask, task);
         return task;
     }
 

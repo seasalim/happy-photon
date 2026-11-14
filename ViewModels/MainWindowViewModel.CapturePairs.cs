@@ -65,7 +65,7 @@ public partial class MainWindowViewModel
         NotifyCaptureMemberStateChanged();
         if (!_restoringShowCapturePairs)
         {
-            _ = PersistBrowsePreferenceAsync("Capture-pair");
+            _ = PersistPreferenceAsync("Capture-pair");
         }
     }
 

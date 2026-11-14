@@ -7,9 +7,7 @@ namespace HappyPhoton.ViewModels;
 
 public partial class MainWindowViewModel
 {
-    private EditSettings? _copiedSettings;
-
-    private string? _copiedSourceName;
+    private PasteSnapshot? _copied;
 
     private CancellationTokenSource? _transientStatusCts;
 
@@ -39,14 +37,9 @@ public partial class MainWindowViewModel
     {
         if (SelectedImage == null) return;
 
-        var snapshot = CapturePasteSnapshot(SelectedImage);
-        _copiedSettings = snapshot.Settings;
-        _copiedSource = snapshot.Source;
-        _copiedSourceName = snapshot.SourceName;
-        _copiedProfileSource = snapshot.Profiles;
-        _copiedSpotSource = snapshot.Spots;
+        _copied = CapturePasteSnapshot(SelectedImage);
         HasCopiedSettings = true;
-        ShowTransientStatus($"Copied settings from {_copiedSourceName}");
+        ShowTransientStatus($"Copied settings from {_copied.SourceName}");
     }
 
     private bool CanPasteEditSettings
@@ -78,12 +71,11 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand(CanExecute = nameof(CanPasteEditSettings))]
-    private Task PasteEditSettingsAsync() => PasteEditSettingsCoreAsync(CopiedPasteSnapshot(), showDialog: false);
+    private Task PasteEditSettingsAsync() => PasteEditSettingsCoreAsync(_copied, showDialog: false);
 
     private async Task PasteEditSettingsCoreAsync(PasteSnapshot? snapshot, bool showDialog)
     {
-        DiscardSpotsGesture();
-        DiscardLocalsGesture();
+        DiscardGestures();
         if (snapshot == null) return;
 
         var resolution = ResolveActionTargets();

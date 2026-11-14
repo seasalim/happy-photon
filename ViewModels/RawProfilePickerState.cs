@@ -74,7 +74,7 @@ internal static class RawProfilePickerProjector
         var profiles = InstallOptions(discovered, selection);
         if (selection != null &&
             renderState?.State.ProfileName is { } renderLabel &&
-            ProfilesEqual(renderState.Selection, selection))
+            RawProfileSelection.Matches(renderState.Selection, selection))
         {
             profiles = RelabelOption(profiles, selection, renderLabel);
         }
@@ -115,7 +115,7 @@ internal static class RawProfilePickerProjector
             profiles.Insert(0, RawProfileOptionViewModel.BuiltIn());
         }
         if (selection != null && profiles.All(option =>
-            !ProfilesEqual(option.Selection, selection)))
+            !RawProfileSelection.Matches(option.Selection, selection)))
         {
             profiles.Add(RawProfileOptionViewModel.Anchor(selection));
         }
@@ -132,7 +132,7 @@ internal static class RawProfilePickerProjector
             !option.IsBuiltIn &&
             (option.Selection?.Source is RawProfileSource.UserFile or
                 RawProfileSource.Embedded ||
-             selection != null && ProfilesEqual(option.Selection, selection)))
+             selection != null && RawProfileSelection.Matches(option.Selection, selection)))
             .ToList();
         var discoveredProfiles = discovered.Where(option => option.IsProfile)
             .ToList();
@@ -141,7 +141,7 @@ internal static class RawProfilePickerProjector
         foreach (var anchor in retained.Where(option => option.Fingerprint == null))
         {
             var resolved = discoveredProfiles.FirstOrDefault(option =>
-                ProfilesEqual(option.Selection, anchor.Selection));
+                RawProfileSelection.Matches(option.Selection, anchor.Selection));
             if (resolved?.Fingerprint is { Length: > 0 } fingerprint)
             {
                 fingerprints.Add(fingerprint);
@@ -151,7 +151,7 @@ internal static class RawProfilePickerProjector
         {
             if (merged.Any(existing =>
                 existing.IsBuiltIn == option.IsBuiltIn &&
-                ProfilesEqual(existing.Selection, option.Selection)))
+                RawProfileSelection.Matches(existing.Selection, option.Selection)))
             {
                 continue;
             }
@@ -166,7 +166,7 @@ internal static class RawProfilePickerProjector
         var ordered = merged.OrderBy(option =>
         {
             if (option.Selection?.Source != RawProfileSource.Adobe) return -1;
-            var index = discoveredProfiles.FindIndex(candidate => ProfilesEqual(candidate.Selection, option.Selection));
+            var index = discoveredProfiles.FindIndex(candidate => RawProfileSelection.Matches(candidate.Selection, option.Selection));
 
             return index >= 0 ? index : int.MaxValue;
         });
@@ -179,7 +179,7 @@ internal static class RawProfilePickerProjector
         RawProfileOptionViewModel option)
     {
         var profiles = current.Where(candidate => candidate.IsProfile).ToList();
-        var index = profiles.FindIndex(candidate => ProfilesEqual(candidate.Selection, option.Selection));
+        var index = profiles.FindIndex(candidate => RawProfileSelection.Matches(candidate.Selection, option.Selection));
 
         if (index >= 0)
         {
@@ -221,17 +221,6 @@ internal static class RawProfilePickerProjector
         return menu.ToImmutableArray();
     }
 
-    internal static bool ProfilesEqual(
-        RawProfileSelection? first,
-        RawProfileSelection? second) => first == null && second == null ||
-        first != null && second != null &&
-        first.Source == second.Source &&
-        string.Equals(first.Location, second.Location, StringComparison.Ordinal) &&
-        string.Equals(
-            first.ContentHash,
-            second.ContentHash,
-            StringComparison.OrdinalIgnoreCase);
-
     private static string ProjectStatus(
         bool isRawCapable,
         bool isLoading,
@@ -261,7 +250,7 @@ internal static class RawProfilePickerProjector
         }
 
         if (renderState != null &&
-            ProfilesEqual(renderState.Selection, selection) &&
+            RawProfileSelection.Matches(renderState.Selection, selection) &&
             renderState.State.Status != DcpProfileErrorCode.None)
         {
             return Uppercase(renderState.State.Message ?? RejectionFallback);
@@ -321,7 +310,7 @@ internal static class RawProfilePickerProjector
         ImmutableArray<RawProfileOptionViewModel> profiles,
         RawProfileSelection selection,
         string label) => profiles.Select(option =>
-            ProfilesEqual(option.Selection, selection)
+            RawProfileSelection.Matches(option.Selection, selection)
                 ? option.WithLabel(label)
                 : option)
             .ToImmutableArray();
@@ -329,7 +318,7 @@ internal static class RawProfilePickerProjector
     private static RawProfileOptionViewModel? FindSelectedOption(
         ImmutableArray<RawProfileOptionViewModel> options,
         RawProfileSelection? selection) => options.FirstOrDefault(option =>
-            option.IsProfile && ProfilesEqual(option.Selection, selection)) ??
+            option.IsProfile && RawProfileSelection.Matches(option.Selection, selection)) ??
             options.FirstOrDefault(option => option.IsBuiltIn);
 
     private static void AddGroup(

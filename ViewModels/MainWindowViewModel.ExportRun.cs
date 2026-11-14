@@ -121,8 +121,7 @@ public partial class MainWindowViewModel
     private Task TryStartExportAsync(ExportJob? job)
     {
         if (job == null && ExportSettings.ValidationReason.Length > 0) return Task.CompletedTask;
-        DiscardSpotsGesture();
-        DiscardLocalsGesture();
+        DiscardGestures();
         if (Interlocked.CompareExchange(ref _exportStartOwned, 1, 0) != 0)
         {
             Interlocked.Increment(ref _duplicateExportStartRefusals);

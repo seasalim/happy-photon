@@ -85,20 +85,7 @@ public readonly record struct XmpCropProjection(
         before.Rotation != after.Rotation ||
         before.HorizonRotation != after.HorizonRotation ||
         !CropRegion.Matches(before.Crop, after.Crop) ||
-        !GeometryMatches(before.Geometry, after.Geometry);
-
-    private static bool GeometryMatches(
-        GeometrySettings? left,
-        GeometrySettings? right)
-    {
-        var leftActive = left?.IsIdentity == false;
-        var rightActive = right?.IsIdentity == false;
-        return leftActive == rightActive && (!leftActive ||
-            left!.Vertical == right!.Vertical &&
-            left.Horizontal == right.Horizontal &&
-            left.Aspect == right.Aspect &&
-            left.Distortion == right.Distortion);
-    }
+        !GeometrySettings.Matches(before.Geometry, after.Geometry);
 }
 
 public sealed record AssessmentSnapshot(

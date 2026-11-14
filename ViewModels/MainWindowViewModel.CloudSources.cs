@@ -153,10 +153,7 @@ public partial class MainWindowViewModel
         }
 
         var generation = Volatile.Read(ref _browseGeneration);
-        var request = CreateSourceHydrationCancellation();
-        var previous = Interlocked.Exchange(ref _sourceHydrationCts, request);
-        previous?.Cancel();
-        previous?.Dispose();
+        var request = ReplaceDebounce(ref _sourceHydrationCts, CreateSourceHydrationCancellation());
         ShowPinnedStatus(SourceDownloadStatus);
 
         try
@@ -245,9 +242,7 @@ public partial class MainWindowViewModel
 
     private void CancelSourceHydration()
     {
-        var request = Interlocked.Exchange(ref _sourceHydrationCts, null);
-        request?.Cancel();
-        request?.Dispose();
+        CancelAndDispose(ref _sourceHydrationCts);
         ClearPinnedStatus(SourceDownloadStatus);
     }
 }

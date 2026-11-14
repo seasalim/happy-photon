@@ -328,13 +328,7 @@ public partial class MainWindowViewModel
         _cropSessionIdentity++;
         if (value) CloseBeforeAfterSplit();
         ToggleBeforeAfterSplitCommand.NotifyCanExecuteChanged();
-        UndoCommand.NotifyCanExecuteChanged();
-        RedoCommand.NotifyCanExecuteChanged();
-        JumpToHistoryStepCommand.NotifyCanExecuteChanged();
-        ClearHistoryCommand.NotifyCanExecuteChanged();
-        ClearHistoryAboveStepCommand.NotifyCanExecuteChanged();
-        RotateLeftCommand.NotifyCanExecuteChanged();
-        RotateRightCommand.NotifyCanExecuteChanged();
+        NotifyHistoryAndRotateCommands();
         NotifyWhiteBalanceCommandState();
         if (value)
         {
@@ -410,13 +404,5 @@ public partial class MainWindowViewModel
         {
             SetDisplayedWhiteBalance(_asShotKelvin, _asShotTint);
         }
-    }
-
-    private void ResetWhiteBalanceUi()
-    {
-        _liveWhiteBalance = new WhiteBalanceSettings();
-        IsWhiteBalancePicking = false;
-        SetDisplayedWhiteBalance(_asShotKelvin, _asShotTint);
-        SetModeLabel("As Shot");
     }
 }

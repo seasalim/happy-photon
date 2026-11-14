@@ -50,19 +50,10 @@ public partial class MainWindowViewModel
         if (!IsLoupeMode) return;
         if (image == null) { LoupePane?.Dispose(); return; }
 
-        var cancellation = Interlocked.Exchange(ref _loupeLoadingCts, null);
-        cancellation?.Cancel();
-        cancellation?.Dispose();
+        CancelAndDispose(ref _loupeLoadingCts);
         if (LoupePane != null) DisposePreviewPane(LoupePane);
 
-        var pane = new ComparePaneViewModel(image, _timeProvider)
-        {
-            DisplayTransform = DisplayTransform,
-            OriginalViewPixelSize = RenderGeometry.CalculateOriginalViewSize(
-                image.PixelWidth,
-                image.PixelHeight,
-                image.EditSettings)
-        };
+        var pane = CreatePreviewPane(image);
         LoupePane = pane;
         _loupeLoadingCts = new CancellationTokenSource();
         // The thumbnail pump is paused in the loupe, so an image beyond the
@@ -152,9 +143,7 @@ public partial class MainWindowViewModel
     {
         if (!IsLoupeMode && LoupePane == null) return;
 
-        var cancellation = Interlocked.Exchange(ref _loupeLoadingCts, null);
-        cancellation?.Cancel();
-        cancellation?.Dispose();
+        CancelAndDispose(ref _loupeLoadingCts);
         IsLoupeMode = false;
         CancelAdjacentPreviewWarm(invalidateWorker: true);
         if (LoupePane != null) DisposePreviewPane(LoupePane);

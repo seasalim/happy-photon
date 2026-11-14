@@ -32,11 +32,11 @@ public partial class MainWindowViewModel
         OnBrowseThumbnailSizeRequestChanged();
         if (!_restoringBrowseThumbnailSize)
         {
-            _ = PersistBrowsePreferenceAsync("Thumbnail-size");
+            _ = PersistPreferenceAsync("Thumbnail-size");
         }
     }
 
-    private async Task PersistBrowsePreferenceAsync(string description)
+    private async Task PersistPreferenceAsync(string description)
     {
         try
         {

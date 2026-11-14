@@ -78,10 +78,7 @@ public partial class MainWindowViewModel
             foreach (var completed in _imageHistorySaves.Where(pair => pair.Value.IsCompleted).ToArray())
                 _imageHistorySaves.Remove(completed.Key);
             _imageHistorySaves[imageFile.FilePath] = save;
-            _serializedHistoryCommit = save;
-            _serializedHistoryImage = imageFile;
-            _serializedHistorySettings = settingsSnapshot;
-            TrackHistoryCommit(save);
+            TrackSerializedHistoryCommit(save, imageFile, settingsSnapshot);
         }
         return save;
     }
@@ -138,11 +135,15 @@ public partial class MainWindowViewModel
         await CommitCropAssessmentAsync(image, writeContext);
     }
 
-    private void TrackHistoryCommit(Task commit)
+    // Records the commit later saves of this image serialize behind, then tracks it.
+    private void TrackSerializedHistoryCommit(Task commit, ImageFile image, EditSettings settings)
     {
-        var pending = _pendingHistoryCommit;
-        _pendingHistoryCommit = pending is { IsCompleted: false }
-            ? Task.WhenAll(pending, commit)
-            : commit;
+        _serializedHistoryCommit = commit;
+        _serializedHistoryImage = image;
+        _serializedHistorySettings = settings;
+        TrackHistoryCommit(commit);
     }
+
+    private void TrackHistoryCommit(Task commit) =>
+        ChainPending(ref _pendingHistoryCommit, commit);
 }

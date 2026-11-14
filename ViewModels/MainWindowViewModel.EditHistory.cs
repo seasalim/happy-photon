@@ -29,8 +29,7 @@ public partial class MainWindowViewModel
 
     public async Task PreviewHistoryHoverAsync(EditHistoryEntry entry)
     {
-        DiscardSpotsGesture();
-        DiscardLocalsGesture();
+        DiscardGestures();
         EndHistoryHover();
         var image = SelectedImage;
         if (image == null || entry.IsCurrent || !IsDevelopMode ||
@@ -100,10 +99,7 @@ public partial class MainWindowViewModel
         // Edits wait for the current load; shutdown also owns superseded reads.
         if (_pendingHistoryLoad is { } load)
         {
-            var pending = _historyLoadsTask;
-            _historyLoadsTask = pending is { IsCompleted: false }
-                ? Task.WhenAll(pending, load)
-                : load;
+            ChainPending(ref _historyLoadsTask, load);
         }
     }
 
@@ -241,10 +237,7 @@ public partial class MainWindowViewModel
             return;
         }
         var clear = ClearHistoryCoreAsync(image, generation);
-        _serializedHistoryCommit = clear;
-        _serializedHistoryImage = image;
-        _serializedHistorySettings = image.EditSettings.Clone();
-        TrackHistoryCommit(clear);
+        TrackSerializedHistoryCommit(clear, image, image.EditSettings.Clone());
         await clear;
     }
 

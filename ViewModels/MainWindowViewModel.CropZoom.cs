@@ -64,8 +64,7 @@ public partial class MainWindowViewModel
             SelectedImage is not { } image)
             return;
 
-        DiscardSpotsGesture();
-        DiscardLocalsGesture();
+        DiscardGestures();
         var before = CaptureLiveEditState();
         Rotation = (Rotation + delta + 360) % 360;
         image.EditSettings.Rotation = Rotation;
@@ -268,6 +267,11 @@ public partial class MainWindowViewModel
         if (_cropModeTransitionRequested == value) return;
         _cropModeTransitionRequested = value;
         if (value) CancelHistoryHover();
+        NotifyHistoryAndRotateCommands();
+    }
+
+    private void NotifyHistoryAndRotateCommands()
+    {
         UndoCommand.NotifyCanExecuteChanged();
         RedoCommand.NotifyCanExecuteChanged();
         JumpToHistoryStepCommand.NotifyCanExecuteChanged();

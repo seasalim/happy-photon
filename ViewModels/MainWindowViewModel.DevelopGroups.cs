@@ -49,7 +49,7 @@ public partial class MainWindowViewModel
             {
                 if (!_settingDevelopGroups && e.PropertyName == nameof(DevelopGroupViewModel.IsExpanded))
                 {
-                    _ = PersistBrowsePreferenceAsync("Develop-group");
+                    _ = PersistPreferenceAsync("Develop-group");
                 }
             };
         }
@@ -81,7 +81,7 @@ public partial class MainWindowViewModel
         if (!DevelopGroupList.Contains(group)) return;
 
         RestoreDevelopGroups(DevelopGroupList.ToDictionary(item => item.Name, item => item == group));
-        _ = PersistBrowsePreferenceAsync("Develop-group");
+        _ = PersistPreferenceAsync("Develop-group");
     }
 
     partial void OnIsWhiteBalancePickingChanged(bool value)

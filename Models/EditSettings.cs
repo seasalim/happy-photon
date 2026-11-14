@@ -244,7 +244,7 @@ public class EditSettings
                Detail.ChromaNr == other.Detail.ChromaNr &&
                EffectsMatch(Effects, other.Effects) &&
                MixersMatch(Mixer, other.Mixer) &&
-               GeometryMatches(Geometry, other.Geometry) &&
+               GeometrySettings.Matches(Geometry, other.Geometry) &&
                Lens.Distortion == other.Lens.Distortion &&
                Lens.ChromaticAberration == other.Lens.ChromaticAberration &&
                Lens.Vignetting == other.Lens.Vignetting &&
@@ -256,7 +256,7 @@ public class EditSettings
                CurvesMatch(CurveRed, other.CurveRed) &&
                CurvesMatch(CurveGreen, other.CurveGreen) &&
                CurvesMatch(CurveBlue, other.CurveBlue) &&
-               ProfilesEqual(RawProfile, other.RawProfile) &&
+               RawProfileSelection.Matches(RawProfile, other.RawProfile) &&
                (Locals ?? []).SequenceEqual(other.Locals ?? []) &&
                (Repairs ?? []).SequenceEqual(other.Repairs ?? []);
     }
@@ -270,18 +270,6 @@ public class EditSettings
 
         return left.Points.SequenceEqual(right.Points);
     }
-
-    private static bool ProfilesEqual(
-        RawProfileSelection? left,
-        RawProfileSelection? right) =>
-        ReferenceEquals(left, right) ||
-        left != null && right != null &&
-        left.Source == right.Source &&
-        string.Equals(left.Location, right.Location, StringComparison.Ordinal) &&
-        string.Equals(
-            left.ContentHash,
-            right.ContentHash,
-            StringComparison.OrdinalIgnoreCase);
 
     private static bool EffectsMatch(
         EffectsSettings? left,
@@ -324,23 +312,6 @@ public class EditSettings
         }
 
         return true;
-    }
-
-    private static bool GeometryMatches(
-        GeometrySettings? left,
-        GeometrySettings? right)
-    {
-        var leftActive = left?.IsIdentity == false;
-        var rightActive = right?.IsIdentity == false;
-        if (!leftActive || !rightActive)
-        {
-            return leftActive == rightActive;
-        }
-
-        return left!.Vertical == right!.Vertical &&
-               left.Horizontal == right.Horizontal &&
-               left.Aspect == right.Aspect &&
-               left.Distortion == right.Distortion;
     }
 }
 

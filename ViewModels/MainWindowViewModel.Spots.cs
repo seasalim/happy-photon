@@ -19,10 +19,7 @@ public partial class MainWindowViewModel
 
     public double NewSpotRadius => _brushPreferences.SpotSize / 100;
 
-    public bool CanEditSpots => !_renderOutcomeChannelClosed && IsSpotsMode && CanEditSelectedImage && IsDevelopMode &&
-        !IsFullScreenMode && !IsBeforeAfterSplit && !_isBeforeAfterSplitTransitioning &&
-        _requestedPreviewIntent != PreviewSurfaceIntent.Original && !_isHoveringPreset &&
-        _hoveredHistoryEntry == null && !IsWhiteBalancePicking && SpotDisplayMap != null;
+    public bool CanEditSpots => IsSpotsMode && IsInteractiveDevelopSurface && SpotDisplayMap != null;
 
     public Repair? SelectedSpot
     {

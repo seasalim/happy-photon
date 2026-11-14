@@ -86,13 +86,7 @@ public sealed class LensSettings
         ProfileOverride = null;
     }
 
-    public LensSettings Clone() => new()
-    {
-        Distortion = Distortion,
-        ChromaticAberration = ChromaticAberration,
-        Vignetting = Vignetting,
-        ProfileOverride = ProfileOverride
-    };
+    public LensSettings Clone() => (LensSettings)MemberwiseClone();
 }
 
 public sealed class GeometrySettings
@@ -113,13 +107,23 @@ public sealed class GeometrySettings
     public bool IsIdentity =>
         Vertical == 0 && Horizontal == 0 && Aspect == 0 && Distortion == 0;
 
-    public GeometrySettings Clone() => new()
+    public GeometrySettings Clone() => (GeometrySettings)MemberwiseClone();
+
+    /// <summary>True when both are identity (or null), or both apply the same correction.</summary>
+    public static bool Matches(GeometrySettings? left, GeometrySettings? right)
     {
-        Vertical = Vertical,
-        Horizontal = Horizontal,
-        Aspect = Aspect,
-        Distortion = Distortion
-    };
+        var leftActive = left?.IsIdentity == false;
+        var rightActive = right?.IsIdentity == false;
+        if (!leftActive || !rightActive)
+        {
+            return leftActive == rightActive;
+        }
+
+        return left!.Vertical == right!.Vertical &&
+               left.Horizontal == right.Horizontal &&
+               left.Aspect == right.Aspect &&
+               left.Distortion == right.Distortion;
+    }
 }
 
 public sealed class WhiteBalanceSettings
@@ -174,12 +178,7 @@ public sealed class DetailSettings
     public int ResolveCaptureSharpen(bool isRawSource) =>
         CaptureSharpen ?? GetCaptureSharpenDefault(isRawSource);
 
-    public DetailSettings Clone() => new()
-    {
-        CaptureSharpen = CaptureSharpen,
-        LuminanceNr = LuminanceNr,
-        ChromaNr = ChromaNr
-    };
+    public DetailSettings Clone() => (DetailSettings)MemberwiseClone();
 }
 
 public sealed class EffectsSettings
@@ -200,13 +199,7 @@ public sealed class EffectsSettings
     [JsonIgnore]
     public bool HasActivePixels => Vignette != 0 || Grain != 0;
 
-    public EffectsSettings Clone() => new()
-    {
-        Vignette = Vignette,
-        Midpoint = Midpoint,
-        Grain = Grain,
-        GrainSize = GrainSize
-    };
+    public EffectsSettings Clone() => (EffectsSettings)MemberwiseClone();
 }
 
 public sealed class ColorMixerBandSettings
@@ -224,12 +217,7 @@ public sealed class ColorMixerBandSettings
     public bool HasActivePixels =>
         Hue != 0 || Saturation != 0 || Luminance != 0;
 
-    public ColorMixerBandSettings Clone() => new()
-    {
-        Hue = Hue,
-        Saturation = Saturation,
-        Luminance = Luminance
-    };
+    public ColorMixerBandSettings Clone() => (ColorMixerBandSettings)MemberwiseClone();
 }
 
 public sealed class ColorMixerSettings

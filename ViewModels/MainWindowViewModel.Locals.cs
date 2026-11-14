@@ -34,10 +34,14 @@ public partial class MainWindowViewModel
     }
     public bool HasSelectedLocal => SelectedLocal != null;
     public bool CanAddLocal => CanEditLocals && Locals.Count < LocalAdjustment.MaximumCount;
-    public bool CanEditLocals => !_renderOutcomeChannelClosed && IsLocalsMode && CanEditSelectedImage && IsDevelopMode &&
+    public bool CanEditLocals => IsLocalsMode && IsInteractiveDevelopSurface;
+
+    // The Develop preview shows the live edit and nothing else claims the pointer.
+    private bool IsInteractiveDevelopSurface => !_renderOutcomeChannelClosed && CanEditSelectedImage && IsDevelopMode &&
         !IsFullScreenMode && !IsBeforeAfterSplit && !_isBeforeAfterSplitTransitioning &&
         _requestedPreviewIntent != PreviewSurfaceIntent.Original &&
         !_isHoveringPreset && _hoveredHistoryEntry == null && !IsWhiteBalancePicking;
+
     public bool IsLocalMaskVisible => !_isProvisionalRotation && CanEditLocals &&
         (HasSelectedLocal || IsBrushCreationArmed) &&
         (ShowLocalMask || IsLocalMaskHeld || IsBrushCreationArmed || IsBrushStrokeActive || IsLocalHuePicking);

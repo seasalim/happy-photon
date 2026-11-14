@@ -17,20 +17,9 @@ public partial class MainWindowViewModel
     public int CaptureSharpenDefault =>
         DetailSettings.GetCaptureSharpenDefault(IsHighlightHandlingEnabled);
 
-    partial void OnCaptureSharpenChanged(int value) => OnDetailValueChanged();
-    partial void OnLuminanceNrChanged(int value) => OnDetailValueChanged();
-    partial void OnChromaNrChanged(int value) => OnDetailValueChanged();
-
-    private void OnDetailValueChanged()
-    {
-        if (_isLoadingImage || !CanEditSelectedImage)
-        {
-            return;
-        }
-
-        UpdateCanReset();
-        SchedulePreviewUpdate();
-    }
+    partial void OnCaptureSharpenChanged(int value) => OnEditValueChanged();
+    partial void OnLuminanceNrChanged(int value) => OnEditValueChanged();
+    partial void OnChromaNrChanged(int value) => OnEditValueChanged();
 
     private void SaveDetailTo(EditSettings target)
     {
@@ -69,12 +58,5 @@ public partial class MainWindowViewModel
         _isLoadingImage = true;
         CaptureSharpen = DetailSettings.GetCaptureSharpenDefault(isRawSource);
         _isLoadingImage = wasLoading;
-    }
-
-    private void ResetDetailUi()
-    {
-        CaptureSharpen = CaptureSharpenDefault;
-        LuminanceNr = 0;
-        ChromaNr = 0;
     }
 }

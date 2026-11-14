@@ -177,14 +177,7 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(IsWorkspacePreviewSurfaceActive));
         UpdateNavigatorPreviewSurfaceActivity();
         OnPropertyChanged(nameof(CanSavePreset));
-        NotifyWhiteBalanceCommandState();
-        ToggleColorAssessmentModeCommand.NotifyCanExecuteChanged();
-        ToggleBeforeAfterCommand.NotifyCanExecuteChanged();
-        ToggleBeforeAfterSplitCommand.NotifyCanExecuteChanged();
-        NotifyCaptureMemberStateChanged();
-        UndoCommand.NotifyCanExecuteChanged();
-        RedoCommand.NotifyCanExecuteChanged();
-        NotifyClippingCommandState();
+        NotifyPreviewSurfaceCommands();
         NotifyExportRunCommandState();
         NotifyVersionCommandState();
         BeginDevelopHistoryLoad(isDevelopMode ? SelectedImage : null);
@@ -205,19 +198,7 @@ public partial class MainWindowViewModel
         }
         else if (!isPreviewWorkspace && !IsFullScreenMode)
         {
-            var generation = ReserveRenderOutcome();
-            ApplySurfaceClearOutcome(SelectedImage, generation);
-            LeaveDevelopClippingSurface();
-            _previewLoadingCts?.Cancel();
-            _previewDebounce?.Cancel();
-            if (SelectedImage is { IsRaw: true } image &&
-                image.EditSettings.HasEdits)
-            {
-                _ = TrackDirectThumbnailOperation(
-                    RefreshThumbnailAsync(image));
-            }
-            ImageService.Previews.FlushRenderedPreviewCache();
-            ScheduleHistogramUpdate();
+            ClearPreviewSurface(leaveClippingSurface: true);
         }
         else if (!isDevelopMode && !IsFullScreenMode)
         {
@@ -266,14 +247,7 @@ public partial class MainWindowViewModel
         PasteEditSettingsCommand.NotifyCanExecuteChanged();
         ChoosePasteSettingsCommand.NotifyCanExecuteChanged();
         NotifySyncSettingsChanged();
-        NotifyWhiteBalanceCommandState();
-        ToggleColorAssessmentModeCommand.NotifyCanExecuteChanged();
-        ToggleBeforeAfterCommand.NotifyCanExecuteChanged();
-        ToggleBeforeAfterSplitCommand.NotifyCanExecuteChanged();
-        NotifyCaptureMemberStateChanged();
-        UndoCommand.NotifyCanExecuteChanged();
-        RedoCommand.NotifyCanExecuteChanged();
-        NotifyClippingCommandState();
+        NotifyPreviewSurfaceCommands();
         NotifyVersionCommandState();
 
         if (value && SelectedImage != null)
@@ -290,18 +264,41 @@ public partial class MainWindowViewModel
         }
         else if (!value && IsBrowseMode)
         {
-            var generation = ReserveRenderOutcome();
-            ApplySurfaceClearOutcome(SelectedImage, generation);
-            _previewLoadingCts?.Cancel();
-            _previewDebounce?.Cancel();
-            if (SelectedImage is { IsRaw: true } image &&
-                image.EditSettings.HasEdits)
-            {
-                _ = TrackDirectThumbnailOperation(
-                    RefreshThumbnailAsync(image));
-            }
-            ImageService.Previews.FlushRenderedPreviewCache();
-            ScheduleHistogramUpdate();
+            ClearPreviewSurface(leaveClippingSurface: false);
         }
+    }
+
+    private void NotifyPreviewSurfaceCommands()
+    {
+        NotifyWhiteBalanceCommandState();
+        ToggleColorAssessmentModeCommand.NotifyCanExecuteChanged();
+        ToggleBeforeAfterCommand.NotifyCanExecuteChanged();
+        ToggleBeforeAfterSplitCommand.NotifyCanExecuteChanged();
+        NotifyCaptureMemberStateChanged();
+
+        UndoCommand.NotifyCanExecuteChanged();
+        RedoCommand.NotifyCanExecuteChanged();
+        NotifyClippingCommandState();
+    }
+
+    // Leaves the preview surface for the grid: clears it, stops pending preview
+    // work and refreshes an edited RAW's thumbnail and the histogram.
+    private void ClearPreviewSurface(bool leaveClippingSurface)
+    {
+        var generation = ReserveRenderOutcome();
+        ApplySurfaceClearOutcome(SelectedImage, generation);
+        if (leaveClippingSurface) LeaveDevelopClippingSurface();
+
+        _previewLoadingCts?.Cancel();
+        _previewDebounce?.Cancel();
+        if (SelectedImage is { IsRaw: true } image &&
+            image.EditSettings.HasEdits)
+        {
+            _ = TrackDirectThumbnailOperation(
+                RefreshThumbnailAsync(image));
+        }
+
+        ImageService.Previews.FlushRenderedPreviewCache();
+        ScheduleHistogramUpdate();
     }
 }

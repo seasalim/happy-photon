@@ -39,7 +39,7 @@ public partial class MainWindowViewModel
 
         if (!_restoringAppTheme && IsAppearanceSettingsReady)
         {
-            _ = PersistAppThemeAsync();
+            _ = PersistPreferenceAsync("Theme");
         }
     }
 
@@ -49,22 +49,6 @@ public partial class MainWindowViewModel
         if (IsAppearanceSettingsReady && Enum.IsDefined(theme))
         {
             AppTheme = theme;
-        }
-    }
-
-    private async Task PersistAppThemeAsync()
-    {
-        try
-        {
-            if (PersistAppSettingsAsync != null)
-            {
-                await PersistAppSettingsAsync();
-            }
-        }
-        catch (Exception exception)
-        {
-            System.Diagnostics.Debug.WriteLine(
-                $"Theme persistence failed: {exception.Message}");
         }
     }
 }

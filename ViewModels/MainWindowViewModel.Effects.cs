@@ -72,12 +72,4 @@ public partial class MainWindowViewModel
         Grain = effects?.Grain ?? 0;
         GrainSize = effects?.GrainSize ?? GrainSize.Medium;
     }
-
-    private void ResetEffectsUi()
-    {
-        Vignette = 0;
-        Midpoint = 50;
-        Grain = 0;
-        GrainSize = GrainSize.Medium;
-    }
 }

@@ -281,26 +281,12 @@ public partial class MainWindowViewModel
                    SelectedImage?.EditSettings.RawProfile != null;
     }
 
+    // Loading default settings leaves the same slider state, except that a
+    // reset also ends white-balance picking (ResetSlidersEquivalenceTests).
     private void ResetSliders()
     {
-        Exposure = 0;
-        ResetWhiteBalanceUi();
-        ResetHighlightReconstructionUi();
-        ResetDetailUi();
-        ResetEffectsUi();
-        ResetMixerUi();
-        ResetLensUi();
-        ResetGeometryUi();
-        Brightness = 0;
-        Contrast = 0;
-        Saturation = 0;
-        Vibrance = 0;
-        Shadows = 0;
-        Highlights = 0;
-        Whites = Blacks = 0;
-        Texture = Clarity = 0;
-        Rotation = 0;
-        HorizonRotation = 0.0;
+        IsWhiteBalancePicking = false;
+        LoadSliderValuesFrom(new EditSettings());
         LoadCurrentCurveFrom(SelectedImage?.EditSettings);
         UpdateCanReset();
     }

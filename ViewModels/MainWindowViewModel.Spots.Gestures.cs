@@ -161,5 +161,12 @@ public partial class MainWindowViewModel
         return true;
     }
 
+    // Abandons any unfinished spot or local gesture before another edit.
+    private void DiscardGestures()
+    {
+        DiscardSpotsGesture();
+        DiscardLocalsGesture();
+    }
+
     private static bool FiniteSpotPoint(Point point) => double.IsFinite(point.X) && double.IsFinite(point.Y);
 }

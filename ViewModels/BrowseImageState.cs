@@ -70,29 +70,13 @@ public partial class BrowseImageState : ObservableObject
                 _ => "No images match the current filter"
             };
 
-    partial void OnFileTypeFilterChanged(ImageFileTypeFilter value)
-    {
-        ApplyFilter();
-        FilterChanged?.Invoke(this, EventArgs.Empty);
-    }
+    partial void OnFileTypeFilterChanged(ImageFileTypeFilter value) => RefreshFilters();
 
-    partial void OnFlagFilterChanged(FlagFilter value)
-    {
-        ApplyFilter();
-        FilterChanged?.Invoke(this, EventArgs.Empty);
-    }
+    partial void OnFlagFilterChanged(FlagFilter value) => RefreshFilters();
 
-    partial void OnMinimumRatingChanged(int value)
-    {
-        ApplyFilter();
-        FilterChanged?.Invoke(this, EventArgs.Empty);
-    }
+    partial void OnMinimumRatingChanged(int value) => RefreshFilters();
 
-    partial void OnColorLabelFilterChanged(ColorLabelFilter value)
-    {
-        ApplyFilter();
-        FilterChanged?.Invoke(this, EventArgs.Empty);
-    }
+    partial void OnColorLabelFilterChanged(ColorLabelFilter value) => RefreshFilters();
 
     public void SetImages(IEnumerable<ImageFile> images)
     {
@@ -157,17 +141,9 @@ public partial class BrowseImageState : ObservableObject
     public ImageFile? LastVisible() =>
         VisibleImages.Count > 0 ? VisibleImages[^1] : null;
 
-    public ImageFile? PreviousVisible(ImageFile? image)
-    {
-        var index = IndexOfVisible(image);
-        return index > 0 ? VisibleImages[index - 1] : null;
-    }
+    public ImageFile? PreviousVisible(ImageFile? image) => MoveVisible(image, -1);
 
-    public ImageFile? NextVisible(ImageFile? image)
-    {
-        var index = IndexOfVisible(image);
-        return index >= 0 && index < VisibleImages.Count - 1 ? VisibleImages[index + 1] : null;
-    }
+    public ImageFile? NextVisible(ImageFile? image) => MoveVisible(image, 1);
 
     public ImageFile? MoveVisible(ImageFile? image, int offset)
     {
@@ -201,19 +177,18 @@ public partial class BrowseImageState : ObservableObject
     }
 
     public bool MatchesCurrentFilters(ImageFile image, ImageFlag flag) =>
-        CaptureIsVisible(image) && CaptureMatchesFileType(FileTypeFilter, image) &&
-        MatchesFlagFilter(flag) &&
-        image.Rating >= MinimumRating && MatchesColorLabelFilter(image.ColorLabel);
+        MatchesCurrentFilters(image, flag, image.Rating, image.ColorLabel);
 
     public bool MatchesCurrentFilters(ImageFile image, int rating) =>
-        CaptureIsVisible(image) && CaptureMatchesFileType(FileTypeFilter, image) &&
-        MatchesFlagFilter(image) &&
-        rating >= MinimumRating && MatchesColorLabelFilter(image.ColorLabel);
+        MatchesCurrentFilters(image, image.Flag, rating, image.ColorLabel);
 
     public bool MatchesCurrentFilters(ImageFile image, ColorLabel colorLabel) =>
+        MatchesCurrentFilters(image, image.Flag, image.Rating, colorLabel);
+
+    private bool MatchesCurrentFilters(ImageFile image, ImageFlag flag, int rating, ColorLabel colorLabel) =>
         CaptureIsVisible(image) && CaptureMatchesFileType(FileTypeFilter, image) &&
-        MatchesFlagFilter(image) &&
-        image.Rating >= MinimumRating && MatchesColorLabelFilter(colorLabel);
+        MatchesFlagFilter(flag) &&
+        rating >= MinimumRating && MatchesColorLabelFilter(colorLabel);
 
     public void ReplaceSelection(IReadOnlySet<ImageFile> selection)
     {
@@ -311,21 +286,15 @@ public partial class BrowseImageState : ObservableObject
         NotifySelectedCountChanged();
     }
 
-    public void SelectAllVisible()
+    public void SelectAllVisible() => SetAllVisibleSelected(true);
+
+    public void DeselectAllVisible() => SetAllVisibleSelected(false);
+
+    private void SetAllVisibleSelected(bool selected)
     {
         foreach (var image in VisibleImages)
         {
-            image.IsSelected = true;
-        }
-
-        NotifySelectedCountChanged();
-    }
-
-    public void DeselectAllVisible()
-    {
-        foreach (var image in VisibleImages)
-        {
-            image.IsSelected = false;
+            image.IsSelected = selected;
         }
 
         NotifySelectedCountChanged();

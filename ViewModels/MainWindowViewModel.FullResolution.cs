@@ -185,10 +185,7 @@ public partial class MainWindowViewModel
 
     private void CancelFullRefinement()
     {
-        var cancellation = _fullRenderCts;
-        _fullRenderCts = null;
-        cancellation?.Cancel();
-        cancellation?.Dispose();
+        CancelAndDispose(ref _fullRenderCts);
     }
 
     private void ReleaseFullResolution()

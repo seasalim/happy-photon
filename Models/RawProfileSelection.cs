@@ -29,12 +29,15 @@ public sealed class RawProfileSelection
     [JsonPropertyName("contentHash")]
     public string ContentHash { get; set; } = string.Empty;
 
-    public RawProfileSelection Clone() => new()
-    {
-        Source = Source,
-        Location = Location,
-        ContentHash = ContentHash
-    };
+    public RawProfileSelection Clone() => (RawProfileSelection)MemberwiseClone();
+
+    /// <summary>True when both are null, or both name the same profile content.</summary>
+    public static bool Matches(RawProfileSelection? left, RawProfileSelection? right) =>
+        ReferenceEquals(left, right) ||
+        left != null && right != null &&
+        left.Source == right.Source &&
+        string.Equals(left.Location, right.Location, StringComparison.Ordinal) &&
+        string.Equals(left.ContentHash, right.ContentHash, StringComparison.OrdinalIgnoreCase);
 
     [JsonIgnore]
     public string CacheToken =>

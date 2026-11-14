@@ -71,8 +71,6 @@ internal sealed partial class RenderOutcome : IDisposable
         ImageFile image,
         long generation,
         PreviewSurfaceIntent intent,
-        RenderOutcomeClass outcomeClass,
-        PreviewPaintSource source,
         PreviewArtifacts artifacts,
         bool promotable,
         PreviewSurfaceIntent? rollbackRequestedIntent = null)
@@ -84,9 +82,9 @@ internal sealed partial class RenderOutcome : IDisposable
         {
             Image = image,
             Generation = generation,
-            Class = outcomeClass,
+            Class = RenderOutcomeClass.StateDefining,
             Intent = intent,
-            PaintSource = source,
+            PaintSource = PreviewPaintSource.FreshRender,
             Succeeded = bitmap != null,
             IsBaseStale = stale,
             Promotable = promotable && !stale,

@@ -20,8 +20,7 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanToggleBeforeAfterSplit))]
     private async Task ToggleBeforeAfterSplitAsync()
     {
-        DiscardSpotsGesture();
-        DiscardLocalsGesture();
+        DiscardGestures();
         if (IsBeforeAfterSplit)
         {
             CloseBeforeAfterSplit();
@@ -69,10 +68,7 @@ public partial class MainWindowViewModel
             maxDimension <= _beforeAfterRequest.MaxDimension ||
             hash == _beforeAfterRendered.Hash &&
             maxDimension <= _beforeAfterRendered.MaxDimension) return;
-        var cts = new CancellationTokenSource();
-        var previous = Interlocked.Exchange(ref _beforeAfterRenderCts, cts);
-        previous?.Cancel();
-        previous?.Dispose();
+        var cts = ReplaceDebounce(ref _beforeAfterRenderCts);
         _beforeAfterRequest = (hash, maxDimension);
         _ = RenderBeforeAfterAsync(image, settings, hash, maxDimension, cts);
     }

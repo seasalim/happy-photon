@@ -62,8 +62,6 @@ public partial class MainWindowViewModel
                 selectedImage,
                 outcomeGeneration,
                 intent,
-                RenderOutcomeClass.StateDefining,
-                PreviewPaintSource.FreshRender,
                 artifacts,
                 promotable,
                 rollbackRequestedIntent ?? previousIntent));

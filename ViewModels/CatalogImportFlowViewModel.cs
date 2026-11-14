@@ -193,11 +193,8 @@ public sealed class CatalogImportFlowViewModel : ObservableObject, IDisposable
         if (_preview != null && _previewedSignature == _liveSignature)
         {
             InvalidateRunningPreview();
-            _report = _preview.Report;
-            _failureText = null;
             StatusText = ReviewStatus(_preview.Report);
-            OnPropertyChanged(nameof(Report));
-            OnPropertyChanged(nameof(FailureText));
+            PublishReport(_preview.Report, failureText: null);
             NotifyCanApply();
             return;
         }
@@ -217,15 +214,12 @@ public sealed class CatalogImportFlowViewModel : ObservableObject, IDisposable
         {
             var result = await _operations.ApplyAsync(
                 preview, _applyCancellation.Token);
-            _report = result.Report;
-            _failureText = null;
             _isApplied = true;
             _applySucceeded = true;
             StatusText = result.DatabaseWrites == 0
                 ? "Everything is already up to date. No catalog rows were changed."
                 : "Import complete. Lightroom and your original photographs were not changed.";
-            OnPropertyChanged(nameof(Report));
-            OnPropertyChanged(nameof(FailureText));
+            PublishReport(result.Report, failureText: null);
             OnPropertyChanged(nameof(IsApplied));
             OnPropertyChanged(nameof(ApplySucceeded));
         }
@@ -345,11 +339,8 @@ public sealed class CatalogImportFlowViewModel : ObservableObject, IDisposable
 
             _preview = preview;
             _previewedSignature = signature;
-            _report = preview.Report;
-            _failureText = null;
             StatusText = preservedStatus ?? ReviewStatus(preview.Report);
-            OnPropertyChanged(nameof(Report));
-            OnPropertyChanged(nameof(FailureText));
+            PublishReport(preview.Report, failureText: null);
         }
         catch (OperationCanceledException)
         {
@@ -429,41 +420,43 @@ public sealed class CatalogImportFlowViewModel : ObservableObject, IDisposable
     private void ShowFailure(string message)
     {
         StatusText = message;
-        _failureText = message;
-        _report = null;
-        OnPropertyChanged(nameof(FailureText));
-        OnPropertyChanged(nameof(Report));
+        PublishReport(report: null, message);
         NotifyCanApply();
     }
 
-    private void SetInitializing(bool value)
+    private void PublishReport(CatalogImportReport? report, string? failureText)
     {
-        if (_isInitializing == value) return;
-        _isInitializing = value;
-        NotifyOperationState(nameof(IsInitializing));
+        _report = report;
+        _failureText = failureText;
+        OnPropertyChanged(nameof(Report));
+        OnPropertyChanged(nameof(FailureText));
     }
 
-    private void SetPreviewRunning(bool value)
-    {
-        if (_isPreviewRunning == value) return;
-        _isPreviewRunning = value;
-        NotifyOperationState(nameof(IsPreviewRunning));
-    }
+    private void SetInitializing(bool value) =>
+        SetOperationState(ref _isInitializing, value, nameof(IsInitializing));
+
+    private void SetPreviewRunning(bool value) =>
+        SetOperationState(ref _isPreviewRunning, value, nameof(IsPreviewRunning));
 
     private void SetApplying(bool value)
     {
-        if (_isApplying == value) return;
-        _isApplying = value;
-        NotifyOperationState(nameof(IsApplying));
-        OnPropertyChanged(nameof(InputsEnabled));
+        if (SetOperationState(ref _isApplying, value, nameof(IsApplying)))
+        {
+            OnPropertyChanged(nameof(InputsEnabled));
+        }
     }
 
-    private void NotifyOperationState(string propertyName)
+    private bool SetOperationState(ref bool field, bool value, string propertyName)
     {
+        if (field == value) return false;
+
+        field = value;
         OnPropertyChanged(propertyName);
         OnPropertyChanged(nameof(IsBusy));
         OnPropertyChanged(nameof(HasInFlightOperation));
         NotifyCanApply();
+
+        return true;
     }
 
     private void NotifyCanApply() => OnPropertyChanged(nameof(CanApply));

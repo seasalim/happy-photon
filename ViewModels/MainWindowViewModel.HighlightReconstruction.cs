@@ -82,7 +82,4 @@ public partial class MainWindowViewModel
             ShowTransientStatus(MonochromeRawStatus);
         }
     }
-
-    private void ResetHighlightReconstructionUi() =>
-        HlReconstruction = HlReconstructionMode.Clip;
 }
