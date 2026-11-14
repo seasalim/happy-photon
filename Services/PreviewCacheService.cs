@@ -39,31 +39,14 @@ public sealed class PreviewCacheService : IAsyncDisposable
 
     internal Action? AfterMetadataReadForTesting { get; set; }
 
-    public string GetCachePath(ImageFile imageFile)
-    {
-        if (imageFile.CatalogId == 0)
-            throw new InvalidOperationException("Image must be in catalog before caching.");
-        return _catalogService.GetPreviewPath(imageFile.CatalogId);
-    }
+    public string GetCachePath(ImageFile imageFile) =>
+        CatalogCacheFile.PathFor(imageFile, _catalogService.GetPreviewPath);
 
     public string GetMetadataPath(ImageFile imageFile) =>
         Path.ChangeExtension(GetCachePath(imageFile), ".meta");
 
-    public bool IsCacheValid(ImageFile imageFile)
-    {
-        if (imageFile.CatalogId == 0) return false;
-        var path = _catalogService.GetPreviewPath(imageFile.CatalogId);
-        if (!File.Exists(path)) return false;
-        try
-        {
-            return File.GetLastWriteTimeUtc(path) >
-                File.GetLastWriteTimeUtc(imageFile.FilePath);
-        }
-        catch
-        {
-            return false;
-        }
-    }
+    public bool IsCacheValid(ImageFile imageFile) =>
+        CatalogCacheFile.IsNewerThanSource(imageFile, _catalogService.GetPreviewPath);
 
     public CachedPreview? LoadRenderedPreview(ImageFile imageFile)
     {

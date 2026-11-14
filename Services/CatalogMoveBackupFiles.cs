@@ -12,7 +12,7 @@ internal static class CatalogMoveBackupFiles
 
     internal static void AssertLocal(string path, Func<string, FileAttributes> attributes)
     {
-        if (((int)attributes(path) & (0x1000 | 0x40000 | 0x400000)) != 0)
+        if (SourceAvailabilityService.IsCloudOnly(attributes(path)))
             throw new IOException($"The catalog move cannot carry cloud-only backup '{path}'. Make it available locally first.");
     }
 

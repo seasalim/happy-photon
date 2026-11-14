@@ -180,9 +180,7 @@ public partial class MainWindowViewModel
         if (string.IsNullOrEmpty(CurrentFolderPath)) return;
 
         var nextDefault = Path.Combine(CurrentFolderPath, "export");
-        var comparison = OperatingSystem.IsWindows()
-            ? StringComparison.OrdinalIgnoreCase
-            : StringComparison.Ordinal;
+        var comparison = PathComparison.Comparison;
         if (string.IsNullOrEmpty(ExportSettings.OutputFolder) ||
             (_lastAutomaticExportFolder != null &&
              string.Equals(

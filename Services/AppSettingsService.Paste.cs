@@ -6,13 +6,12 @@ public partial class AppSettingsService
 {
     private const string PasteGroupsKey = "PasteGroupsV2";
 
-    private async Task<Dictionary<string, bool>> LoadPasteGroupsAsync()
+    private static Dictionary<string, bool> LoadPasteGroups(Func<string, string?> read)
     {
-        if (await _catalogService.GetAppSettingAsync(PasteGroupsKey) is not null)
-            return await LoadGroupPreferencesAsync(PasteGroupsKey);
+        if (read(PasteGroupsKey) is { } saved) return LoadGroupPreferences(saved);
 
         // The new storage key saves the migration marker and choice together.
-        var groups = await LoadGroupPreferencesAsync("PasteGroups");
+        var groups = LoadGroupPreferences(read("PasteGroups"));
         var adjustments = groups.GetValueOrDefault("Adjustments", true);
 
         if (groups.GetValueOrDefault("Presence", true) != adjustments)
@@ -23,9 +22,8 @@ public partial class AppSettingsService
         return groups;
     }
 
-    private async Task<Dictionary<string, bool>> LoadGroupPreferencesAsync(string key)
+    private static Dictionary<string, bool> LoadGroupPreferences(string? saved)
     {
-        var saved = await _catalogService.GetAppSettingAsync(key);
         if (string.IsNullOrEmpty(saved)) return [];
 
         try

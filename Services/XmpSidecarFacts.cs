@@ -84,14 +84,8 @@ public readonly record struct XmpCropProjection(
     public static bool GeometryChanged(EditSettings before, EditSettings after) =>
         before.Rotation != after.Rotation ||
         before.HorizonRotation != after.HorizonRotation ||
-        !CropsMatch(before.Crop, after.Crop) ||
+        !CropRegion.Matches(before.Crop, after.Crop) ||
         !GeometryMatches(before.Geometry, after.Geometry);
-
-    internal static bool CropsMatch(CropRegion? left, CropRegion? right) =>
-        ReferenceEquals(left, right) ||
-        left != null && right != null &&
-        left.Left == right.Left && left.Top == right.Top &&
-        left.Right == right.Right && left.Bottom == right.Bottom;
 
     private static bool GeometryMatches(
         GeometrySettings? left,

@@ -87,19 +87,7 @@ public partial class CatalogService
                     command.CommandText = "DELETE FROM edit_history WHERE image_id = @id AND seq > @position;";
                     await command.ExecuteNonQueryAsync();
 
-                    foreach (var row in target.Deleted)
-                    {
-                        command.Parameters.Clear();
-                        command.CommandText = """
-                            INSERT INTO edit_history (image_id, seq, label, settings_json)
-                            VALUES (@id, @seq, @label, @settings);
-                            """;
-                        command.Parameters.AddWithValue("@id", target.CatalogId);
-                        command.Parameters.AddWithValue("@seq", row.Sequence);
-                        command.Parameters.AddWithValue("@label", row.Label);
-                        command.Parameters.AddWithValue("@settings", row.SettingsJson);
-                        await command.ExecuteNonQueryAsync();
-                    }
+                    await InsertHistoryRowsAsync(command, target.CatalogId, target.Deleted);
                 }
 
                 restored.Add(target.CatalogId);

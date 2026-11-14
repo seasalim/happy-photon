@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Threading;
 using HappyPhoton.Models;
+using HappyPhoton.Services;
 
 namespace HappyPhoton.Views;
 
@@ -172,9 +173,7 @@ public partial class BrowseGridView
     public void RestoreViewportAnchorPath(string? filePath)
     {
         if (Images == null || string.IsNullOrWhiteSpace(filePath)) return;
-        var comparison = OperatingSystem.IsWindows()
-            ? StringComparison.OrdinalIgnoreCase
-            : StringComparison.Ordinal;
+        var comparison = PathComparison.Comparison;
         var index = Images.IndexOf(Images.FirstOrDefault(image =>
             string.Equals(image.FilePath, filePath, comparison))!);
         if (index < 0) return;

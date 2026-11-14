@@ -9,7 +9,14 @@ namespace HappyPhoton.Services;
 internal sealed record BackupEntry(long Size, string Sha256);
 internal sealed record BackupManifest(int FormatVersion, string Kind, DateTimeOffset Utc,
     string AppVersion, Guid CatalogIdentity, long SchemaVersion, long ImageRows,
-    Dictionary<string, BackupEntry> Entries, bool Damaged = false);
+    Dictionary<string, BackupEntry> Entries, bool Damaged = false)
+{
+    // A format-1 manifest that lists the two files every restore needs.
+    internal static bool IsComplete([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] BackupManifest? manifest) =>
+        manifest is { FormatVersion: 1, Entries: not null } &&
+        manifest.Entries.ContainsKey("catalog.db") && manifest.Entries.ContainsKey(".catalog-identity");
+}
+
 internal sealed record BackupOutcome(DateTimeOffset Utc, string Status, string? Reason = null);
 
 public sealed partial class CatalogBackupService(CatalogService catalog)
@@ -59,12 +66,11 @@ public sealed partial class CatalogBackupService(CatalogService catalog)
             try
             {
                 // Do not hydrate a sidecar during a silent schedule check.
-                if (((int)File.GetAttributes(path) & (0x1000 | 0x40000 | 0x400000)) != 0) continue;
+                if (SourceAvailabilityService.IsCloudOnly(File.GetAttributes(path))) continue;
                 var manifest = JsonSerializer.Deserialize<BackupManifest>(File.ReadAllText(path));
-                if (manifest is { FormatVersion: 1, Entries: not null } &&
+                if (BackupManifest.IsComplete(manifest) &&
                     !manifest.Damaged && manifest.SchemaVersion <= CatalogMigrations.CurrentVersion &&
-                    manifest.CatalogIdentity == catalog.OpenCatalogIdentity &&
-                    manifest.Entries.ContainsKey("catalog.db") && manifest.Entries.ContainsKey(".catalog-identity"))
+                    manifest.CatalogIdentity == catalog.OpenCatalogIdentity)
                     result.Add((stem, manifest));
             }
             catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException) { }

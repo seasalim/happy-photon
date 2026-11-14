@@ -1,3 +1,4 @@
+using System.Globalization;
 using HappyPhoton.Models;
 
 namespace HappyPhoton.Services;
@@ -26,99 +27,85 @@ public partial class AppSettingsService
 
     public async Task<AppSettings> LoadAsync()
     {
+        var saved = await _catalogService.GetAppSettingsAsync();
+        string? Read(string key) => saved.GetValueOrDefault(key);
+        bool Flag(string key) => bool.TryParse(Read(key), out var value) && value;
+
         var fileTypeFilter = ImageFileTypeFilter.All;
-        var savedFilter = await _catalogService.GetAppSettingAsync(FileTypeFilterKey);
+        var savedFilter = Read(FileTypeFilterKey);
         if (!string.IsNullOrEmpty(savedFilter) &&
             Enum.TryParse<ImageFileTypeFilter>(savedFilter, ignoreCase: true, out var parsedFilter))
         {
             fileTypeFilter = parsedFilter;
         }
 
-        var thumbnailSize = BrowseThumbnailSize.Medium;
-        var savedThumbnailSize = await _catalogService.GetAppSettingAsync(BrowseThumbnailSizeKey);
-        if (!string.IsNullOrEmpty(savedThumbnailSize) &&
-            Enum.TryParse<BrowseThumbnailSize>(savedThumbnailSize, ignoreCase: true, out var parsedSize) &&
-            Enum.IsDefined(parsedSize))
-        {
-            thumbnailSize = parsedSize;
-        }
-
-        var appTheme = AppTheme.Dark;
-        var savedAppTheme = await _catalogService.GetAppSettingAsync(AppThemeKey);
-        if (!string.IsNullOrEmpty(savedAppTheme) &&
-            Enum.TryParse<AppTheme>(savedAppTheme, ignoreCase: true, out var parsedTheme) &&
-            Enum.IsDefined(parsedTheme))
-        {
-            appTheme = parsedTheme;
-        }
-
-        int? firstRunExperienceVersion = null;
-        var savedFirstRunVersion =
-            await _catalogService.GetAppSettingAsync(FirstRunExperienceVersionKey);
-        if (int.TryParse(savedFirstRunVersion, out var parsedFirstRunVersion))
-        {
-            firstRunExperienceVersion = parsedFirstRunVersion;
-        }
-
         return new AppSettings
         {
-            ShowTips = !bool.TryParse(await _catalogService.GetAppSettingAsync("ShowTips"), out var showTips) || showTips,
-            BrowseTipsSeen = await LoadTipsSeenAsync("BrowseTipsSeen"),
-            DevelopTipsSeen = await LoadTipsSeenAsync("DevelopTipsSeen"),
-            ExportTipsSeen = await LoadTipsSeenAsync("ExportTipsSeen"),
-            PasteGroups = await LoadPasteGroupsAsync(),
-            PresetGroups = await LoadGroupPreferencesAsync("PresetGroups"),
-            DevelopGroups = await LoadGroupPreferencesAsync("DevelopGroups"),
-            SpotMode = await _catalogService.GetAppSettingAsync("SpotMode") == "clone" ? "clone" : "heal",
-            SpotSize = await LoadBrushNumberAsync("SpotSize", 3, .2, 10),
-            SpotFeather = await LoadBrushNumberAsync("SpotFeather", 50, 0, 100),
-            SpotOpacity = await LoadBrushNumberAsync("SpotOpacity", 100, 5, 100),
-            SpotVisualizeThreshold = await LoadBrushNumberAsync("SpotVisualizeThreshold", 50, 0, 100),
-            BrushMode = await _catalogService.GetAppSettingAsync("BrushMode") == "erase" ? "erase" : "paint",
-            BrushSize = await LoadBrushNumberAsync("BrushSize", 65, 1, 100),
-            BrushFeather = await LoadBrushNumberAsync("BrushFeather", 50, 0, 100),
-            BrushFlow = await LoadBrushNumberAsync("BrushFlow", 100, 5, 100),
-            Watermark = await LoadWatermarkAsync(),
-            WatermarkEnabled = bool.TryParse(await _catalogService.GetAppSettingAsync("WatermarkEnabled"), out var enabled) && enabled,
-            RootFolderPath = await _catalogService.GetAppSettingAsync(RootFolderPathKey),
-            SelectedFolderPath = await _catalogService.GetAppSettingAsync(SelectedFolderPathKey),
-            FirstRunExperienceVersion = firstRunExperienceVersion,
+            ShowTips = !bool.TryParse(Read("ShowTips"), out var showTips) || showTips,
+            BrowseTipsSeen = Flag("BrowseTipsSeen"),
+            DevelopTipsSeen = Flag("DevelopTipsSeen"),
+            ExportTipsSeen = Flag("ExportTipsSeen"),
+            PasteGroups = LoadPasteGroups(Read),
+            PresetGroups = LoadGroupPreferences(Read("PresetGroups")),
+            DevelopGroups = LoadGroupPreferences(Read("DevelopGroups")),
+            SpotMode = Read("SpotMode") == "clone" ? "clone" : "heal",
+            SpotSize = BrushNumber(Read("SpotSize"), 3, .2, 10),
+            SpotFeather = BrushNumber(Read("SpotFeather"), 50, 0, 100),
+            SpotOpacity = BrushNumber(Read("SpotOpacity"), 100, 5, 100),
+            SpotVisualizeThreshold = BrushNumber(Read("SpotVisualizeThreshold"), 50, 0, 100),
+            BrushMode = Read("BrushMode") == "erase" ? "erase" : "paint",
+            BrushSize = BrushNumber(Read("BrushSize"), 65, 1, 100),
+            BrushFeather = BrushNumber(Read("BrushFeather"), 50, 0, 100),
+            BrushFlow = BrushNumber(Read("BrushFlow"), 100, 5, 100),
+            Watermark = LoadWatermark(Read),
+            WatermarkEnabled = Flag("WatermarkEnabled"),
+            RootFolderPath = Read(RootFolderPathKey),
+            SelectedFolderPath = Read(SelectedFolderPathKey),
+            FirstRunExperienceVersion = int.TryParse(Read(FirstRunExperienceVersionKey), out var firstRun)
+                ? firstRun : null,
             FileTypeFilter = fileTypeFilter,
-            BrowseThumbnailSize = thumbnailSize,
-            ShowCapturePairs = bool.TryParse(
-                await _catalogService.GetAppSettingAsync(ShowCapturePairsKey),
-                out var showCapturePairs) && showCapturePairs,
-            AppTheme = appTheme,
-            StripLocationData = bool.TryParse(
-                await _catalogService.GetAppSettingAsync(StripLocationDataKey),
-                out var stripLocationData) && stripLocationData,
-            OutputSharpening = ParseOutputSharpening(
-                await _catalogService.GetAppSettingAsync(OutputSharpeningKey))
+            BrowseThumbnailSize = DefinedEnum(Read(BrowseThumbnailSizeKey), BrowseThumbnailSize.Medium),
+            ShowCapturePairs = Flag(ShowCapturePairsKey),
+            AppTheme = DefinedEnum(Read(AppThemeKey), AppTheme.Dark),
+            StripLocationData = Flag(StripLocationDataKey),
+            OutputSharpening = ParseOutputSharpening(Read(OutputSharpeningKey))
         };
     }
 
-    private async Task<double> LoadBrushNumberAsync(string key, double fallback, double min, double max) =>
-        double.TryParse(await _catalogService.GetAppSettingAsync(key), System.Globalization.NumberStyles.Float,
-            System.Globalization.CultureInfo.InvariantCulture, out var value) && double.IsFinite(value)
+    private static T DefinedEnum<T>(string? value, T fallback) where T : struct, Enum =>
+        !string.IsNullOrEmpty(value) && Enum.TryParse<T>(value, ignoreCase: true, out var parsed) &&
+        Enum.IsDefined(parsed) ? parsed : fallback;
+
+    private static double BrushNumber(string? text, double fallback, double min, double max) =>
+        double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var value) && double.IsFinite(value)
             ? Math.Clamp(value, min, max) : fallback;
 
     public Task SaveAsync(AppSettings settings, bool saveTips = true)
     {
-        return _catalogService.SetAppSettingsAsync(WithTips(settings, saveTips, WithWatermark(settings, new Dictionary<string, string?>
+        var values = Preferences(settings, saveTips);
+        values[RootFolderPathKey] = settings.RootFolderPath;
+        values[SelectedFolderPathKey] = settings.SelectedFolderPath;
+        values[FirstRunExperienceVersionKey] = settings.FirstRunExperienceVersion?.ToString();
+
+        return _catalogService.SetAppSettingsAsync(values);
+    }
+
+    public Task SavePreferencesAsync(AppSettings settings, bool saveTips = true) =>
+        _catalogService.SetAppSettingsAsync(Preferences(settings, saveTips));
+
+    private static Dictionary<string, string?> Preferences(AppSettings settings, bool saveTips)
+    {
+        var values = new Dictionary<string, string?>
         {
-            [RootFolderPathKey] = settings.RootFolderPath,
-            [SelectedFolderPathKey] = settings.SelectedFolderPath,
-            [FirstRunExperienceVersionKey] =
-                settings.FirstRunExperienceVersion?.ToString(),
             ["SpotMode"] = settings.SpotMode,
-            ["SpotSize"] = settings.SpotSize.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            ["SpotFeather"] = settings.SpotFeather.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            ["SpotOpacity"] = settings.SpotOpacity.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            ["SpotVisualizeThreshold"] = settings.SpotVisualizeThreshold.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            ["SpotSize"] = settings.SpotSize.ToString(CultureInfo.InvariantCulture),
+            ["SpotFeather"] = settings.SpotFeather.ToString(CultureInfo.InvariantCulture),
+            ["SpotOpacity"] = settings.SpotOpacity.ToString(CultureInfo.InvariantCulture),
+            ["SpotVisualizeThreshold"] = settings.SpotVisualizeThreshold.ToString(CultureInfo.InvariantCulture),
             ["BrushMode"] = settings.BrushMode,
-            ["BrushSize"] = settings.BrushSize.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            ["BrushFeather"] = settings.BrushFeather.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            ["BrushFlow"] = settings.BrushFlow.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            ["BrushSize"] = settings.BrushSize.ToString(CultureInfo.InvariantCulture),
+            ["BrushFeather"] = settings.BrushFeather.ToString(CultureInfo.InvariantCulture),
+            ["BrushFlow"] = settings.BrushFlow.ToString(CultureInfo.InvariantCulture),
             [PasteGroupsKey] = System.Text.Json.JsonSerializer.Serialize(settings.PasteGroups),
             ["PresetGroups"] = System.Text.Json.JsonSerializer.Serialize(settings.PresetGroups),
             ["DevelopGroups"] = System.Text.Json.JsonSerializer.Serialize(settings.DevelopGroups),
@@ -128,37 +115,9 @@ public partial class AppSettingsService
             [AppThemeKey] = settings.AppTheme.ToString(),
             [StripLocationDataKey] = settings.StripLocationData.ToString(),
             [OutputSharpeningKey] = settings.OutputSharpening.ToString()
-        })));
-    }
+        };
 
-    public Task SavePreferencesAsync(AppSettings settings, bool saveTips = true)
-    {
-        return _catalogService.SetAppSettingsAsync(WithTips(settings, saveTips, WithWatermark(settings, new Dictionary<string, string?>
-        {
-            ["SpotMode"] = settings.SpotMode,
-            ["SpotSize"] = settings.SpotSize.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            ["SpotFeather"] = settings.SpotFeather.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            ["SpotOpacity"] = settings.SpotOpacity.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            ["SpotVisualizeThreshold"] = settings.SpotVisualizeThreshold.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            ["BrushMode"] = settings.BrushMode,
-            ["BrushSize"] = settings.BrushSize.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            ["BrushFeather"] = settings.BrushFeather.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            ["BrushFlow"] = settings.BrushFlow.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            [PasteGroupsKey] = System.Text.Json.JsonSerializer.Serialize(settings.PasteGroups),
-            ["PresetGroups"] = System.Text.Json.JsonSerializer.Serialize(settings.PresetGroups),
-            ["DevelopGroups"] = System.Text.Json.JsonSerializer.Serialize(settings.DevelopGroups),
-            [FileTypeFilterKey] = settings.FileTypeFilter.ToString(),
-            [BrowseThumbnailSizeKey] = settings.BrowseThumbnailSize.ToString(),
-            [ShowCapturePairsKey] = settings.ShowCapturePairs.ToString(),
-            [AppThemeKey] = settings.AppTheme.ToString(),
-            [StripLocationDataKey] = settings.StripLocationData.ToString(),
-            [OutputSharpeningKey] = settings.OutputSharpening.ToString()
-        })));
-    }
-
-    private static Dictionary<string, string?> WithTips(
-        AppSettings settings, bool saveTips, Dictionary<string, string?> values)
-    {
+        AddWatermark(settings, values);
         if (!saveTips) return values;
 
         values["ShowTips"] = settings.ShowTips.ToString();
@@ -168,9 +127,6 @@ public partial class AppSettingsService
 
         return values;
     }
-
-    private async Task<bool> LoadTipsSeenAsync(string key) =>
-        bool.TryParse(await _catalogService.GetAppSettingAsync(key), out var seen) && seen;
 
     public Task SaveFirstRunVersionAsync(int version)
     {

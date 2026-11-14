@@ -193,6 +193,24 @@ public sealed class AppSettingsServiceTests : IDisposable
         Assert.Equal(expected, loaded.OutputSharpening);
     }
 
+    [Theory]
+    [InlineData(null, ImageFileTypeFilter.All)]
+    [InlineData("", ImageFileTypeFilter.All)]
+    [InlineData("invalid", ImageFileTypeFilter.All)]
+    [InlineData("jpeg", ImageFileTypeFilter.Jpeg)]
+    [InlineData("7", (ImageFileTypeFilter)7)]
+    [InlineData("Raw,Jpeg", (ImageFileTypeFilter)3)]
+    public async Task LoadAsync_KeepsPermissiveFileTypeFilterParse(string? value, ImageFileTypeFilter expected)
+    {
+        using var catalog = new CatalogService(_catalogPath);
+        await catalog.InitializeAsync();
+        await catalog.SetAppSettingAsync("FileTypeFilter", value);
+
+        var loaded = await new AppSettingsService(catalog).LoadAsync();
+
+        Assert.Equal(expected, loaded.FileTypeFilter);
+    }
+
     [Fact]
     public async Task SavePreferences_DoesNotChangeFolderOrFirstRunState()
     {

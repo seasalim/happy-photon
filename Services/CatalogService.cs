@@ -201,10 +201,9 @@ public partial class CatalogService : IDisposable
     public async Task<long> GetOrCreateImageAsync(string filePath)
     {
         EnsureInitialized();
-        await _connectionGate.WaitAsync();
-        try
+        return await GatedAsync(async connection =>
         {
-            using var cmd = _connection!.CreateCommand();
+            using var cmd = connection.CreateCommand();
             cmd.CommandText = @"
                 INSERT INTO images (
                     file_path, version, file_name, edit_settings, edit_version, updated_utc)
@@ -221,11 +220,7 @@ public partial class CatalogService : IDisposable
             var result = (long)(await cmd.ExecuteScalarAsync())!;
             await RefreshCacheStampAsync(result);
             return result;
-        }
-        finally
-        {
-            _connectionGate.Release();
-        }
+        });
     }
 
     /// <summary>Loads catalog state for many paths in a small number of queries.</summary>
@@ -277,17 +272,10 @@ public partial class CatalogService : IDisposable
                     var catalogId = reader.GetInt64(1);
                     var settings = ReadEditSettings(reader, 4, catalogId, path);
                     var flag = ReadEnumColumn(reader, 6, ImageFlag.Unflagged);
-                    var rating = reader.IsDBNull(7)
-                        ? 0
-                        : (int)Math.Clamp(reader.GetInt64(7), 0, 5);
+                    var rating = ReadRating(reader, 7);
                     var colorLabel = ReadEnumColumn(reader, 8, ColorLabel.None);
                     var revision = reader.IsDBNull(9) ? 0 : reader.GetInt64(9);
-                    DateTime? assessedUtc = reader.IsDBNull(10)
-                        ? null
-                        : DateTime.Parse(
-                            reader.GetString(10),
-                            null,
-                            System.Globalization.DateTimeStyles.RoundtripKind);
+                    DateTime? assessedUtc = ReadUtcOrNull(reader, 10);
                     var pendingAxes = reader.IsDBNull(11)
                         ? AssessmentAxes.None
                         : (AssessmentAxes)reader.GetInt32(11);
@@ -367,7 +355,7 @@ public partial class CatalogService : IDisposable
                     "The edit settings document and row version markers do not match.");
             }
             var settings = EditSettingsJson.Deserialize(
-                json,
+                document.RootElement,
                 out var wasClamped);
             if (wasClamped)
             {
@@ -395,30 +383,17 @@ public partial class CatalogService : IDisposable
     }
 
     /// <summary>Gets the cached thumbnail path for an image.</summary>
-    public string GetThumbnailPath(long catalogId)
-    {
-        var prefix = (catalogId % 256).ToString("x2");
-        return Path.Combine(CachePath, "assets", "thumbs", prefix, $"{catalogId}.jpg");
-    }
+    public string GetThumbnailPath(long catalogId) => AssetPath("thumbs", catalogId);
 
     /// <summary>Gets the cached preview path for an image.</summary>
-    public string GetPreviewPath(long catalogId)
-    {
-        var prefix = (catalogId % 256).ToString("x2");
-        return Path.Combine(CachePath, "assets", "previews", prefix, $"{catalogId}.jpg");
-    }
+    public string GetPreviewPath(long catalogId) => AssetPath("previews", catalogId);
 
     /// <summary>Gets the accurate rendered RAW thumbnail path for an image.</summary>
-    public string GetRenderedThumbnailPath(long catalogId)
-    {
-        var prefix = (catalogId % 256).ToString("x2");
-        return Path.Combine(
-            CachePath,
-            "assets",
-            "rendered-thumbs",
-            prefix,
-            $"{catalogId}.jpg");
-    }
+    public string GetRenderedThumbnailPath(long catalogId) => AssetPath("rendered-thumbs", catalogId);
+
+    // Assets fan out into 256 folders by the low byte of the catalog id.
+    private string AssetPath(string kind, long catalogId) =>
+        Path.Combine(CachePath, "assets", kind, (catalogId % 256).ToString("x2"), $"{catalogId}.jpg");
 
     public void Dispose()
     {

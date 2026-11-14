@@ -21,9 +21,7 @@ public sealed partial class PreviewService
             throw new ArgumentOutOfRangeException(nameof(maxDimension));
         }
 
-        if (!SourceAccessPolicy.CanRead(
-                _sourceAvailability.GetAvailability(imageFile.FilePath),
-                SourceReadIntent.Background))
+        if (!CanReadSourceInBackground(imageFile))
         {
             return null;
         }
@@ -121,7 +119,7 @@ public sealed partial class PreviewService
             await activeWarm.WaitAsync(cancellationToken).ConfigureAwait(false);
         return await RunCacheWorkerAsync(imageFile, () =>
         {
-            if (!CanReadAdjacentSource(imageFile)) return null;
+            if (!CanReadSourceInBackground(imageFile)) return null;
             CullPerf?.Record("CacheJoinDecode", imageFile.CatalogId);
             using var cached = TryLoadAdjacentWarm(imageFile, hash) ??
                 (_previewCache.HasSettingsMatchedEntry(imageFile, hash)

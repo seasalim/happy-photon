@@ -27,16 +27,27 @@ public sealed class XmpSidecarReader
             return null;
         }
 
-        XmpSidecarReadStream.ThrowIfOversized(candidate.Path, candidate.Length);
+        var document = await LoadBoundedAsync(candidate.Path, candidate.Length, cancellationToken);
+
+        return XmpSidecarDocument.ReadFacts(document, labelNames);
+    }
+
+    /// <summary>Loads a sidecar through the 4 MiB bound; -1 means the length is not yet known.</summary>
+    internal static async Task<XDocument> LoadBoundedAsync(
+        string path,
+        long knownLength,
+        CancellationToken cancellationToken)
+    {
+        XmpSidecarReadStream.ThrowIfOversized(path, knownLength);
 
         await using var stream = new FileStream(
-            candidate.Path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite,
+            path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite,
             4096, FileOptions.Asynchronous | FileOptions.SequentialScan);
         await using var bounded = new XmpSidecarReadStream(
-            stream, candidate.Path, MaximumSidecarBytes);
-        var document = await XDocument.LoadAsync(
+            stream, path, MaximumSidecarBytes);
+
+        return await XDocument.LoadAsync(
             bounded, LoadOptions.PreserveWhitespace, cancellationToken);
-        return XmpSidecarDocument.ReadFacts(document, labelNames);
     }
 }
 

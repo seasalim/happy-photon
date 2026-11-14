@@ -36,9 +36,7 @@ public class FolderTreeService
             .Select(NormalizePath)
             .Where(path => path != null)
             .Cast<string>()
-            .Distinct(OperatingSystem.IsWindows()
-                ? StringComparer.OrdinalIgnoreCase
-                : StringComparer.Ordinal)
+            .Distinct(PathComparison.Comparer)
             .ToArray();
     }
 
@@ -107,7 +105,7 @@ public class FolderTreeService
             return BrowseLocationValidation.MissingOrInaccessible;
         }
 
-        if (_excludedRoots.Any(root => IsSameOrDescendant(root, normalizedPath)))
+        if (_excludedRoots.Any(root => AppDataRootOwnership.IsSameOrDescendant(root, normalizedPath)))
         {
             return BrowseLocationValidation.Catalog;
         }
@@ -134,21 +132,7 @@ public class FolderTreeService
         return normalizedRoot != null &&
                normalizedCandidate != null &&
                Directory.Exists(normalizedCandidate) &&
-               IsSameOrDescendant(normalizedRoot, normalizedCandidate);
-    }
-
-    internal static bool IsSameOrDescendant(string rootPath, string candidatePath)
-    {
-        var relativePath = Path.GetRelativePath(rootPath, candidatePath);
-        if (relativePath == ".")
-        {
-            return true;
-        }
-
-        return !Path.IsPathRooted(relativePath) &&
-               relativePath != ".." &&
-               !relativePath.StartsWith($"..{Path.DirectorySeparatorChar}", StringComparison.Ordinal) &&
-               !relativePath.StartsWith($"..{Path.AltDirectorySeparatorChar}", StringComparison.Ordinal);
+               AppDataRootOwnership.IsSameOrDescendant(normalizedRoot, normalizedCandidate);
     }
 
     private IReadOnlyList<string> GetVisibleDirectoryPaths(string parentPath)
@@ -164,7 +148,7 @@ public class FolderTreeService
                 .Where(path => !IsHiddenOrSystem(path))
                 .Select(Path.GetFullPath)
                 .Where(path => !_excludedRoots.Any(root =>
-                    IsSameOrDescendant(root, path)))
+                    AppDataRootOwnership.IsSameOrDescendant(root, path)))
                 .ToArray();
         }
         catch (UnauthorizedAccessException)

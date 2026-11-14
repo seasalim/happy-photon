@@ -5,26 +5,27 @@ namespace HappyPhoton.Services;
 
 public partial class AppSettingsService
 {
-    private async Task<WatermarkSpec> LoadWatermarkAsync()
+    private static WatermarkSpec LoadWatermark(Func<string, string?> readSetting)
     {
-        Task<string?> Read(string name) => _catalogService.GetAppSettingAsync("Watermark" + name);
-        async Task<bool> Flag(string name, bool fallback = false) =>
-            bool.TryParse(await Read(name), out var value) ? value : fallback;
-        async Task<double> Number(string name, double min, double max, double fallback) =>
-            double.TryParse(await Read(name), NumberStyles.Float, CultureInfo.InvariantCulture, out var value) &&
+        string? Read(string name) => readSetting("Watermark" + name);
+        bool Flag(string name, bool fallback = false) =>
+            bool.TryParse(Read(name), out var value) ? value : fallback;
+        double Number(string name, double min, double max, double fallback) =>
+            double.TryParse(Read(name), NumberStyles.Float, CultureInfo.InvariantCulture, out var value) &&
             double.IsFinite(value) && value >= min && value <= max ? value : fallback;
-        async Task<T> Choice<T>(string name, T fallback) where T : struct, Enum =>
-            Enum.TryParse<T>(await Read(name), true, out var value) && Enum.IsDefined(value) ? value : fallback;
+        T Choice<T>(string name, T fallback) where T : struct, Enum =>
+            Enum.TryParse<T>(Read(name), true, out var value) && Enum.IsDefined(value) ? value : fallback;
+
         return new WatermarkSpec(
-            (await Read("Text") ?? "").Replace("\r", "").Replace("\n", ""),
-            await Read("FontFamily") ?? "", await Flag("Bold"), await Flag("Italic"),
-            await Number("Size", 1, 20, 3), await Choice("Color", WatermarkColor.White),
-            await Number("Opacity", 5, 100, 60), await Choice("Edge", WatermarkEdge.Bottom),
-            await Choice("Alignment", WatermarkAlignment.End), await Flag("RotateAlongEdge", true),
-            await Number("Margin", 0, 20, 2));
+            (Read("Text") ?? "").Replace("\r", "").Replace("\n", ""),
+            Read("FontFamily") ?? "", Flag("Bold"), Flag("Italic"),
+            Number("Size", 1, 20, 3), Choice("Color", WatermarkColor.White),
+            Number("Opacity", 5, 100, 60), Choice("Edge", WatermarkEdge.Bottom),
+            Choice("Alignment", WatermarkAlignment.End), Flag("RotateAlongEdge", true),
+            Number("Margin", 0, 20, 2));
     }
 
-    private static Dictionary<string, string?> WithWatermark(AppSettings settings, Dictionary<string, string?> values)
+    private static void AddWatermark(AppSettings settings, Dictionary<string, string?> values)
     {
         var mark = settings.Watermark;
         values["WatermarkEnabled"] = settings.WatermarkEnabled.ToString();
@@ -39,6 +40,5 @@ public partial class AppSettingsService
         values["WatermarkAlignment"] = mark.Alignment.ToString();
         values["WatermarkRotateAlongEdge"] = mark.RotateAlongEdge.ToString();
         values["WatermarkMargin"] = mark.Margin.ToString(CultureInfo.InvariantCulture);
-        return values;
     }
 }

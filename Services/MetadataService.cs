@@ -112,8 +112,11 @@ internal sealed class MetadataService
         {
             imageFile.MetadataReadObserved?.Invoke(nameof(FileInfo));
             var fileInfo = new FileInfo(imageFile.FilePath);
-            builder.FileSize = fileInfo.Length;
-            builder.FileModifiedDate = fileInfo.LastWriteTime;
+            builder.Value = builder.Value with
+            {
+                FileSize = fileInfo.Length,
+                FileModifiedDate = fileInfo.LastWriteTime
+            };
             var availability = availabilityService.GetAvailability(
                 imageFile.FilePath);
             if (!SourceAccessPolicy.CanRead(
@@ -127,7 +130,7 @@ internal sealed class MetadataService
                     availability == SourceAvailability.RequiresHydration
                         ? MetadataLoadStatus.DeferredForHydration
                         : MetadataLoadStatus.Failed,
-                    builder.ToMetadata());
+                    builder.Value);
             }
 
             if (imageFile.IsRaw && rawService.IsAvailable)
@@ -136,13 +139,30 @@ internal sealed class MetadataService
                 if (rawMetadata != null)
                 {
                     source = "LibRaw";
-                    builder.Apply(rawMetadata);
+                    builder.Value = builder.Value with
+                    {
+                        PixelWidth = rawMetadata.PixelWidth,
+                        PixelHeight = rawMetadata.PixelHeight,
+                        DateTaken = rawMetadata.DateTaken,
+                        CameraMake = rawMetadata.CameraMake,
+                        CameraModel = rawMetadata.CameraModel,
+                        FNumber = rawMetadata.FNumber,
+                        ExposureTime = FormatExposureTime(rawMetadata.ExposureTime),
+                        Iso = rawMetadata.Iso,
+                        FocalLength = rawMetadata.FocalLength,
+                        FocalLengthIn35mmFilm = rawMetadata.FocalLengthIn35mmFilm,
+                        ExposureBias = rawMetadata.ExposureBias,
+                        LensModel = rawMetadata.LensModel,
+                        GpsLatitude = rawMetadata.GpsLatitude,
+                        GpsLongitude = rawMetadata.GpsLongitude,
+                        GpsAltitude = rawMetadata.GpsAltitude
+                    };
                     ApplyRawExifSupplement(
                         imageFile.FilePath,
                         builder,
                         rawSupplementReader);
                     return MetadataExtractionResult.Loaded(
-                        builder.ToMetadata());
+                        builder.Value);
                 }
             }
 
@@ -150,8 +170,11 @@ internal sealed class MetadataService
             {
                 using var image = new MagickImage();
                 image.Ping(imageFile.FilePath);
-                builder.PixelWidth = (int)image.Width;
-                builder.PixelHeight = (int)image.Height;
+                builder.Value = builder.Value with
+                {
+                    PixelWidth = (int)image.Width,
+                    PixelHeight = (int)image.Height
+                };
                 var exifProfile = image.GetExifProfile();
                 if (exifProfile != null)
                 {
@@ -166,12 +189,15 @@ internal sealed class MetadataService
                 {
                     source = "RawPingFailed";
                     return MetadataExtractionResult.Loaded(
-                        builder.ToMetadata());
+                        builder.Value);
                 }
 
                 using var image = new MagickImage(imageFile.FilePath);
-                builder.PixelWidth = (int)image.Width;
-                builder.PixelHeight = (int)image.Height;
+                builder.Value = builder.Value with
+                {
+                    PixelWidth = (int)image.Width,
+                    PixelHeight = (int)image.Height
+                };
                 var exifProfile = image.GetExifProfile();
                 if (exifProfile != null)
                 {
@@ -196,7 +222,7 @@ internal sealed class MetadataService
                 $"source={source ?? "None"}");
         }
 
-        return MetadataExtractionResult.Loaded(builder.ToMetadata());
+        return MetadataExtractionResult.Loaded(builder.Value);
     }
 
     private static void ApplyExifMetadata(MetadataBuilder metadata, IExifProfile exifProfile)
@@ -209,74 +235,86 @@ internal sealed class MetadataService
             System.Globalization.DateTimeStyles.None,
             out var dateTaken))
         {
-            metadata.DateTaken = dateTaken;
+            metadata.Value = metadata.Value with { DateTaken = dateTaken };
         }
 
-        metadata.CameraMake = exifProfile.GetValue(ExifTag.Make)?.Value?.ToString()?.Trim();
-        metadata.CameraModel = exifProfile.GetValue(ExifTag.Model)?.Value?.ToString()?.Trim();
+        metadata.Value = metadata.Value with
+        {
+            CameraMake = exifProfile.GetValue(ExifTag.Make)?.Value?.ToString()?.Trim()
+        };
+        metadata.Value = metadata.Value with
+        {
+            CameraModel = exifProfile.GetValue(ExifTag.Model)?.Value?.ToString()?.Trim()
+        };
         var lens = exifProfile.GetValue(ExifTag.LensModel)?.Value?.ToString()?.Trim();
-        metadata.LensModel = string.IsNullOrEmpty(lens) ? null : lens;
+        metadata.Value = metadata.Value with { LensModel = string.IsNullOrEmpty(lens) ? null : lens };
 
         if (exifProfile.GetValue(ExifTag.FNumber)?.Value is Rational fNumber)
         {
-            metadata.FNumber = fNumber.ToDouble();
+            metadata.Value = metadata.Value with { FNumber = fNumber.ToDouble() };
         }
 
         if (exifProfile.GetValue(ExifTag.ExposureTime)?.Value is Rational exposure)
         {
-            metadata.ExposureTime = FormatExposureTime(exposure.ToDouble());
+            metadata.Value = metadata.Value with { ExposureTime = FormatExposureTime(exposure.ToDouble()) };
         }
 
         if (exifProfile.GetValue(ExifTag.ISOSpeedRatings)?.Value is ushort[] iso && iso.Length > 0)
         {
-            metadata.Iso = iso[0];
+            metadata.Value = metadata.Value with { Iso = iso[0] };
         }
 
         if (exifProfile.GetValue(ExifTag.FocalLength)?.Value is Rational focalLength)
         {
-            metadata.FocalLength = focalLength.ToDouble();
+            metadata.Value = metadata.Value with { FocalLength = focalLength.ToDouble() };
         }
 
         if (exifProfile.GetValue(ExifTag.FocalLengthIn35mmFilm)?.Value is ushort equivalent &&
             equivalent > 0)
         {
-            metadata.FocalLengthIn35mmFilm = equivalent;
+            metadata.Value = metadata.Value with { FocalLengthIn35mmFilm = equivalent };
         }
 
         ApplyExposureBias(metadata, exifProfile);
 
         if (exifProfile.GetValue(ExifTag.MeteringMode)?.Value is ushort metering)
         {
-            metadata.MeteringMode = metering;
+            metadata.Value = metadata.Value with { MeteringMode = metering };
         }
 
         if (exifProfile.GetValue(ExifTag.WhiteBalance)?.Value is ushort whiteBalance)
         {
-            metadata.WhiteBalanceMode = whiteBalance;
+            metadata.Value = metadata.Value with { WhiteBalanceMode = whiteBalance };
         }
 
         if (exifProfile.GetValue(ExifTag.Flash)?.Value is ushort flash)
         {
-            metadata.FlashValue = flash;
+            metadata.Value = metadata.Value with { FlashValue = flash };
         }
 
         var latitude = exifProfile.GetValue(ExifTag.GPSLatitude)?.Value as Rational[];
         var longitude = exifProfile.GetValue(ExifTag.GPSLongitude)?.Value as Rational[];
         if (latitude != null && longitude != null)
         {
-            metadata.GpsLatitude = ConvertGpsToDouble(
-                latitude,
-                exifProfile.GetValue(ExifTag.GPSLatitudeRef)?.Value?.ToString());
-            metadata.GpsLongitude = ConvertGpsToDouble(
-                longitude,
-                exifProfile.GetValue(ExifTag.GPSLongitudeRef)?.Value?.ToString());
+            metadata.Value = metadata.Value with
+            {
+                GpsLatitude = ConvertGpsToDouble(
+                    latitude,
+                    exifProfile.GetValue(ExifTag.GPSLatitudeRef)?.Value?.ToString())
+            };
+            metadata.Value = metadata.Value with
+            {
+                GpsLongitude = ConvertGpsToDouble(
+                    longitude,
+                    exifProfile.GetValue(ExifTag.GPSLongitudeRef)?.Value?.ToString())
+            };
         }
 
         if (exifProfile.GetValue(ExifTag.GPSAltitude)?.Value is Rational altitude)
         {
             var value = altitude.ToDouble();
             var reference = exifProfile.GetValue(ExifTag.GPSAltitudeRef)?.Value;
-            metadata.GpsAltitude = reference == 1 ? -value : value;
+            metadata.Value = metadata.Value with { GpsAltitude = reference == 1 ? -value : value };
         }
     }
 
@@ -290,10 +328,13 @@ internal sealed class MetadataService
             var supplement = rawSupplementReader != null
                 ? rawSupplementReader(filePath)
                 : ReadRawExifSupplement(filePath);
-            metadata.ExposureBias = supplement.ExposureBias;
-            metadata.MeteringMode = supplement.MeteringMode;
-            metadata.WhiteBalanceMode = supplement.WhiteBalanceMode;
-            metadata.FlashValue = supplement.FlashValue;
+            metadata.Value = metadata.Value with
+            {
+                ExposureBias = supplement.ExposureBias,
+                MeteringMode = supplement.MeteringMode,
+                WhiteBalanceMode = supplement.WhiteBalanceMode,
+                FlashValue = supplement.FlashValue
+            };
         }
         catch (Exception ex)
         {
@@ -363,7 +404,7 @@ internal sealed class MetadataService
         if (exifProfile.GetValue(ExifTag.ExposureBiasValue)?.Value is
             SignedRational exposureBias)
         {
-            metadata.ExposureBias = exposureBias.ToDouble();
+            metadata.Value = metadata.Value with { ExposureBias = exposureBias.ToDouble() };
         }
     }
 
@@ -376,72 +417,10 @@ internal sealed class MetadataService
         return reference is "S" or "W" ? -result : result;
     }
 
+    // The metadata read so far: an early return or a failed read keeps every field already set.
     private sealed class MetadataBuilder
     {
-        public long FileSize { get; set; }
-        public int PixelWidth { get; set; }
-        public int PixelHeight { get; set; }
-        public DateTime? DateTaken { get; set; }
-        public DateTime? FileModifiedDate { get; set; }
-        public string? CameraMake { get; set; }
-        public string? CameraModel { get; set; }
-        public double? FNumber { get; set; }
-        public string? ExposureTime { get; set; }
-        public int? Iso { get; set; }
-        public double? FocalLength { get; set; }
-        public double? FocalLengthIn35mmFilm { get; set; }
-        public double? ExposureBias { get; set; }
-        public int? MeteringMode { get; set; }
-        public int? WhiteBalanceMode { get; set; }
-        public int? FlashValue { get; set; }
-        public string? LensModel { get; set; }
-        public double? GpsLatitude { get; set; }
-        public double? GpsLongitude { get; set; }
-        public double? GpsAltitude { get; set; }
-
-        public void Apply(RawMetadata metadata)
-        {
-            PixelWidth = metadata.PixelWidth;
-            PixelHeight = metadata.PixelHeight;
-            DateTaken = metadata.DateTaken;
-            CameraMake = metadata.CameraMake;
-            CameraModel = metadata.CameraModel;
-            FNumber = metadata.FNumber;
-            ExposureTime = FormatExposureTime(metadata.ExposureTime);
-            Iso = metadata.Iso;
-            FocalLength = metadata.FocalLength;
-            FocalLengthIn35mmFilm = metadata.FocalLengthIn35mmFilm;
-            ExposureBias = metadata.ExposureBias;
-            LensModel = metadata.LensModel;
-            GpsLatitude = metadata.GpsLatitude;
-            GpsLongitude = metadata.GpsLongitude;
-            GpsAltitude = metadata.GpsAltitude;
-        }
-
-        public ImageMetadata ToMetadata() => new()
-        {
-            FileSize = FileSize,
-            PixelWidth = PixelWidth,
-            PixelHeight = PixelHeight,
-            DateTaken = DateTaken,
-            FileModifiedDate = FileModifiedDate,
-            CameraMake = CameraMake,
-            CameraModel = CameraModel,
-            FNumber = FNumber,
-            ExposureTime = ExposureTime,
-            Iso = Iso,
-            FocalLength = FocalLength,
-            FocalLengthIn35mmFilm = FocalLengthIn35mmFilm,
-            ExposureBias = ExposureBias,
-            MeteringMode = MeteringMode,
-            WhiteBalanceMode = WhiteBalanceMode,
-            FlashValue = FlashValue,
-            LensModel = LensModel,
-            GpsLatitude = GpsLatitude,
-            GpsLongitude = GpsLongitude,
-            GpsAltitude = GpsAltitude
-        };
-
+        public ImageMetadata Value { get; set; } = new();
     }
 
     // Show subsecond exposures as 1/n only when they really are unit

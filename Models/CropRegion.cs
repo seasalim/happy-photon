@@ -41,6 +41,13 @@ public class CropRegion
         Bottom = Bottom
     };
 
+    /// <summary>True when both are null, or both have identical edges.</summary>
+    public static bool Matches(CropRegion? left, CropRegion? right) =>
+        ReferenceEquals(left, right) ||
+        left != null && right != null &&
+        left.Left == right.Left && left.Top == right.Top &&
+        left.Right == right.Right && left.Bottom == right.Bottom;
+
     /// <summary>
     /// Converts normalized coordinates to pixel coordinates.
     /// </summary>

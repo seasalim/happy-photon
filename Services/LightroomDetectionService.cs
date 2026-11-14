@@ -107,18 +107,14 @@ public sealed class LightroomDetectionService
         string? picturesRoot,
         string? catalogRoot)
     {
-        var comparison = OperatingSystem.IsWindows()
-            ? StringComparer.OrdinalIgnoreCase
-            : StringComparer.Ordinal;
+        var comparison = PathComparison.Comparer;
         var roots = new List<string>();
         // A custom pictures folder outranks the conventional
         // Pictures\Lightroom location: the first catalog found becomes the
         // populated first-run default.
         var customPictures = !string.IsNullOrWhiteSpace(picturesRoot) &&
             !string.Equals(picturesRoot, _defaultPicturesRoot,
-                OperatingSystem.IsWindows()
-                    ? StringComparison.OrdinalIgnoreCase
-                    : StringComparison.Ordinal);
+                PathComparison.Comparison);
         if (customPictures) roots.Add(picturesRoot!);
         if (!string.IsNullOrWhiteSpace(_defaultPicturesRoot))
             roots.Add(Path.Combine(_defaultPicturesRoot, "Lightroom"));

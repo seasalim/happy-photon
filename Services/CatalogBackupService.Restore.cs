@@ -19,7 +19,7 @@ public sealed partial class CatalogBackupService
         new(StringComparer.OrdinalIgnoreCase);
     internal static void MarkDamaged(string path) => Damaged.TryAdd(System.IO.Path.GetFullPath(path), 0);
     internal Func<string, FileAttributes> Attributes { get; set; } = File.GetAttributes;
-    private bool CloudOnly(string path) => ((int)Attributes(path) & (0x1000 | 0x40000 | 0x400000)) != 0;
+    private bool CloudOnly(string path) => SourceAvailabilityService.IsCloudOnly(Attributes(path));
 
     public IReadOnlyList<CatalogBackupRow> ListForRestore()
     {
@@ -43,11 +43,7 @@ public sealed partial class CatalogBackupService
                 }
                 catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException) { }
 
-                if (manifest is not { FormatVersion: 1, Entries: not null } ||
-                    !manifest.Entries.ContainsKey("catalog.db") || !manifest.Entries.ContainsKey(".catalog-identity"))
-                {
-                    manifest = null;
-                }
+                if (!BackupManifest.IsComplete(manifest)) manifest = null;
 
                 var state = Damaged.ContainsKey(path) || manifest?.Damaged == true ? "damaged" :
                     manifest?.SchemaVersion > CatalogMigrations.CurrentVersion ? $"needs a newer app (schema {manifest.SchemaVersion})" :

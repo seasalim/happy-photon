@@ -68,7 +68,7 @@ internal static class ConstructionBaselineGoldens
                             "The edit settings document and row version markers do not match.");
                     }
                     var settings = EditSettingsJson.Deserialize(
-                        json,
+                        document.RootElement,
                         out var wasClamped);
                     if (wasClamped)
                     {

@@ -7,11 +7,10 @@ public partial class CatalogService
     public async Task<CatalogImageState?> CreateVersionAsync(long sourceCatalogId)
     {
         EnsureInitialized();
-        await _connectionGate.WaitAsync();
-        try
+        return await GatedAsync<CatalogImageState?>(async connection =>
         {
-            using var transaction = _connection!.BeginTransaction();
-            using var command = _connection!.CreateCommand();
+            using var transaction = connection.BeginTransaction();
+            using var command = connection.CreateCommand();
             command.Transaction = transaction;
             command.CommandText = """
                 WITH RECURSIVE candidates(version) AS (
@@ -46,9 +45,7 @@ public partial class CatalogService
                 reader.IsDBNull(2) ? null : reader.GetString(2),
                 ReadEditSettings(reader, 3, id, $"version {reader.GetInt32(1)}"),
                 ReadEnumColumn(reader, 5, ImageFlag.Unflagged),
-                reader.IsDBNull(6)
-                    ? 0
-                    : (int)Math.Clamp(reader.GetInt64(6), 0, 5),
+                ReadRating(reader, 6),
                 ReadEnumColumn(reader, 7, ColorLabel.None));
             await reader.DisposeAsync();
 
@@ -76,10 +73,7 @@ public partial class CatalogService
                     state = state with
                     {
                         AssessmentRevision = assessment.GetInt64(0),
-                        AssessedUtc = DateTime.Parse(
-                            assessment.GetString(1),
-                            null,
-                            System.Globalization.DateTimeStyles.RoundtripKind)
+                        AssessedUtc = ReadUtc(assessment, 1)
                     };
                 }
             }
@@ -87,11 +81,7 @@ public partial class CatalogService
             await transaction.CommitAsync();
             await RefreshCacheStampAsync(id);
             return state;
-        }
-        finally
-        {
-            _connectionGate.Release();
-        }
+        });
     }
 
     public async Task RenameVersionAsync(long catalogId, string? label)
@@ -103,10 +93,9 @@ public partial class CatalogService
         if (normalized?.Length > 24)
             throw new ArgumentException("Version labels are limited to 24 characters.");
 
-        await _connectionGate.WaitAsync();
-        try
+        await GatedAsync(async connection =>
         {
-            using var command = _connection!.CreateCommand();
+            using var command = connection.CreateCommand();
             command.CommandText = """
                 UPDATE images SET version_label = @label, updated_utc = @updated
                 WHERE id = @id;
@@ -116,11 +105,7 @@ public partial class CatalogService
             command.Parameters.AddWithValue("@updated", DateTime.UtcNow.ToString("O"));
             if (await command.ExecuteNonQueryAsync() != 1)
                 throw new InvalidOperationException($"Catalog image {catalogId} was not found.");
-        }
-        finally
-        {
-            _connectionGate.Release();
-        }
+        });
     }
 
     public async Task<bool> DeleteVersionAsync(long catalogId)
@@ -145,11 +130,10 @@ public partial class CatalogService
     public async Task DeleteFileAsync(string filePath)
     {
         EnsureInitialized();
-        await _connectionGate.WaitAsync();
-        try
+        await GatedAsync(async connection =>
         {
-            using var transaction = _connection!.BeginTransaction();
-            using var command = _connection!.CreateCommand();
+            using var transaction = connection.BeginTransaction();
+            using var command = connection.CreateCommand();
             command.Transaction = transaction;
             command.CommandText =
                 "SELECT id FROM images WHERE file_path = @path COLLATE NOCASE;";
@@ -178,10 +162,6 @@ public partial class CatalogService
                 "DELETE FROM images WHERE file_path = @path COLLATE NOCASE;";
             await command.ExecuteNonQueryAsync();
             await transaction.CommitAsync();
-        }
-        finally
-        {
-            _connectionGate.Release();
-        }
+        });
     }
 }

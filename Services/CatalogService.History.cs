@@ -16,15 +16,10 @@ public partial class CatalogService
         {
             await loadGate(catalogId);
         }
-        await _connectionGate.WaitAsync();
-        try
+        return await GatedAsync(async connection =>
         {
-            return await ReadHistoryAsync(_connection!, null, catalogId);
-        }
-        finally
-        {
-            _connectionGate.Release();
-        }
+            return await ReadHistoryAsync(connection, null, catalogId);
+        });
     }
 
     public async Task SaveEditSettingsWithHistoryAsync(
@@ -129,19 +124,7 @@ public partial class CatalogService
         command.Parameters.AddWithValue("@position", truncateAfter);
         await command.ExecuteNonQueryAsync();
 
-        foreach (var entry in appended)
-        {
-            command.Parameters.Clear();
-            command.CommandText = """
-                INSERT INTO edit_history (image_id, seq, label, settings_json)
-                VALUES (@id, @seq, @label, @settings);
-                """;
-            command.Parameters.AddWithValue("@id", catalogId);
-            command.Parameters.AddWithValue("@seq", entry.Sequence);
-            command.Parameters.AddWithValue("@label", entry.Label);
-            command.Parameters.AddWithValue("@settings", entry.SettingsJson);
-            await command.ExecuteNonQueryAsync();
-        }
+        await InsertHistoryRowsAsync(command, catalogId, appended);
 
         await WritePositionAsync(transaction, catalogId, position);
     }

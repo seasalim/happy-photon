@@ -251,7 +251,7 @@ public class EditSettings
                Lens.ProfileOverride == other.Lens.ProfileOverride &&
                Rotation == other.Rotation &&
                HorizonRotation == other.HorizonRotation &&
-               CropsMatch(Crop, other.Crop) &&
+               CropRegion.Matches(Crop, other.Crop) &&
                CurvesMatch(Curve, other.Curve) &&
                CurvesMatch(CurveRed, other.CurveRed) &&
                CurvesMatch(CurveGreen, other.CurveGreen) &&
@@ -260,12 +260,6 @@ public class EditSettings
                (Locals ?? []).SequenceEqual(other.Locals ?? []) &&
                (Repairs ?? []).SequenceEqual(other.Repairs ?? []);
     }
-
-    private static bool CropsMatch(CropRegion? left, CropRegion? right) =>
-        ReferenceEquals(left, right) ||
-        left != null && right != null &&
-        left.Left == right.Left && left.Top == right.Top &&
-        left.Right == right.Right && left.Bottom == right.Bottom;
 
     private static bool CurvesMatch(CurveData? left, CurveData? right)
     {

@@ -15,7 +15,7 @@ public sealed partial class PreviewService
 
     internal Action<RenderRequest, ImageMagick.MagickImage>? FullResolutionRendered { get; set; }
 
-    internal bool CanRefine(ImageFile image) => SourceAccessPolicy.CanRead(
+    internal bool CanReadSourceInBackground(ImageFile image) => SourceAccessPolicy.CanRead(
         _sourceAvailability.GetAvailability(image.FilePath), SourceReadIntent.Background);
 
     internal int FullResolutionThreshold(ImageFile image, EditSettings settings, Bitmap bitmap)
@@ -32,7 +32,7 @@ public sealed partial class PreviewService
 
     internal DevelopFullBase CreateFullBase(ImageFile image, EditSettings settings) => new(async token =>
     {
-        if (!CanRefine(image)) return null;
+        if (!CanReadSourceInBackground(image)) return null;
 
         var decode = await ResolveDecodeAsync(image, settings, token).ConfigureAwait(false);
         FullResolutionTrace?.Invoke("decode-start");

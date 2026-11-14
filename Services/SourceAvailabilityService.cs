@@ -97,4 +97,8 @@ internal sealed class SourceAvailabilityService : ISourceAvailabilityService
         (attributes & HydrationAttributes) != 0
             ? SourceAvailability.RequiresHydration
             : SourceAvailability.AvailableLocally;
+
+    // Checks the hydration bits on every OS, so injected attributes work in tests anywhere.
+    internal static bool IsCloudOnly(FileAttributes attributes) =>
+        ClassifyWindowsAttributes(attributes) == SourceAvailability.RequiresHydration;
 }

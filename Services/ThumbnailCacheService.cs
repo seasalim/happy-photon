@@ -58,27 +58,11 @@ public sealed class ThumbnailCacheService : IAsyncDisposable
         _processingTask = Task.Run(ProcessSaveQueueAsync);
     }
 
-    public string GetCachePath(ImageFile imageFile)
-    {
-        if (imageFile.CatalogId == 0)
-            throw new InvalidOperationException("Image must be in catalog before caching.");
-        return _catalogService.GetThumbnailPath(imageFile.CatalogId);
-    }
+    public string GetCachePath(ImageFile imageFile) =>
+        CatalogCacheFile.PathFor(imageFile, _catalogService.GetThumbnailPath);
 
-    public bool IsCacheValid(ImageFile imageFile)
-    {
-        if (imageFile.CatalogId == 0) return false;
-        var cachePath = _catalogService.GetThumbnailPath(imageFile.CatalogId);
-        if (!File.Exists(cachePath)) return false;
-        try
-        {
-            return File.GetLastWriteTimeUtc(cachePath) > File.GetLastWriteTimeUtc(imageFile.FilePath);
-        }
-        catch
-        {
-            return false;
-        }
-    }
+    public bool IsCacheValid(ImageFile imageFile) =>
+        CatalogCacheFile.IsNewerThanSource(imageFile, _catalogService.GetThumbnailPath);
 
     public bool IsCacheValid(
         ImageFile imageFile,

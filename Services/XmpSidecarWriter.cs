@@ -403,19 +403,10 @@ public sealed class XmpSidecarWriter : IAsyncDisposable
         string.Equals(left.Path, right.Path, StringComparison.OrdinalIgnoreCase) &&
         left.LastWriteUtc == right.LastWriteUtc && left.Length == right.Length;
 
-    private static async Task<XDocument> LoadAsync(
+    private static Task<XDocument> LoadAsync(
         string path,
-        CancellationToken cancellationToken)
-    {
-        XmpSidecarReadStream.ThrowIfOversized(path);
-        await using var stream = new FileStream(
-            path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite,
-            4096, FileOptions.Asynchronous | FileOptions.SequentialScan);
-        await using var bounded = new XmpSidecarReadStream(
-            stream, path, XmpSidecarReader.MaximumSidecarBytes);
-        return await XDocument.LoadAsync(
-            bounded, LoadOptions.PreserveWhitespace, cancellationToken);
-    }
+        CancellationToken cancellationToken) =>
+        XmpSidecarReader.LoadBoundedAsync(path, -1, cancellationToken);
 
     private static async Task SaveAsync(
         XDocument document,

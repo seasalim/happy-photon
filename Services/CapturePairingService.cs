@@ -10,9 +10,7 @@ public sealed record CaptureFileGroup(IReadOnlyList<string> ImageIds);
 public static class CapturePairingService
 {
     private static readonly StringComparer PathComparer =
-        OperatingSystem.IsWindows()
-            ? StringComparer.OrdinalIgnoreCase
-            : StringComparer.Ordinal;
+        PathComparison.Comparer;
 
     public static bool IsRawJpegPair(string firstPath, string secondPath)
     {

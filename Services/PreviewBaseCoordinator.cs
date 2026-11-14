@@ -5,9 +5,7 @@ namespace HappyPhoton.Services;
 internal sealed partial class PreviewBaseCoordinator : IAsyncDisposable
 {
     private static readonly StringComparer PathComparer =
-        OperatingSystem.IsWindows()
-            ? StringComparer.OrdinalIgnoreCase
-            : StringComparer.Ordinal;
+        PathComparison.Comparer;
 
     private readonly IBaseImageLoader _loader;
     private readonly object _sync = new();

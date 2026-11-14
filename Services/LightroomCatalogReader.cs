@@ -117,7 +117,7 @@ public sealed class LightroomCatalogReader
         var columns = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
         foreach (var table in CoreTables)
         {
-            columns[table] = await ReadColumnsAsync(connection, table, cancellationToken);
+            columns[table] = await SqliteColumns.ReadAsync(connection, table, cancellationToken: cancellationToken);
         }
         ValidateCoreColumns(columns);
 
@@ -125,7 +125,7 @@ public sealed class LightroomCatalogReader
         var major = checked((int)(version / 100000));
         var carriedAxes = GetCarriedAxes(columns["Adobe_images"]);
         var cropColumns = tables.Contains("Adobe_imageDevelopSettings")
-            ? await ReadColumnsAsync(connection, "Adobe_imageDevelopSettings", cancellationToken)
+            ? await SqliteColumns.ReadAsync(connection, "Adobe_imageDevelopSettings", cancellationToken: cancellationToken)
             : [];
         var carriesCrops = columns["Adobe_images"].Contains("orientation") &&
             new[] { "image", "text", "fileWidth", "fileHeight", "croppedWidth", "croppedHeight" }
@@ -155,19 +155,6 @@ public sealed class LightroomCatalogReader
         var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         using var reader = await command.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken)) result.Add(reader.GetString(0));
-        return result;
-    }
-
-    private static async Task<HashSet<string>> ReadColumnsAsync(
-        SqliteConnection connection,
-        string table,
-        CancellationToken cancellationToken)
-    {
-        using var command = connection.CreateCommand();
-        command.CommandText = $"PRAGMA table_info(\"{table}\");";
-        var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        while (await reader.ReadAsync(cancellationToken)) result.Add(reader.GetString(1));
         return result;
     }
 

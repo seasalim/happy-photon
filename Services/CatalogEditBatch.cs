@@ -27,7 +27,7 @@ public sealed record CatalogEditBatchTarget(long CatalogId, string? PreviousJson
                     return new();
                 }
 
-                return EditSettingsJson.Deserialize(PreviousJson, out _);
+                return EditSettingsJson.Deserialize(document.RootElement, out _);
             }
             catch (JsonException)
             {

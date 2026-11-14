@@ -66,7 +66,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        if (!ImageService.Previews.CanRefine(image))
+        if (!ImageService.Previews.CanReadSourceInBackground(image))
         {
             ReleaseFullResolution();
             OneToOneStatus = "1:1 · preview detail";

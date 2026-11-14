@@ -18,31 +18,26 @@ public partial class CatalogService
         if (normalized.Length == 0) return [];
         ValidateMutations(normalized);
 
-        await _connectionGate.WaitAsync(cancellationToken);
-        try
+        return await GatedAsync(async connection =>
         {
-            using var transaction = _connection!.BeginTransaction();
+            using var transaction = connection.BeginTransaction();
             var assessedUtc = DateTime.UtcNow;
             foreach (var mutation in normalized)
             {
                 await ApplyAssessmentMutationAsync(
-                    _connection, transaction, mutation,
+                    connection, transaction, mutation,
                     mutation.PendingAxes & mutation.Axes,
                     assessedUtc,
                     cancellationToken);
             }
 
             var snapshots = await ReadAssessmentSnapshotsAsync(
-                _connection, transaction,
+                connection, transaction,
                 normalized.Select(mutation => mutation.ImageId).ToArray(),
                 cancellationToken);
             await transaction.CommitAsync(cancellationToken);
             return snapshots;
-        }
-        finally
-        {
-            _connectionGate.Release();
-        }
+        }, cancellationToken);
     }
 
     public async Task<IReadOnlyList<(AssessmentSnapshot Snapshot, AssessmentAxes Axes)>>
@@ -51,11 +46,10 @@ public partial class CatalogService
     {
         EnsureInitialized();
         if (imageIds.Count == 0) return [];
-        await _connectionGate.WaitAsync(cancellationToken);
-        try
+        return await GatedAsync(async connection =>
         {
-            using var transaction = _connection!.BeginTransaction();
-            using var command = _connection.CreateCommand();
+            using var transaction = connection.BeginTransaction();
+            using var command = connection.CreateCommand();
             command.Transaction = transaction;
             command.CommandText = """
                 SELECT id, edit_settings FROM images
@@ -70,9 +64,9 @@ public partial class CatalogService
                         reader.GetString(1), out _).Crop is { IsFullImage: false });
             }
             var ids = crops.Keys.ToArray();
-            await EnsureAssessmentRowsAsync(_connection, ids, cancellationToken, transaction);
+            await EnsureAssessmentRowsAsync(connection, ids, cancellationToken, transaction);
             var snapshots = await ReadAssessmentSnapshotsAsync(
-                _connection, transaction, ids, cancellationToken);
+                connection, transaction, ids, cancellationToken);
             var marked = new List<(AssessmentSnapshot, AssessmentAxes)>();
             foreach (var snapshot in snapshots)
             {
@@ -93,11 +87,7 @@ public partial class CatalogService
             }
             await transaction.CommitAsync(cancellationToken);
             return marked;
-        }
-        finally
-        {
-            _connectionGate.Release();
-        }
+        }, cancellationToken);
     }
 
     public async Task<IReadOnlyList<AssessmentSnapshot>> LoadAssessmentSnapshotsAsync(
@@ -107,18 +97,13 @@ public partial class CatalogService
         EnsureInitialized();
         var ids = imageIds.Distinct().ToArray();
         if (ids.Length == 0) return [];
-        await _connectionGate.WaitAsync(cancellationToken);
-        try
+        return await GatedAsync(async connection =>
         {
             await EnsureAssessmentRowsAsync(
-                _connection!, ids, cancellationToken);
+                connection, ids, cancellationToken);
             return await ReadAssessmentSnapshotsAsync(
-                _connection!, null, ids, cancellationToken);
-        }
-        finally
-        {
-            _connectionGate.Release();
-        }
+                connection, null, ids, cancellationToken);
+        }, cancellationToken);
     }
 
     private static async Task EnsureAssessmentRowsAsync(
@@ -148,10 +133,9 @@ public partial class CatalogService
         CancellationToken cancellationToken = default)
     {
         EnsureInitialized();
-        await _connectionGate.WaitAsync(cancellationToken);
-        try
+        return await GatedAsync(async connection =>
         {
-            using var command = _connection!.CreateCommand();
+            using var command = connection.CreateCommand();
             command.CommandText = """
                 UPDATE image_assessments
                 SET pending_axes = pending_axes & ~@axes
@@ -161,11 +145,7 @@ public partial class CatalogService
             command.Parameters.AddWithValue("@revision", revision);
             command.Parameters.AddWithValue("@axes", (int)axes);
             return await command.ExecuteNonQueryAsync(cancellationToken) == 1;
-        }
-        finally
-        {
-            _connectionGate.Release();
-        }
+        }, cancellationToken);
     }
 
     public async Task<XmpCropProjection> LoadCropProjectionAsync(
@@ -173,10 +153,9 @@ public partial class CatalogService
         CancellationToken cancellationToken = default)
     {
         EnsureInitialized();
-        await _connectionGate.WaitAsync(cancellationToken);
-        try
+        return await GatedAsync(async connection =>
         {
-            using var command = _connection!.CreateCommand();
+            using var command = connection.CreateCommand();
             command.CommandText =
                 "SELECT edit_settings FROM images WHERE id = @id AND version = 1;";
             command.Parameters.AddWithValue("@id", imageId);
@@ -185,11 +164,7 @@ public partial class CatalogService
                 throw new InvalidOperationException(
                     $"Catalog image {imageId} was not found or is not V1.");
             return XmpCropProjection.From(EditSettingsJson.Deserialize(json, out _));
-        }
-        finally
-        {
-            _connectionGate.Release();
-        }
+        }, cancellationToken);
     }
 
     public async Task<IReadOnlyList<XmpReconcileAdoption>> AdoptSidecarFactsAsync(
@@ -198,21 +173,20 @@ public partial class CatalogService
     {
         EnsureInitialized();
         if (items.Count == 0) return [];
-        await _connectionGate.WaitAsync(cancellationToken);
-        try
+        return await GatedAsync(async connection =>
         {
-            using var transaction = _connection!.BeginTransaction();
+            using var transaction = connection.BeginTransaction();
             var adopted = new List<XmpReconcileAdoption>();
             foreach (var item in items)
             {
                 var axes = SelectAdoptableAxes(item);
                 if (axes == AssessmentAxes.None) continue;
                 var adoptedAxes = await AdoptOneAsync(
-                    _connection, transaction, item, axes, cancellationToken);
+                    connection, transaction, item, axes, cancellationToken);
                 if (adoptedAxes != AssessmentAxes.None)
                 {
                     var refreshed = (await ReadAssessmentSnapshotsAsync(
-                        _connection, transaction, [item.Snapshot.ImageId],
+                        connection, transaction, [item.Snapshot.ImageId],
                         cancellationToken)).Single();
                     adopted.Add(new XmpReconcileAdoption(
                         refreshed, adoptedAxes,
@@ -223,11 +197,7 @@ public partial class CatalogService
             }
             await transaction.CommitAsync(cancellationToken);
             return adopted;
-        }
-        finally
-        {
-            _connectionGate.Release();
-        }
+        }, cancellationToken);
     }
 
     private static AssessmentAxes SelectAdoptableAxes(XmpReconcileItem item)
@@ -443,8 +413,7 @@ public partial class CatalogService
                 reader.GetInt64(0), reader.GetString(1),
                 (ImageFlag)reader.GetInt32(2), reader.GetInt32(3),
                 (ColorLabel)reader.GetInt32(4), reader.GetInt64(5),
-                DateTime.Parse(reader.GetString(6), null,
-                    System.Globalization.DateTimeStyles.RoundtripKind),
+                ReadUtc(reader, 6),
                 (AssessmentAxes)reader.GetInt32(7)));
         }
         if (result.Count != imageIds.Distinct().Count())

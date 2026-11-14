@@ -229,7 +229,7 @@ public sealed class CatalogImportService
             return null;
         }
         var value = source.Crop!;
-        if (XmpCropProjection.CropsMatch(local.Crop, value) && local.Rotation == 0 &&
+        if (CropRegion.Matches(local.Crop, value) && local.Rotation == 0 &&
             local.HorizonRotation == 0 && local.Geometry?.IsIdentity != false)
         {
             summary.Unchanged++;
@@ -406,9 +406,7 @@ public sealed class CatalogImportService
     private static StringComparer PathComparer => StringComparer.OrdinalIgnoreCase;
 
     private static StringComparison PathStringComparison =>
-        OperatingSystem.IsWindows()
-            ? StringComparison.OrdinalIgnoreCase
-            : StringComparison.Ordinal;
+        PathComparison.Comparison;
 
     private static readonly CatalogImportBaseline EmptyBaseline =
         new(false, 0, ImageFlag.Unflagged, 0, ColorLabel.None,

@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using Microsoft.Data.Sqlite;
 
 namespace HappyPhoton.Services;
@@ -11,12 +10,12 @@ internal static class CatalogFingerprinter
         var presets = Path.Combine(root, "presets");
         return new CatalogFingerprint(
             await RecoverAndCountRowsAsync(database),
-            HashFile(Path.Combine(root, ".catalog-identity")),
+            CatalogBackupService.Hash(Path.Combine(root, ".catalog-identity")),
             Directory.Exists(presets)
                 ? Directory.EnumerateFiles(presets, "*.json")
                     .ToDictionary(
                         path => Path.GetFileName(path),
-                        HashFile,
+                        CatalogBackupService.Hash,
                         StringComparer.Ordinal)
                 : new Dictionary<string, string>());
     }
@@ -43,7 +42,4 @@ internal static class CatalogFingerprinter
         command.CommandText = "SELECT COUNT(*) FROM images;";
         return (long)(await command.ExecuteScalarAsync() ?? 0L);
     }
-
-    private static string HashFile(string path) =>
-        Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path)));
 }

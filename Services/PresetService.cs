@@ -93,9 +93,7 @@ public class PresetService
         if (_initialized && string.Equals(
                 _presetsDirectory,
                 normalized,
-                OperatingSystem.IsWindows()
-                    ? StringComparison.OrdinalIgnoreCase
-                    : StringComparison.Ordinal))
+                PathComparison.Comparison))
         {
             return;
         }
@@ -296,7 +294,7 @@ public class PresetService
         }
 
         var settings = EditSettingsJson.Deserialize(
-            settingsElement.GetRawText(),
+            settingsElement,
             out var wasClamped, ignoreLocals: true, ignoreRepairs: true);
         // Camera and lens profiles are image-specific and never transfer through a
         // preset file, including a hand-edited one.

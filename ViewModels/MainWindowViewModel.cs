@@ -113,9 +113,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         AppDataLocationOrigin.Persisted,
         AppDataLocationOrigin.Persisted,
         string.Equals(_catalogService.CatalogPath, _catalogService.CachePath,
-            OperatingSystem.IsWindows()
-                ? StringComparison.OrdinalIgnoreCase
-                : StringComparison.Ordinal)
+            PathComparison.Comparison)
             ? AppDataLocationTopology.LegacyCoLocated
             : AppDataLocationTopology.Split));
 

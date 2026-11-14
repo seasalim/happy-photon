@@ -10,9 +10,7 @@ public partial class MainWindowViewModel
     private bool _restoringShowCapturePairs;
 
     private static readonly StringComparer CapturePathComparer =
-        OperatingSystem.IsWindows()
-            ? StringComparer.OrdinalIgnoreCase
-            : StringComparer.Ordinal;
+        PathComparison.Comparer;
 
     [ObservableProperty]
     private bool _showCapturePairs;

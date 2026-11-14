@@ -202,7 +202,5 @@ public static class AppDataRootOwnership
         string.Equals(
             Normalize(left),
             Normalize(right),
-            OperatingSystem.IsWindows()
-                ? StringComparison.OrdinalIgnoreCase
-                : StringComparison.Ordinal);
+            PathComparison.Comparison);
 }

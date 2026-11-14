@@ -33,12 +33,7 @@ internal static class CatalogSchema
     private static async Task ValidateAssessmentSchemaAsync(
         SqliteConnection connection)
     {
-        using var command = connection.CreateCommand();
-        command.CommandText = "PRAGMA table_info(image_assessments);";
-        var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        using var reader = await command.ExecuteReaderAsync();
-        while (await reader.ReadAsync()) columns.Add(reader.GetString(1));
-
+        var columns = await SqliteColumns.ReadAsync(connection, "image_assessments");
         string[] required = ["image_id", "revision", "assessed_utc", "pending_axes"];
         if (required.Any(column => !columns.Contains(column)))
         {
@@ -80,7 +75,7 @@ internal static class CatalogSchema
 
     private static async Task ValidateImageSchemaAsync(SqliteConnection connection)
     {
-        var columns = await GetImageColumnsAsync(connection);
+        var columns = await SqliteColumns.ReadAsync(connection, "images");
         var missing = RequiredImageColumns
             .Where(column => !columns.Contains(column))
             .ToArray();
@@ -94,20 +89,5 @@ internal static class CatalogSchema
                 $"(missing: {string.Join(", ", missing)}). Set the catalog and cache " +
                 $"at '{catalogPath}' aside together, then retry.");
         }
-    }
-
-    private static async Task<HashSet<string>> GetImageColumnsAsync(SqliteConnection connection)
-    {
-        using var cmd = connection.CreateCommand();
-        cmd.CommandText = "PRAGMA table_info(images)";
-
-        var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-        {
-            columns.Add(reader.GetString(1));
-        }
-
-        return columns;
     }
 }

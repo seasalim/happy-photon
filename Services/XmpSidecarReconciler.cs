@@ -104,18 +104,13 @@ public sealed class XmpSidecarReconciler
                 {
                     if (facts.Crop.Kind == XmpFactKind.Matched)
                     {
+                        // Short-circuit order matters: no source I/O while a crop is pending or geometry is edited.
                         if (snapshot.PendingAxes.HasFlag(AssessmentAxes.Crop) ||
-                            XmpCropProjection.HasGeometryEdits(localSettings))
-                        {
-                            facts = facts with { Crop = XmpFact<CropRegion>.Missing };
-                        }
-                        else if (!SourceAccessPolicy.CanRead(
+                            XmpCropProjection.HasGeometryEdits(localSettings) ||
+                            !SourceAccessPolicy.CanRead(
                                 _availability.GetAvailability(path),
-                                SourceReadIntent.Background))
-                        {
-                            facts = facts with { Crop = XmpFact<CropRegion>.Missing };
-                        }
-                        else if (!_readOrientation(path, out var orientation))
+                                SourceReadIntent.Background) ||
+                            !_readOrientation(path, out var orientation))
                         {
                             facts = facts with { Crop = XmpFact<CropRegion>.Missing };
                         }

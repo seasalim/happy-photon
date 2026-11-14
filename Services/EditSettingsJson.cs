@@ -40,14 +40,22 @@ internal static partial class EditSettingsJson
     public static EditSettings Deserialize(string json, out bool wasClamped, bool ignoreLocals = false, bool ignoreRepairs = false)
     {
         using var document = JsonDocument.Parse(json);
-        if (document.RootElement.ValueKind != JsonValueKind.Object ||
-            !document.RootElement.TryGetProperty("version", out var versionElement) ||
+
+        return Deserialize(document.RootElement, out wasClamped, ignoreLocals, ignoreRepairs);
+    }
+
+    // Callers that already parsed the document pass its root, so each row is parsed once.
+    public static EditSettings Deserialize(
+        JsonElement root, out bool wasClamped, bool ignoreLocals = false, bool ignoreRepairs = false)
+    {
+        if (root.ValueKind != JsonValueKind.Object ||
+            !root.TryGetProperty("version", out var versionElement) ||
             !versionElement.TryGetInt32(out var documentVersion) ||
             !IsSupportedVersion(documentVersion))
         {
             throw new JsonException("Edit settings document must declare version 3 or 4.");
         }
-        if (!document.RootElement.TryGetProperty("lens", out var lensElement) ||
+        if (!root.TryGetProperty("lens", out var lensElement) ||
             lensElement.ValueKind != JsonValueKind.Object ||
             !HasBoolean(lensElement, "distortion") ||
             !HasBoolean(lensElement, "chromaticAberration") ||
@@ -60,12 +68,12 @@ internal static partial class EditSettingsJson
         EditSettings? parsed;
         if (ignoreLocals || ignoreRepairs || documentVersion == 3)
         {
-            var payload = System.Text.Json.Nodes.JsonNode.Parse(json)!.AsObject();
+            var payload = System.Text.Json.Nodes.JsonObject.Create(root)!;
             if (ignoreLocals || documentVersion == 3) payload.Remove("locals");
             if (ignoreRepairs) payload.Remove("repairs");
             parsed = payload.Deserialize<EditSettings>(CompactOptions);
         }
-        else parsed = document.RootElement.Deserialize<EditSettings>(CompactOptions);
+        else parsed = root.Deserialize<EditSettings>(CompactOptions);
         var settings = parsed
             ?? throw new JsonException("Edit settings document is null.");
         if (settings.Version != documentVersion)

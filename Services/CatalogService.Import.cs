@@ -16,10 +16,9 @@ public partial class CatalogService
         EnsureInitialized();
         if (filePaths.Count == 0)
             return new Dictionary<string, CatalogImportBaseline>();
-        await _connectionGate.WaitAsync(cancellationToken);
-        try
+        return await GatedAsync(async connection =>
         {
-            using var command = _connection!.CreateCommand();
+            using var command = connection.CreateCommand();
             command.CommandText = """
                 SELECT images.file_path, images.id, images.flag_state,
                        images.rating, images.color_label,
@@ -41,27 +40,10 @@ public partial class CatalogService
             using var reader = await command.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
             {
-                result[reader.GetString(0)] = new CatalogImportBaseline(
-                    true, reader.GetInt64(1),
-                    ReadEnumColumn(reader, 2, ImageFlag.Unflagged),
-                    reader.IsDBNull(3) ? 0 :
-                        (int)Math.Clamp(reader.GetInt64(3), 0, 5),
-                    ReadEnumColumn(reader, 4, ColorLabel.None),
-                    reader.IsDBNull(5) ? 0 : reader.GetInt64(5),
-                    reader.IsDBNull(6) ? null : DateTime.Parse(
-                        reader.GetString(6), null,
-                        System.Globalization.DateTimeStyles.RoundtripKind),
-                    reader.IsDBNull(7) ? AssessmentAxes.None :
-                        (AssessmentAxes)reader.GetInt32(7),
-                    reader.GetString(0),
-                    ReadEditSettings(reader, 8, reader.GetInt64(1), reader.GetString(0)));
+                result[reader.GetString(0)] = ReadImportBaseline(reader, 1, 0);
             }
             return result;
-        }
-        finally
-        {
-            _connectionGate.Release();
-        }
+        }, cancellationToken);
     }
 
     public async Task<CatalogImportApplyResult> ApplyImportAsync(
@@ -69,10 +51,9 @@ public partial class CatalogService
         CancellationToken cancellationToken = default)
     {
         EnsureInitialized();
-        await _connectionGate.WaitAsync(cancellationToken);
-        try
+        return await GatedAsync(async connection =>
         {
-            using var transaction = _connection!.BeginTransaction();
+            using var transaction = connection.BeginTransaction();
             var writes = 0;
             var adoptions = new List<CatalogImportAdoption>();
 
@@ -80,7 +61,7 @@ public partial class CatalogService
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 var current = await ReadImportBaselineAsync(
-                    _connection, transaction, change.FilePath, cancellationToken);
+                    connection, transaction, change.FilePath, cancellationToken);
                 if (!BaselineMatches(change.Baseline, current, change.ComparedAxes))
                     throw new CatalogImportConflictException();
 
@@ -88,7 +69,7 @@ public partial class CatalogService
                 if (!current.Exists)
                 {
                     imageId = await InsertImportedPathAsync(
-                        _connection, transaction, change.FilePath, cancellationToken);
+                        connection, transaction, change.FilePath, cancellationToken);
                     await ObserveImportWriteAsync(++writes, cancellationToken);
                 }
 
@@ -99,19 +80,19 @@ public partial class CatalogService
                     await ObserveImportWriteAsync(++writes, cancellationToken);
                 if (change.Axes == AssessmentAxes.None && adoptedCrop == null) continue;
                 if (change.Axes == AssessmentAxes.None)
-                    await EnsureAssessmentRowsAsync(_connection, [imageId], cancellationToken, transaction);
+                    await EnsureAssessmentRowsAsync(connection, [imageId], cancellationToken, transaction);
                 else
-                    await UpdateImportedAssessmentAsync(_connection, transaction, imageId, change, DateTime.UtcNow, cancellationToken);
+                    await UpdateImportedAssessmentAsync(connection, transaction, imageId, change, DateTime.UtcNow, cancellationToken);
                 if (change.Axes != AssessmentAxes.None) await ObserveImportWriteAsync(++writes, cancellationToken);
 
                 var snapshot = (await ReadAssessmentSnapshotsAsync(
-                    _connection, transaction, [imageId], cancellationToken)).Single();
+                    connection, transaction, [imageId], cancellationToken)).Single();
                 adoptions.Add(new CatalogImportAdoption(
                     current.Revision, snapshot, adoptedCrop));
             }
 
             var currentSettings = await ReadSettingAsync(
-                _connection, transaction, preview.SettingsKey, cancellationToken);
+                connection, transaction, preview.SettingsKey, cancellationToken);
             if (!string.Equals(currentSettings, preview.BaselineSettingsJson,
                     StringComparison.Ordinal))
             {
@@ -121,18 +102,14 @@ public partial class CatalogService
                     StringComparison.Ordinal))
             {
                 await WriteSettingAsync(
-                    _connection, transaction, preview.SettingsKey,
+                    connection, transaction, preview.SettingsKey,
                     preview.SettingsJson, cancellationToken);
                 await ObserveImportWriteAsync(++writes, cancellationToken);
             }
 
             await transaction.CommitAsync(cancellationToken);
             return new CatalogImportApplyResult(preview.Report, adoptions, writes);
-        }
-        finally
-        {
-            _connectionGate.Release();
-        }
+        }, cancellationToken);
     }
 
     private async Task ObserveImportWriteAsync(
@@ -186,19 +163,28 @@ public partial class CatalogService
                 0, null, AssessmentAxes.None, null);
         }
 
+        return ReadImportBaseline(reader, 0, 7);
+    }
+
+    // Reads id, flag, rating, label, revision, assessed time and pending axes from consecutive
+    // columns starting at idOrdinal; the edit settings are always columns 8 and 9.
+    private CatalogImportBaseline ReadImportBaseline(
+        SqliteDataReader reader, int idOrdinal, int pathOrdinal)
+    {
+        var id = reader.GetInt64(idOrdinal);
+        var path = reader.GetString(pathOrdinal);
+
         return new CatalogImportBaseline(
-            true, reader.GetInt64(0),
-            ReadEnumColumn(reader, 1, ImageFlag.Unflagged),
-            reader.IsDBNull(2) ? 0 : (int)Math.Clamp(reader.GetInt64(2), 0, 5),
-            ReadEnumColumn(reader, 3, ColorLabel.None),
-            reader.IsDBNull(4) ? 0 : reader.GetInt64(4),
-            reader.IsDBNull(5) ? null : DateTime.Parse(
-                reader.GetString(5), null,
-                System.Globalization.DateTimeStyles.RoundtripKind),
-            reader.IsDBNull(6) ? AssessmentAxes.None :
-                (AssessmentAxes)reader.GetInt32(6),
-            reader.GetString(7),
-            ReadEditSettings(reader, 8, reader.GetInt64(0), reader.GetString(7)));
+            true, id,
+            ReadEnumColumn(reader, idOrdinal + 1, ImageFlag.Unflagged),
+            ReadRating(reader, idOrdinal + 2),
+            ReadEnumColumn(reader, idOrdinal + 3, ColorLabel.None),
+            reader.IsDBNull(idOrdinal + 4) ? 0 : reader.GetInt64(idOrdinal + 4),
+            ReadUtcOrNull(reader, idOrdinal + 5),
+            reader.IsDBNull(idOrdinal + 6) ? AssessmentAxes.None :
+                (AssessmentAxes)reader.GetInt32(idOrdinal + 6),
+            path,
+            ReadEditSettings(reader, 8, id, path));
     }
 
     private async Task<CropRegion?> AdoptImportedCropAsync(

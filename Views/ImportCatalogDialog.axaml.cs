@@ -150,9 +150,7 @@ public partial class ImportCatalogDialog : Window
         }
         else if (unresolved == 0)
         {
-            var pathComparer = OperatingSystem.IsWindows()
-                ? StringComparer.OrdinalIgnoreCase
-                : StringComparer.Ordinal;
+            var pathComparer = PathComparison.Comparer;
             var allMatchedAutomatically = importableRoots.All(root =>
                 automatic.TryGetValue(root.SourcePath, out var automaticPath) &&
                 pathComparer.Equals(automaticPath,
@@ -286,9 +284,7 @@ public partial class ImportCatalogDialog : Window
             return string.Equals(
                 Path.TrimEndingDirectorySeparator(Path.GetFullPath(sourcePath)),
                 Path.TrimEndingDirectorySeparator(Path.GetFullPath(mappedPath)),
-                OperatingSystem.IsWindows()
-                    ? StringComparison.OrdinalIgnoreCase
-                    : StringComparison.Ordinal);
+                PathComparison.Comparison);
         }
         catch
         {

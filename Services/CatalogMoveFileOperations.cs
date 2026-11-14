@@ -141,9 +141,7 @@ internal static class CatalogMoveFileOperations
         string.Equals(
             Path.GetFullPath(left),
             Path.GetFullPath(right),
-            OperatingSystem.IsWindows()
-                ? StringComparison.OrdinalIgnoreCase
-                : StringComparison.Ordinal);
+            PathComparison.Comparison);
 
     public static void AssertDestinationEmpty(string destination)
     {

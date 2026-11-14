@@ -149,9 +149,7 @@ public partial class MainWindowViewModel
 
         _folderTreeService.LoadChildren(folder);
 
-        var comparison = OperatingSystem.IsWindows()
-            ? StringComparison.OrdinalIgnoreCase
-            : StringComparison.Ordinal;
+        var comparison = PathComparison.Comparison;
         SelectedImage = Browse.VisibleImages.FirstOrDefault(image =>
             string.Equals(image.FilePath, previousPath, comparison) &&
             image.Version == previousVersion)

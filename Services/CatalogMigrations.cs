@@ -89,20 +89,8 @@ internal static class CatalogMigrations
     private static async Task<bool> HasImageColumnAsync(
         SqliteConnection connection,
         string column,
-        SqliteTransaction? transaction)
-    {
-        using var command = connection.CreateCommand();
-        command.Transaction = transaction;
-        command.CommandText = "PRAGMA table_info(images);";
-        using var reader = await command.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-        {
-            if (string.Equals(reader.GetString(1), column,
-                    StringComparison.OrdinalIgnoreCase))
-                return true;
-        }
-        return false;
-    }
+        SqliteTransaction? transaction) =>
+        (await SqliteColumns.ReadAsync(connection, "images", transaction)).Contains(column);
 
     private static async Task AddVersionsAsync(
         SqliteConnection connection,
@@ -190,22 +178,7 @@ internal static class CatalogMigrations
         SqliteConnection connection,
         SqliteTransaction transaction)
     {
-        using var probe = connection.CreateCommand();
-        probe.Transaction = transaction;
-        probe.CommandText = "PRAGMA table_info(images);";
-        using (var reader = await probe.ExecuteReaderAsync())
-        {
-            while (await reader.ReadAsync())
-            {
-                if (string.Equals(
-                    reader.GetString(1),
-                    "color_label",
-                    StringComparison.OrdinalIgnoreCase))
-                {
-                    return;
-                }
-            }
-        }
+        if (await HasImageColumnAsync(connection, "color_label", transaction)) return;
 
         using var command = connection.CreateCommand();
         command.Transaction = transaction;

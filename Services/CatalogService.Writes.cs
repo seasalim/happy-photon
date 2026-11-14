@@ -56,11 +56,10 @@ public partial class CatalogService
         EnsureInitialized();
         DeleteCacheAssets(catalogId);
 
-        await _connectionGate.WaitAsync();
-        try
+        await GatedAsync(async connection =>
         {
-            using var transaction = _connection!.BeginTransaction();
-            using var cmd = _connection!.CreateCommand();
+            using var transaction = connection.BeginTransaction();
+            using var cmd = connection.CreateCommand();
             cmd.Transaction = transaction;
             cmd.CommandText =
                 "DELETE FROM image_assessments WHERE image_id = @id;";
@@ -71,11 +70,7 @@ public partial class CatalogService
             cmd.CommandText = "DELETE FROM images WHERE id = @id;";
             await cmd.ExecuteNonQueryAsync();
             await transaction.CommitAsync();
-        }
-        finally
-        {
-            _connectionGate.Release();
-        }
+        });
     }
 
     private void DeleteCacheAssets(long catalogId)

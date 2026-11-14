@@ -72,7 +72,7 @@ public sealed partial class PreviewService
                 blockingWorker = _adjacentWarmTask;
                 return false;
             }
-            if (imageFile.CatalogId == 0 || !CanReadAdjacentSource(imageFile) ||
+            if (imageFile.CatalogId == 0 || !CanReadSourceInBackground(imageFile) ||
                 _previewCache.HasSettingsMatchedEntry(imageFile, settingsHash) ||
                 _adjacentWarmEntry?.Matches(imageFile, settingsHash) == true)
                 return false;
@@ -199,7 +199,7 @@ public sealed partial class PreviewService
     {
         var entry = ReadAdjacentWarmEntry();
         if (entry == null || !entry.Matches(imageFile, settingsHash)) return null;
-        if (!CanReadAdjacentSource(imageFile) ||
+        if (!CanReadSourceInBackground(imageFile) ||
             !SourceMatches(imageFile, entry.SourceWriteTime))
         {
             DropAdjacentWarmEntry(entry);
@@ -228,10 +228,6 @@ public sealed partial class PreviewService
             DropAdjacentWarmEntry(entry);
         // An abandoned write leaves this entry as the only copy until replaced.
     }
-    private bool CanReadAdjacentSource(ImageFile imageFile) =>
-        SourceAccessPolicy.CanRead(_sourceAvailability.GetAvailability(
-                imageFile.FilePath),
-            SourceReadIntent.Background);
     private static bool SourceMatches(ImageFile image, DateTime writeTime)
     {
         try { return File.GetLastWriteTimeUtc(image.FilePath) == writeTime; }

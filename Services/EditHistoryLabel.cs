@@ -24,7 +24,7 @@ public static partial class EditHistoryLabel
         Add(changes, "Base look", before.BaseLook, after.BaseLook);
         AddRotation(changes, before.Rotation, after.Rotation);
         AddHorizon(changes, before.HorizonRotation, after.HorizonRotation);
-        if (!CropsMatch(before.Crop, after.Crop))
+        if (!CropRegion.Matches(before.Crop, after.Crop))
             changes.Add(after.Crop == null || after.Crop.IsFullImage
                 ? "Crop cleared"
                 : "Crop");
@@ -143,7 +143,7 @@ public static partial class EditHistoryLabel
     }
 
     public static string? CropOperation(EditSettings before, EditSettings after) =>
-        CropsMatch(before.Crop, after.Crop) ? null : "Crop";
+        CropRegion.Matches(before.Crop, after.Crop) ? null : "Crop";
 
     private static void AddRotation(
         ICollection<string> changes,
@@ -171,12 +171,6 @@ public static partial class EditHistoryLabel
         changes.Add($"Horizon {after.ToString(format)}° " +
                     $"({(after - before).ToString(format)}°)");
     }
-
-    private static bool CropsMatch(CropRegion? left, CropRegion? right) =>
-        ReferenceEquals(left, right) ||
-        left != null && right != null &&
-        left.Left == right.Left && left.Top == right.Top &&
-        left.Right == right.Right && left.Bottom == right.Bottom;
 
     private static void AddScalar(
         ICollection<string> changes,
