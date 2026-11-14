@@ -144,12 +144,10 @@ jobs:
         run: ./scripts/run-self-check.ps1 -Executable artifacts/release/win-x64/HappyPhoton.exe
       - name: Create Windows ZIP
         shell: pwsh
-        run: |
-          $artifact = "artifacts/release/happy-photon-${{ needs.prepare.outputs.version }}-win-x64.zip"
-          Compress-Archive `
-            -Path artifacts/release/win-x64/* `
-            -DestinationPath $artifact `
-            -CompressionLevel Optimal
+        run: >
+          ./scripts/package-windows-zip.ps1
+          -PublishDirectory artifacts/release/win-x64
+          -OutputPath artifacts/release/happy-photon-${{ needs.prepare.outputs.version }}-win-x64.zip
 
       - name: Upload Windows package
         uses: actions/upload-artifact@v7
@@ -204,18 +202,11 @@ jobs:
 
       - name: Create Linux archive
         shell: bash
-        run: |
-          chmod +x artifacts/release/linux-x64/HappyPhoton
-          epoch="$(git log -1 --format=%ct)"
-          artifact="artifacts/release/happy-photon-${{ needs.prepare.outputs.version }}-linux-x64.tar.gz"
-          tar --sort=name \
-            --mtime="@$epoch" \
-            --owner=0 \
-            --group=0 \
-            --numeric-owner \
-            -C artifacts/release/linux-x64 \
-            -cf - . |
-            gzip -n > "$artifact"
+        run: >
+          ./scripts/package-linux-archive.sh
+          --publish-dir artifacts/release/linux-x64
+          --output
+          artifacts/release/happy-photon-${{ needs.prepare.outputs.version }}-linux-x64.tar.xz
 
       - name: Self-check Linux build
         shell: pwsh
@@ -255,7 +246,7 @@ jobs:
         with:
           name: package-linux-x64
           path: |
-            artifacts/release/happy-photon-${{ needs.prepare.outputs.version }}-linux-x64.tar.gz
+            artifacts/release/happy-photon-${{ needs.prepare.outputs.version }}-linux-x64.tar.xz
             artifacts/release/happy-photon-${{ needs.prepare.outputs.version }}-x86_64.AppImage
           if-no-files-found: error
           retention-days: 1

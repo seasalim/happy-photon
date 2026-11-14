@@ -194,15 +194,20 @@ jobs:
 
           switch ($rid) {
             'win-x64' {
-              Compress-Archive -Path "$publish/*" -DestinationPath artifacts/ci/package.zip -CompressionLevel Optimal
+              ./scripts/package-windows-zip.ps1 -PublishDirectory $publish -OutputPath artifacts/ci/package.zip
               $sizes['Windows ZIP'] = (Get-Item artifacts/ci/package.zip).Length
               $sizes['Store MSIX'] = (Get-Item artifacts/windows-msix/package/*.msix).Length
             }
             'linux-x64' {
-              chmod +x "$publish/HappyPhoton"
-              $epoch = git log -1 --format=%ct
-              bash -c "tar --sort=name --mtime=@$epoch --owner=0 --group=0 --numeric-owner -C '$publish' -cf - . | gzip -n > artifacts/ci/package.tar.gz"
-              $sizes['Linux tarball'] = (Get-Item artifacts/ci/package.tar.gz).Length
+              # Built twice to prove the archive is byte-reproducible.
+              foreach ($copy in 'package.tar.xz', 'package-repeat.tar.xz') {
+                ./scripts/package-linux-archive.sh --publish-dir $publish --output "artifacts/ci/$copy"
+                if ($LASTEXITCODE) { throw 'package-linux-archive.sh failed' }
+              }
+              $hashes = Get-FileHash artifacts/ci/package.tar.xz, artifacts/ci/package-repeat.tar.xz -Algorithm SHA256
+              if ($hashes[0].Hash -ne $hashes[1].Hash) { throw 'The Linux archive is not byte-reproducible.' }
+              Write-Output "Linux archive SHA-256 (both builds): $($hashes[0].Hash)"
+              $sizes['Linux tarball'] = (Get-Item artifacts/ci/package.tar.xz).Length
             }
             'osx-arm64' {
               $env:APPLE_SIGNING_IDENTITY = '-'

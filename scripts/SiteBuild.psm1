@@ -51,7 +51,7 @@ function New-UnavailableSiteManifest {
         platforms = [ordered]@{
             windows = New-PlatformRecord -Id "windows" -Label "Windows" -Architecture $Config.platforms.windows.architecture -MinimumOs $Config.platforms.windows.minimumOs -Availability $(if ($storeVerified) { "verified" } else { "unavailable" }) -Reason $(if ($storeVerified) { "The public Microsoft Store listing is verified; download advertising remains off until final launch review." } else { "The Microsoft Store release is completing certification." }) -Note $(if ($storeVerified) { "Microsoft Store · $($Config.microsoftStoreVersion)" } else { "Store link coming after public certification" }) -ActionLabel "Get Happy Photon for Windows" -Url $null -PackageType "Microsoft Store" -Size 0
             macos = New-PlatformRecord -Id "macos" -Label "macOS" -Architecture $Config.platforms.macos.architecture -MinimumOs $Config.platforms.macos.minimumOs -Availability "unavailable" -Reason "The macOS package still needs Developer ID signing and notarization." -Note "Signed public ZIP follows verification" -ActionLabel "Download for macOS — Apple Silicon" -Url $null -PackageType "ZIP" -Size 0
-            linux = New-PlatformRecord -Id "linux" -Label "Linux" -Architecture $Config.platforms.linux.architecture -MinimumOs $Config.platforms.linux.minimumOs -Availability "unavailable" -Reason "The Linux archive will arrive with the first public GitHub release." -Note "Public tar.gz archive coming at launch" -ActionLabel "Download for Linux — x64" -Url $null -PackageType "tar.gz" -Size 0
+            linux = New-PlatformRecord -Id "linux" -Label "Linux" -Architecture $Config.platforms.linux.architecture -MinimumOs $Config.platforms.linux.minimumOs -Availability "unavailable" -Reason "The Linux archive will arrive with the first public GitHub release." -Note "Public tar.xz archive coming at launch" -ActionLabel "Download for Linux — x64" -Url $null -PackageType "tar.xz" -Size 0
         }
     }
 }
@@ -95,6 +95,23 @@ function Find-ReleaseAsset {
     return $asset
 }
 
+# Releases from 0.3.4 on ship .tar.xz; older ones keep .tar.gz.
+function Find-LinuxReleaseAsset {
+    param(
+        [Parameter(Mandatory)] [object[]]$Assets,
+        [Parameter(Mandatory)] [string]$Version
+    )
+
+    foreach ($extension in @("tar.xz", "tar.gz")) {
+        $asset = Find-ReleaseAsset -Assets $Assets -ExpectedName "happy-photon-$Version-linux-x64.$extension"
+        if ($asset) {
+            return [pscustomobject]@{ Asset = $asset; PackageType = $extension }
+        }
+    }
+
+    return $null
+}
+
 function New-ReleaseSiteManifest {
     param(
         [Parameter(Mandatory)] [pscustomobject]$Config,
@@ -124,14 +141,15 @@ function New-ReleaseSiteManifest {
     }
 
     $macName = "happy-photon-$version-osx-arm64.zip"
-    $linuxName = "happy-photon-$version-linux-x64.tar.gz"
     $checksumName = "SHA256SUMS.txt"
     $macAsset = Find-ReleaseAsset -Assets @($release.assets) -ExpectedName $macName
-    $linuxAsset = Find-ReleaseAsset -Assets @($release.assets) -ExpectedName $linuxName
+    $linux = Find-LinuxReleaseAsset -Assets @($release.assets) -Version $version
     $checksumAsset = Find-ReleaseAsset -Assets @($release.assets) -ExpectedName $checksumName
-    if (-not $macAsset -or -not $linuxAsset -or -not $checksumAsset) {
+    if (-not $macAsset -or -not $linux -or -not $checksumAsset) {
         throw "Selected release is missing one or more required public assets."
     }
+
+    $linuxAsset = $linux.Asset
 
     $advertising = [bool]$AdvertiseDownloads
     if ($advertising -and -not $ProvenanceVerified) {
@@ -166,9 +184,9 @@ function New-ReleaseSiteManifest {
         platforms = [ordered]@{
             windows = New-PlatformRecord -Id "windows" -Label "Windows" -Architecture $Config.platforms.windows.architecture -MinimumOs $Config.platforms.windows.minimumOs -Availability $(if ($storeAvailable) { if ($advertising) { "available" } else { "verified" } } else { "unavailable" }) -Reason $windowsReason -Note "Microsoft Store · $($Config.microsoftStoreVersion)" -ActionLabel "Get Happy Photon for Windows" -Url $(if ($storeAvailable -and $advertising) { $Config.microsoftStoreUrl } else { $null }) -PackageType "Microsoft Store" -Size 0 -Channel $channel -Detail "Install the Microsoft-signed x64 release from the Store."
             macos = New-PlatformRecord -Id "macos" -Label "macOS" -Architecture $Config.platforms.macos.architecture -MinimumOs $Config.platforms.macos.minimumOs -Availability $(if ($macVerified) { if ($advertising) { "available" } else { "verified" } } else { "unavailable" }) -Reason $macReason -Note "Signed and notarized ZIP · $version" -ActionLabel "Download for macOS — Apple Silicon" -Url $(if ($macAvailable) { $macAsset.browser_download_url } else { $null }) -PackageType "ZIP" -Size $macAsset.size -Channel $channel -Detail "For Apple Silicon Macs running macOS 14 or later. Intel Macs are not supported."
-            linux = New-PlatformRecord -Id "linux" -Label "Linux" -Architecture $Config.platforms.linux.architecture -MinimumOs $Config.platforms.linux.minimumOs -Availability $(if ($advertising) { "available" } else { "verified" }) -Reason $linuxReason -Note "Portable tar.gz · $version" -ActionLabel "Download for Linux — x64" -Url $(if ($linuxAvailable) { $linuxAsset.browser_download_url } else { $null }) -PackageType "tar.gz" -Size $linuxAsset.size -Channel $channel -Detail "Portable x64 archive for Linux; desktop integration is not yet a native package."
+            linux = New-PlatformRecord -Id "linux" -Label "Linux" -Architecture $Config.platforms.linux.architecture -MinimumOs $Config.platforms.linux.minimumOs -Availability $(if ($advertising) { "available" } else { "verified" }) -Reason $linuxReason -Note "Portable $($linux.PackageType) · $version" -ActionLabel "Download for Linux — x64" -Url $(if ($linuxAvailable) { $linuxAsset.browser_download_url } else { $null }) -PackageType $linux.PackageType -Size $linuxAsset.size -Channel $channel -Detail "Portable x64 archive for Linux; desktop integration is not yet a native package."
         }
     }
 }
 
-Export-ModuleMember -Function New-UnavailableSiteManifest, Select-SiteRelease, Find-ReleaseAsset, New-ReleaseSiteManifest
+Export-ModuleMember -Function New-UnavailableSiteManifest, Select-SiteRelease, Find-ReleaseAsset, Find-LinuxReleaseAsset, New-ReleaseSiteManifest
