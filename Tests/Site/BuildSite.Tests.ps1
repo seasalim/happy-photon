@@ -67,6 +67,29 @@ Describe "Happy Photon download manifests" {
         $manifest.platforms.linux.url | Should -BeNullOrEmpty
     }
 
+    It "resolves a .tar.xz Linux archive for new releases" {
+        $fixture = Read-Fixture "stable-public-xz"
+        $manifest = New-ReleaseSiteManifest -Config (Read-SiteConfig) -Repository $fixture.repository -Releases @($fixture.releases) -PreferredChannel stable -DataSource Fixture
+        $manifest.platforms.linux.packageType | Should -Be "tar.xz"
+        $manifest.platforms.linux.note | Should -Be "Portable tar.xz · 0.1.0"
+        $manifest.platforms.linux.size | Should -Be 64000000
+    }
+
+    It "still resolves a .tar.gz Linux archive for older releases" {
+        $fixture = Read-Fixture "stable-public"
+        $manifest = New-ReleaseSiteManifest -Config (Read-SiteConfig) -Repository $fixture.repository -Releases @($fixture.releases) -PreferredChannel stable -DataSource Fixture
+        $manifest.platforms.linux.packageType | Should -Be "tar.gz"
+        $manifest.platforms.linux.note | Should -Be "Portable tar.gz · 0.1.0"
+        $manifest.platforms.linux.size | Should -Be 92000000
+    }
+
+    It "prefers .tar.xz when a release carries both Linux archives" {
+        $assets = @((Read-Fixture "stable-public").releases[0].assets) + @((Read-Fixture "stable-public-xz").releases[0].assets)
+        $linux = Find-LinuxReleaseAsset -Assets $assets -Version "0.1.0"
+        $linux.PackageType | Should -Be "tar.xz"
+        $linux.Asset.name | Should -Be "happy-photon-0.1.0-linux-x64.tar.xz"
+    }
+
     It "keeps the Microsoft Store version independent from the GitHub release" {
         $fixture = Read-Fixture "stable-public"
         $config = Read-SiteConfig

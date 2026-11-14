@@ -267,6 +267,13 @@ if (-not (Test-Path -LiteralPath (Join-Path $inspectionDirectory 'licenses'))) {
     throw 'The MSIX package is missing the required licenses directory.'
 }
 
+# The win-x64-msix profile leaves the runtime's debugger and dump files out.
+$debuggerFiles = Get-ChildItem -LiteralPath $inspectionDirectory -File |
+    Where-Object { $_.Name -in 'createdump.exe', 'mscordbi.dll', 'Microsoft.DiaSymReader.Native.amd64.dll' -or $_.Name -like 'mscordaccore*.dll' }
+if ($debuggerFiles) {
+    throw "The MSIX package carries debugger-only runtime files: $($debuggerFiles.Name -join ', ')"
+}
+
 $package = Get-Item -LiteralPath $packagePath
 Write-Output "MSIX package: $($package.FullName)"
 Write-Output "MSIX version: $msixVersion"

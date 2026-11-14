@@ -22,6 +22,7 @@ of the Microsoft-signed Windows package.
 
 The Windows ZIP uses the same source revision and version as the Store MSIX.
 It is self-contained: extract the complete archive and run `HappyPhoton.exe`.
+`scripts/package-windows-zip.ps1` writes it at maximum deflate.
 It does not inherit Microsoft's Store signature and may trigger Windows trust
 warnings or be blocked by system policy. Keep the Store as the recommended
 website download and link to GitHub Releases for the fallback. Older releases
@@ -38,7 +39,11 @@ application base directory is structurally `Contents/MacOS`; Windows, Linux,
 and unbundled macOS builds continue to resolve it next to the binary.
 
 The Linux job wraps its retained `linux-x64` publish output in both the
-reproducible tar archive and an AppImage. AppImage packaging pins appimagetool
+reproducible tar archive and an AppImage. `scripts/package-linux-archive.sh`
+writes the archive as `.tar.xz` with single-threaded `xz -9` (multi-threaded xz
+output depends on the thread count); releases before 0.3.4 shipped `.tar.gz`,
+and the site resolves either name. CI builds the archive twice and fails
+unless both copies are identical. AppImage packaging pins appimagetool
 1.9.1 and type-2 runtime 20251108; both downloads use fixed release tags and
 committed SHA-256 checks before execution. The runtime is supplied explicitly
 because appimagetool otherwise downloads its latest runtime. Unlike the Linux
@@ -78,7 +83,10 @@ other trimmable assemblies are trimmed, while the app assembly and untrimmed
 packages stay whole. `JsonSerializerIsReflectionEnabledByDefault=true` keeps
 the app's reflection-based JSON working (trimming turns it off by default).
 Composite ReadyToRun follows the SDK default: on for the single-file builds,
-off for the Store layout. The two Windows layouts share
+off for the Store layout. The Store profile also leaves out the runtime's
+debugger and dump files (`createdump.exe`, `mscordbi.dll`, `mscordaccore*.dll`,
+`Microsoft.DiaSymReader.Native.amd64.dll`), which the single-file builds never
+carried; the MSIX script rejects a package that contains one. The two Windows layouts share
 `obj/Release/net10.0/win-x64/R2R`; the MSIX and startup scripts clear it before
 publishing the Store layout, because composite component stubs left there fail
 fast at launch.

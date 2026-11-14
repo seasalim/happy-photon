@@ -129,7 +129,9 @@ $manifest = switch ($ReleaseDataSource) {
                     [string]$checksumResponse.Content
                 }
                 $provenanceVerified = $true
-                foreach ($assetName in @("happy-photon-$version-osx-arm64.zip", "happy-photon-$version-linux-x64.tar.gz")) {
+                $linux = Find-LinuxReleaseAsset -Assets @($selectedRelease.assets) -Version $version
+                $linuxName = if ($linux) { $linux.Asset.name } else { "happy-photon-$version-linux-x64.tar.xz" }
+                foreach ($assetName in @("happy-photon-$version-osx-arm64.zip", $linuxName)) {
                     $checksumMatch = [regex]::Match($checksumText, "(?im)^([0-9a-f]{64})\s+\*?" + [regex]::Escape($assetName) + "\s*$")
                     if (-not $checksumMatch.Success) {
                         $provenanceVerified = $false
