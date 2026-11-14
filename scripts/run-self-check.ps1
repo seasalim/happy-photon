@@ -5,8 +5,12 @@ param(
     [Parameter(Mandatory)]
     [string] $Executable,
 
-    # Instead of a pass, require exit 1 at this step (the control publish).
+    # Instead of a pass, require exit 1 at this step (the control publish) ...
     [string] $ExpectFailStep,
+
+    # ... with a failure matching this wildcard pattern, e.g.
+    # 'InvalidOperationException: Reflection-based serialization has been disabled*'.
+    [string] $ExpectFailure,
 
     [int] $TimeoutSeconds = 300
 )
@@ -19,6 +23,11 @@ $ErrorActionPreference = 'Stop'
 
 # Must match SelfCheck.StepCount.
 $expectedSteps = 13
+
+if ([bool]$ExpectFailStep -ne [bool]$ExpectFailure) {
+    throw '-ExpectFailStep and -ExpectFailure go together.'
+}
+
 $repository = Split-Path -Parent $PSScriptRoot
 $fixtures = @(
     (Join-Path $repository 'Tests/assets/nikon-d70-burst-1.nef'),
@@ -61,8 +70,10 @@ try {
     $errors | ForEach-Object { Write-Output "stderr: $_" }
 
     if ($ExpectFailStep) {
-        if ($exitCode -ne 1 -or $result -notlike "self-check: FAIL ${ExpectFailStep}:*") {
-            throw "Expected exit 1 at step '$ExpectFailStep'; got exit $exitCode, '$result'."
+        # The failure itself must match: a timeout or an unrelated error at the same step
+        # does not prove the control.
+        if ($exitCode -ne 1 -or $result -notlike "self-check: FAIL ${ExpectFailStep}: $ExpectFailure") {
+            throw "Expected exit 1 at step '$ExpectFailStep' with '$ExpectFailure'; got exit $exitCode, '$result'."
         }
 
         Write-Output "CONTROL OK: failed at $ExpectFailStep as required."

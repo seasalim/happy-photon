@@ -89,12 +89,15 @@ before Avalonia, shows no window, and works only on copies of one RAW and one
 JPEG in a temporary root. It exercises edit-settings and catalog JSON, app
 settings, built-in looks, metadata, RAW and JPEG decode, a render, a JPEG
 export, an XMP sidecar write and read, and a backup with verification, then
-prints `self-check: ok (<n> steps)` (exit 0) or `self-check: FAIL <step>: …`
-(exit 1). `scripts/run-self-check.ps1` runs it against the CC0 fixtures; CI
-runs it on every platform build and the Store payload, and the release
-workflow on every package. Limits: it reads sources under the background-read
-rule (unknown availability passes, so off Windows a cloud placeholder is not
-detected), and the fixtures exercise neither XmpCore nor Adobe camera profiles.
+prints `self-check: ok (<n> steps)` (exit 0), `self-check: FAIL <step>: …`
+(exit 1) or a usage line (exit 2). The Windows executable is a GUI-subsystem
+app and prints only to redirected output. `scripts/run-self-check.ps1` runs it
+against the CC0 fixtures; CI runs it on every platform build and the Store
+payload, and the release workflow on every package. Limits: it reads sources
+under the background-read rule (unknown availability passes, so off Windows a
+cloud placeholder is not detected); the fixtures exercise neither XmpCore,
+Adobe camera profiles nor the MetadataExtractor RAW supplement; a watchdog
+timeout leaves its temporary folder behind.
 UI paths on a trimmed build are covered by the startup harness reaching a
 populated grid and by the clean-machine checks below.
 

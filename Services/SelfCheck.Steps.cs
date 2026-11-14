@@ -53,11 +53,18 @@ internal static partial class SelfCheck
         var settings = await service.LoadAsync();
         settings.BrowseThumbnailSize = BrowseThumbnailSize.Large;
         settings.AppTheme = AppTheme.MidGray;
+
+        // The group preferences are the JSON-stored settings; a failed read returns empty.
+        settings.DevelopGroups["Light"] = false;
+        settings.PasteGroups["Adjustments"] = false;
         await service.SaveAsync(settings);
         var reloaded = await new AppSettingsService(catalog).LoadAsync();
 
         Require(reloaded.BrowseThumbnailSize == BrowseThumbnailSize.Large &&
                 reloaded.AppTheme == AppTheme.MidGray, "app settings did not read back");
+        Require(reloaded.DevelopGroups.GetValueOrDefault("Light", true) == false &&
+                reloaded.PasteGroups.GetValueOrDefault("Adjustments", true) == false,
+            "JSON-stored group settings did not read back");
     }
 
     private static void CheckMetadata(string path)
@@ -101,10 +108,14 @@ internal static partial class SelfCheck
             [new ImageFile(raw) { EditSettings = edits.Clone() }],
             new ExportSettings { OutputFolder = folder, Format = ExportFormat.Jpeg, Quality = 85 });
         var output = Directory.GetFiles(folder, "*.jpg");
+        var failure = result.FailedTargets.FirstOrDefault()?.FailureReason;
 
-        Require(result.ExportedCount == 1 && result.FailedTargets.Count == 0 && output.Length == 1,
-            "export did not write one JPEG");
-        Require(new MagickImageInfo(output[0]).Width > 0, "exported JPEG does not decode");
+        Require(result.ExportedCount == 1 && failure == null && output.Length == 1,
+            $"export did not write one JPEG{(failure == null ? "" : $": {failure}")}");
+
+        // A header read accepts a JPEG whose pixel data cannot decode; decode it fully.
+        using var exported = new MagickImage(output[0]);
+        Require(exported.Width > 0 && exported.Height > 0, "exported JPEG does not decode");
     }
 
     private static async Task CheckXmpAsync(CatalogService catalog, long id, string raw)
@@ -139,7 +150,10 @@ internal static partial class SelfCheck
         var backup = new CatalogBackupService(catalog);
         await backup.BackupAsync();
         var archives = backup.List();
-        Require(archives.Count == 1, "backup was not written");
+
+        // BackupAsync records a failure in this setting instead of throwing.
+        var outcome = await catalog.GetAppSettingAsync(CatalogBackupService.OutcomeKey);
+        Require(archives.Count == 1, $"backup was not written: {outcome}");
 
         Step("backup-verify");
         // List() returns the archive stem; the archive itself is <stem>.zip.

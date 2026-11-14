@@ -1,5 +1,4 @@
 using HappyPhoton.Models;
-using ImageMagick;
 
 namespace HappyPhoton.Services;
 
@@ -14,6 +13,7 @@ internal static partial class SelfCheck
     internal const int StepCount = 13;
     private static readonly TimeSpan Timeout = TimeSpan.FromMinutes(4);
     private static volatile string _step = "start";
+    private static int _stepsRun;
 
     internal static int Run(string[] args)
     {
@@ -37,14 +37,15 @@ internal static partial class SelfCheck
                 return 1;
             }
 
-            Console.WriteLine($"self-check: ok ({StepCount} steps)");
+            Console.WriteLine($"self-check: ok ({_stepsRun} steps)");
 
             return 0;
         }
         catch (AggregateException error)
         {
             var cause = error.GetBaseException();
-            Console.WriteLine($"self-check: FAIL {_step}: {cause.GetType().Name}: {cause.Message}");
+            var message = cause.Message.ReplaceLineEndings(" ");
+            Console.WriteLine($"self-check: FAIL {_step}: {cause.GetType().Name}: {message}");
 
             return 1;
         }
@@ -80,13 +81,14 @@ internal static partial class SelfCheck
         Step("built-in-looks");
         Require(new BuiltInLookLibrary().Looks.Count > 0, "no built-in looks loaded");
 
-        Step("metadata");
-        CheckMetadata(raw);
-        CheckMetadata(jpeg);
-
+        // Before metadata, which falls back silently when LibRaw cannot load.
         Step("libraw-health");
         var health = LibRawNativeSupport.Health;
         Require(health.IsHealthy, $"LibRaw runtime unhealthy: {health.DiagnosticText}");
+
+        Step("metadata");
+        CheckMetadata(raw);
+        CheckMetadata(jpeg);
 
         Step("decode");
         using var rawBase = Decode(new RawBaseLoader(), raw, edits);
@@ -100,9 +102,14 @@ internal static partial class SelfCheck
 
         await CheckXmpAsync(catalog, rawId, raw);
         await CheckBackupAsync(catalog);
+        Require(_stepsRun == StepCount, $"{_stepsRun} of {StepCount} steps ran");
     }
 
-    private static void Step(string name) => _step = name;
+    private static void Step(string name)
+    {
+        _step = name;
+        _stepsRun++;
+    }
 
     private static void Require(bool condition, string message)
     {
@@ -131,6 +138,9 @@ internal static partial class SelfCheck
             $"{Path.GetFileName(source)} is not available locally ({availability})");
         var target = Path.Combine(folder, Path.GetFileName(source));
         File.Copy(source, target);
+
+        // A copied read-only attribute would make the sidecar write and the cleanup fail.
+        File.SetAttributes(target, FileAttributes.Normal);
 
         return target;
     }

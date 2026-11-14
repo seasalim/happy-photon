@@ -30,7 +30,8 @@ if (-not $NoPublish) {
     if (Test-Path $publish) { Remove-Item -Recurse -Force $publish }
     # A prior composite single-file publish leaves component stubs here that would ship
     # without their composite image and fail fast at launch.
-    Remove-Item -Recurse -Force (Join-Path $repo 'obj/Release/net10.0/win-x64/R2R') -ErrorAction SilentlyContinue
+    $readyToRun = Join-Path $repo 'obj/Release/net10.0/win-x64/R2R'
+    if (Test-Path $readyToRun) { Remove-Item -Recurse -Force $readyToRun }
     & dotnet publish (Join-Path $repo 'HappyPhoton.csproj') -p:PublishProfile=win-x64-msix --output $publish *> (Join-Path $runDirectory 'publish.log')
     if ($LASTEXITCODE) { throw 'Publish failed; see publish.log.' }
 }
