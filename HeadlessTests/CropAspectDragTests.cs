@@ -150,6 +150,39 @@ public sealed class CropAspectDragTests
         });
     }
 
+    [AvaloniaFact]
+    public async Task HoverMovesReuseOneCursorPerHandleKind()
+    {
+        await DevelopToolsBaselineTests.WithScene("crop", 1200, 700, async (vm, scope) =>
+        {
+            // test-teardown-policy: allow - WithScene owns this MainWindow scope.
+            scope.Show();
+            Dispatcher.UIThread.RunJobs();
+            var window = scope.Window!;
+            window.UpdateLayout();
+            vm.ChooseCropRatio("1:1");
+            var overlay = window.GetVisualDescendants().OfType<CropOverlayControl>().Single();
+            var crop = vm.CurrentCrop!;
+            Point At(double x, double y) =>
+                overlay.TranslatePoint(new Point(x * overlay.Bounds.Width, y * overlay.Bounds.Height), window)!.Value;
+            var middle = (crop.Top + crop.Bottom) / 2;
+            var center = At((crop.Left + crop.Right) / 2, middle);
+
+            window.MouseMove(At(crop.Right, middle));
+            var edge = overlay.Cursor;
+            window.MouseMove(At(crop.Right, middle) - new Vector(2, 0));
+            Assert.Same(edge, overlay.Cursor);
+            window.MouseMove(center);
+            var move = overlay.Cursor;
+            window.MouseMove(center + new Vector(3, 3));
+            Assert.Same(move, overlay.Cursor);
+            Assert.NotSame(edge, move);
+            window.MouseMove(At(crop.Left, middle));
+            Assert.Same(edge, overlay.Cursor);
+            await Task.CompletedTask;
+        });
+    }
+
     private static CropOverlayControl Drag(CropRegion start, string handle, double dx, double dy, double ratio)
     {
         var overlay = new CropOverlayControl { Crop = start.Clone() };

@@ -4,9 +4,6 @@
              x:Class="HappyPhoton.Views.RawProfilePicker"
              x:DataType="vm:MainWindowViewModel">
     <UserControl.Styles>
-        <Style Selector="Grid.raw-profile-row:disabled">
-            <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
-        </Style>
         <Style Selector="TextBlock.profile-source-line">
             <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
             <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
@@ -31,13 +28,10 @@
             <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
             <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
         </Style>
-        <Style Selector="StackPanel.global-edits.locked Grid.raw-profile-row">
-            <Setter Property="Opacity" Value="1"/>
-        </Style>
     </UserControl.Styles>
 
     <StackPanel Margin="0,0,0,8">
-        <Grid Classes="raw-profile-row"
+        <Grid Classes="raw-profile-row dim-disabled"
               ColumnDefinitions="*,Auto"
               IsEnabled="{Binding RawProfilePickerState.IsVisible}"
               Margin="0,0,0,5">

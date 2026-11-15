@@ -86,8 +86,6 @@ public partial class MainWindow : Window
         if (_browseGridView != null)
         {
             _browseGridView.DevelopModeRequested += OnDevelopModeRequested;
-            _browseGridView.SelectAllRequested += OnSelectAllRequested;
-            _browseGridView.DeselectAllRequested += OnDeselectAllRequested;
             _browseGridView.DeleteRejectedRequested += OnDeleteRejectedRequested;
             _browseGridView.CopyImagePathsRequested += OnCopyImagePathsRequested;
             _browseGridView.RevealImageRequested += OnRevealImageRequested;
@@ -118,12 +116,6 @@ public partial class MainWindow : Window
 
     private void OnDevelopModeRequested(object? sender, EventArgs e) =>
         WithVm(vm => vm.EnterDevelopModeCommand.Execute(null));
-
-    private void OnSelectAllRequested(object? sender, EventArgs e) =>
-        WithVm(vm => vm.SelectAllCommand.Execute(null));
-
-    private void OnDeselectAllRequested(object? sender, EventArgs e) =>
-        WithVm(vm => vm.DeselectAllCommand.Execute(null));
 
     private void OnDeleteRejectedRequested(object? sender, EventArgs e) =>
         WithVm(vm => vm.DeleteRejectedImagesCommand.Execute(null));
@@ -355,82 +347,7 @@ public partial class MainWindow : Window
                 return;
             }
 
-            if (TryHandleSelectionExtendKey(e, vm)) return;
-
-            // Arrow keys: Navigation
-            if (e.Key == Key.Left)
-            {
-                vm.SelectPreviousImageCommand.Execute(null);
-                if (vm.IsBrowseGridVisible) FollowKeyboardFocus(vm);
-                e.Handled = true;
-                return;
-            }
-            else if (e.Key == Key.Right)
-            {
-                vm.SelectNextImageCommand.Execute(null);
-                if (vm.IsBrowseGridVisible) FollowKeyboardFocus(vm);
-                e.Handled = true;
-                return;
-            }
-
-            // Up/Down: row navigation in the grid, and between pane rows in
-            // compare, where the grid is hidden but its 2x2 still has rows.
-            if (vm.IsBrowseGridVisible || vm.IsCompareMode)
-            {
-                if (e.Key == Key.Up)
-                {
-                    var itemsPerRow = _browseGridView?.GetItemsPerRow() ?? 1;
-                    vm.SelectImageUp(itemsPerRow);
-                    if (vm.IsBrowseGridVisible) FollowKeyboardFocus(vm);
-                    e.Handled = true;
-                    return;
-                }
-                else if (e.Key == Key.Down)
-                {
-                    var itemsPerRow = _browseGridView?.GetItemsPerRow() ?? 1;
-                    vm.SelectImageDown(itemsPerRow);
-                    if (vm.IsBrowseGridVisible) FollowKeyboardFocus(vm);
-                    e.Handled = true;
-                    return;
-                }
-            }
-
-            // Paging and Home/End stay grid-only: compare has no scroll extent.
-            if (vm.IsBrowseGridVisible)
-            {
-                if (e.Key == Key.PageUp)
-                {
-                    var itemsPerRow = _browseGridView?.GetItemsPerRow() ?? 1;
-                    var rowsPerPage = _browseGridView?.GetRowsPerPage() ?? 1;
-                    vm.SelectImageUp(itemsPerRow * rowsPerPage);
-                    FollowKeyboardFocus(vm);
-                    e.Handled = true;
-                    return;
-                }
-                else if (e.Key == Key.PageDown)
-                {
-                    var itemsPerRow = _browseGridView?.GetItemsPerRow() ?? 1;
-                    var rowsPerPage = _browseGridView?.GetRowsPerPage() ?? 1;
-                    vm.SelectImageDown(itemsPerRow * rowsPerPage);
-                    FollowKeyboardFocus(vm);
-                    e.Handled = true;
-                    return;
-                }
-                else if (e.Key == Key.Home)
-                {
-                    vm.SelectFirstImage();
-                    FollowKeyboardFocus(vm);
-                    e.Handled = true;
-                    return;
-                }
-                else if (e.Key == Key.End)
-                {
-                    vm.SelectLastImage();
-                    FollowKeyboardFocus(vm);
-                    e.Handled = true;
-                    return;
-                }
-            }
+            if (TryHandleSelectionExtendKey(e, vm) || TryHandleNavigationKey(e, vm)) return;
         }
 
         base.OnKeyDown(e);

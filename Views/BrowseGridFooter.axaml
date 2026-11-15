@@ -88,7 +88,7 @@
                            Margin="6,0"
                            VerticalAlignment="Center"/>
                 <ToggleButton x:Name="BurstsButton" Classes="icon-button"
-                        Click="OnBurstsClick"
+                        IsChecked="{Binding ShowBurstGroups, Mode=TwoWay}"
                         IsEnabled="{Binding IsBrowseGridVisible}"
                         ToolTip.Tip="Group bursts"
                         AutomationProperties.Name="Group bursts">
@@ -97,7 +97,7 @@
                     </Canvas></Viewbox>
                 </ToggleButton>
                 <ToggleButton x:Name="PairsButton" Classes="icon-button"
-                        Click="OnPairsClick"
+                        IsChecked="{Binding ShowCapturePairs, Mode=TwoWay}"
                         IsEnabled="{Binding IsBrowseGridVisible}"
                         ToolTip.Tip="Pair RAW+JPEG"
                         AutomationProperties.Name="Pair RAW+JPEG">

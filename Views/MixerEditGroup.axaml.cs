@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
+using Avalonia.Controls.Shapes;
 using HappyPhoton.Models;
 using HappyPhoton.ViewModels;
 
@@ -9,6 +10,8 @@ namespace HappyPhoton.Views;
 
 public partial class MixerEditGroup : UserControl
 {
+    private MainWindowViewModel? _owner;
+
     public static FuncValueConverter<ColorMixerBand, IBrush>
         HueTrackBrushConverter { get; } = new(CreateHueTrackBrush);
 
@@ -36,7 +39,44 @@ public partial class MixerEditGroup : UserControl
             button.PointerExited += (_, _) => (DataContext as MainWindowViewModel)?.EndMixerBandHover();
         }
 
-        DetachedFromVisualTree += (_, _) => (DataContext as MainWindowViewModel)?.EndMixerBandHover();
+        DataContextChanged += (_, _) => BindOwner();
+        AttachedToVisualTree += (_, _) => BindOwner();
+        DetachedFromVisualTree += (_, _) =>
+        {
+            (DataContext as MainWindowViewModel)?.EndMixerBandHover();
+            UnbindOwner();
+        };
+    }
+
+    private void BindOwner()
+    {
+        UnbindOwner();
+        _owner = DataContext as MainWindowViewModel;
+        if (_owner == null) return;
+
+        _owner.MixerBandsChanged += OnMixerBandsChanged;
+        RefreshBands();
+    }
+
+    private void UnbindOwner()
+    {
+        if (_owner != null) _owner.MixerBandsChanged -= OnMixerBandsChanged;
+
+        _owner = null;
+    }
+
+    private void OnMixerBandsChanged(object? sender, EventArgs e) => RefreshBands();
+
+    private void RefreshBands()
+    {
+        if (_owner == null) return;
+
+        foreach (var button in MixerBandPicker.Children.OfType<Button>())
+        {
+            var band = (ColorMixerBand)button.CommandParameter!;
+            button.Classes.Set("active", _owner.ActiveMixerBand == band);
+            if (button.Content is Border { Child: Ellipse dot }) dot.IsVisible = _owner.IsMixerBandTouched(band);
+        }
     }
 
     private static IBrush CreateHueTrackBrush(ColorMixerBand band) =>

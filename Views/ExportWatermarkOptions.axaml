@@ -3,14 +3,9 @@
              xmlns:vm="using:HappyPhoton.ViewModels"
              xmlns:views="using:HappyPhoton.Views"
              x:Class="HappyPhoton.Views.ExportWatermarkOptions" x:DataType="vm:MainWindowViewModel">
-    <UserControl.Styles>
-        <Style Selector="StackPanel#WatermarkBody:disabled">
-            <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
-        </Style>
-    </UserControl.Styles>
     <StackPanel Spacing="6" Margin="0,10,0,0">
         <CheckBox x:Name="WatermarkEnabled" Classes="edit-toggle" Content="Add watermark" IsChecked="{Binding ExportSettings.Watermark.Enabled, Mode=TwoWay}"/>
-        <StackPanel x:Name="WatermarkBody" Spacing="6" IsEnabled="{Binding ExportSettings.Watermark.Enabled}">
+        <StackPanel x:Name="WatermarkBody" Classes="dim-disabled" Spacing="6" IsEnabled="{Binding ExportSettings.Watermark.Enabled}">
             <TextBlock Text="Text" Classes="section-label"/>
             <TextBox x:Name="WatermarkText" Classes="edit-field" Text="{Binding ExportSettings.Watermark.Text, Mode=TwoWay}"
                      AcceptsReturn="False" AutomationProperties.Name="Watermark text"/>

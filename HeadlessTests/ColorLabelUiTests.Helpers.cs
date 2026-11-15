@@ -1,6 +1,10 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Headless;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
+using Avalonia.Threading;
 using HappyPhoton.Models;
 using HappyPhoton.Services;
 using HappyPhoton.ViewModels;
@@ -18,6 +22,16 @@ public sealed partial class ColorLabelUiTests
 
     private static void Click(Button button) =>
         button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+    // A toggle button flips only on a real click, not on a raised Click event.
+    private static void PointerClick(Window window, Button button)
+    {
+        var point = button.TranslatePoint(
+            new Point(button.Bounds.Width / 2, button.Bounds.Height / 2), window)!.Value;
+        window.MouseDown(point, MouseButton.Left);
+        window.MouseUp(point, MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+    }
 
     private static string NewRoot() =>
         Directory.CreateDirectory(Path.Combine(

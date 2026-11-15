@@ -52,6 +52,11 @@
     <Color x:Key="WhiteBalanceTintGreenColor">#73b95a</Color>
     <Color x:Key="WhiteBalanceTintNeutralColor">#849495</Color>
     <Color x:Key="WhiteBalanceTintMagentaColor">#ec3c7e</Color>
+    <LinearGradientBrush x:Key="WhiteBalanceTintTrack" StartPoint="0%,50%" EndPoint="100%,50%">
+        <GradientStop Offset="0" Color="{StaticResource WhiteBalanceTintGreenColor}"/>
+        <GradientStop Offset="0.5" Color="{StaticResource WhiteBalanceTintNeutralColor}"/>
+        <GradientStop Offset="1" Color="{StaticResource WhiteBalanceTintMagentaColor}"/>
+    </LinearGradientBrush>
     <Color x:Key="ErrorContainerColor">#93000a</Color>
     <Color x:Key="OnErrorContainerColor">#ffdad6</Color>
     <!-- Reject is a culling mark, not an error state. These invariant brushes

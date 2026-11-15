@@ -358,16 +358,21 @@ public sealed class BrowseSelectionMenuTests
         Dispatcher.UIThread.RunJobs();
         Assert.True(deselectAll.IsEnabled);
 
-        var selectRequests = 0;
-        var deselectRequests = 0;
         var deleteRequests = 0;
-        control.SelectAllRequested += (_, _) => selectRequests++;
-        control.DeselectAllRequested += (_, _) => deselectRequests++;
         control.DeleteRejectedRequested += (_, _) => deleteRequests++;
+        Assert.Same(vm.SelectAllCommand, selectAll.Command);
+        Assert.Same(vm.DeselectAllCommand, deselectAll.Command);
+        vm.Browse.ToggleSelection(image);
+        Dispatcher.UIThread.RunJobs();
+        Assert.False(vm.Browse.HasSelectedImages);
         selectAll.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(vm.Browse.HasSelectedImages);
         deselectAll.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+        Assert.False(vm.Browse.HasSelectedImages);
         deleteRejected.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
-        Assert.Equal((1, 1, 1), (selectRequests, deselectRequests, deleteRequests));
+        Assert.Equal(1, deleteRequests);
 
         vm.Browse.SetImages([]);
         Dispatcher.UIThread.RunJobs();

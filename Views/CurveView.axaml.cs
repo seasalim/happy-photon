@@ -101,8 +101,8 @@ public partial class CurveView : UserControl
 
         if (width <= 0 || height <= 0) return;
 
-        // Draw grid lines
-        DrawGrid(width, height);
+        // Grid lines at 25%, 50% and 75%
+        OverlayGridLines.Draw(_canvas, new Rect(0, 0, width, height), HappyPhotonColors.CurveGridLine, 4, 4);
 
         // Draw diagonal reference line
         var diagLine = new Line
@@ -153,37 +153,6 @@ public partial class CurveView : UserControl
             Canvas.SetTop(ellipse, y - radius);
             _canvas.Children.Add(ellipse);
             _pointEllipses.Add(ellipse);
-        }
-    }
-
-    private void DrawGrid(double width, double height)
-    {
-        var gridBrush = HappyPhotonColors.CurveGridLine;
-
-        // Vertical lines at 25%, 50%, 75%
-        for (int i = 1; i < 4; i++)
-        {
-            var line = new Line
-            {
-                StartPoint = new Point(width * i / 4, 0),
-                EndPoint = new Point(width * i / 4, height),
-                Stroke = gridBrush,
-                StrokeThickness = 1
-            };
-            _canvas!.Children.Add(line);
-        }
-
-        // Horizontal lines at 25%, 50%, 75%
-        for (int i = 1; i < 4; i++)
-        {
-            var line = new Line
-            {
-                StartPoint = new Point(0, height * i / 4),
-                EndPoint = new Point(width, height * i / 4),
-                Stroke = gridBrush,
-                StrokeThickness = 1
-            };
-            _canvas!.Children.Add(line);
         }
     }
 

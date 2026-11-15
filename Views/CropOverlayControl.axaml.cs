@@ -57,6 +57,17 @@ public partial class CropOverlayControl : UserControl
     private static readonly IBrush HandleStrokeBrush = HappyPhotonColors.CropHandleStroke;
     private static readonly IBrush GridBrush = HappyPhotonColors.CropGridLine;
 
+    // Hover reuses one cursor per handle kind instead of allocating one per move.
+    private static readonly Cursor TopLeftCornerCursor = new(StandardCursorType.TopLeftCorner);
+
+    private static readonly Cursor TopRightCornerCursor = new(StandardCursorType.TopRightCorner);
+
+    private static readonly Cursor NorthSouthCursor = new(StandardCursorType.SizeNorthSouth);
+
+    private static readonly Cursor WestEastCursor = new(StandardCursorType.SizeWestEast);
+
+    private static readonly Cursor MoveCursor = new(StandardCursorType.SizeAll);
+
     private enum DragHandle
     {
         None,
@@ -82,8 +93,8 @@ public partial class CropOverlayControl : UserControl
     {
         base.OnPropertyChanged(change);
 
-        if (change.Property == CropProperty || change.Property == ImageSizeProperty ||
-            change.Property == BoundsProperty)
+        // Size changes redraw in OnSizeChanged; the overlay is canvas-relative, so moves need none.
+        if (change.Property == CropProperty || change.Property == ImageSizeProperty)
         {
             DrawOverlay();
         }
@@ -143,61 +154,23 @@ public partial class CropOverlayControl : UserControl
 
     private void DrawMask(double width, double height, Rect cropRect)
     {
-        // Top mask
-        if (cropRect.Top > 0)
-        {
-            var topMask = new Rectangle
-            {
-                Width = width,
-                Height = cropRect.Top,
-                Fill = MaskBrush
-            };
-            Canvas.SetLeft(topMask, 0);
-            Canvas.SetTop(topMask, 0);
-            _canvas!.Children.Add(topMask);
-        }
+        if (cropRect.Top > 0) AddMask(0, 0, width, cropRect.Top);
+        if (cropRect.Bottom < height) AddMask(0, cropRect.Bottom, width, height - cropRect.Bottom);
+        if (cropRect.Left > 0) AddMask(0, cropRect.Top, cropRect.Left, cropRect.Height);
+        if (cropRect.Right < width) AddMask(cropRect.Right, cropRect.Top, width - cropRect.Right, cropRect.Height);
+    }
 
-        // Bottom mask
-        if (cropRect.Bottom < height)
+    private void AddMask(double left, double top, double width, double height)
+    {
+        var mask = new Rectangle
         {
-            var bottomMask = new Rectangle
-            {
-                Width = width,
-                Height = height - cropRect.Bottom,
-                Fill = MaskBrush
-            };
-            Canvas.SetLeft(bottomMask, 0);
-            Canvas.SetTop(bottomMask, cropRect.Bottom);
-            _canvas!.Children.Add(bottomMask);
-        }
-
-        // Left mask
-        if (cropRect.Left > 0)
-        {
-            var leftMask = new Rectangle
-            {
-                Width = cropRect.Left,
-                Height = cropRect.Height,
-                Fill = MaskBrush
-            };
-            Canvas.SetLeft(leftMask, 0);
-            Canvas.SetTop(leftMask, cropRect.Top);
-            _canvas!.Children.Add(leftMask);
-        }
-
-        // Right mask
-        if (cropRect.Right < width)
-        {
-            var rightMask = new Rectangle
-            {
-                Width = width - cropRect.Right,
-                Height = cropRect.Height,
-                Fill = MaskBrush
-            };
-            Canvas.SetLeft(rightMask, cropRect.Right);
-            Canvas.SetTop(rightMask, cropRect.Top);
-            _canvas!.Children.Add(rightMask);
-        }
+            Width = width,
+            Height = height,
+            Fill = MaskBrush
+        };
+        Canvas.SetLeft(mask, left);
+        Canvas.SetTop(mask, top);
+        _canvas!.Children.Add(mask);
     }
 
     private void DrawCropBorder(Rect cropRect)
@@ -347,13 +320,13 @@ public partial class CropOverlayControl : UserControl
         return DragHandle.None;
     }
 
-    private Cursor GetCursorForHandle(DragHandle handle) => handle switch
+    private static Cursor GetCursorForHandle(DragHandle handle) => handle switch
     {
-        DragHandle.TopLeft or DragHandle.BottomRight => new Cursor(StandardCursorType.TopLeftCorner),
-        DragHandle.TopRight or DragHandle.BottomLeft => new Cursor(StandardCursorType.TopRightCorner),
-        DragHandle.TopCenter or DragHandle.BottomCenter => new Cursor(StandardCursorType.SizeNorthSouth),
-        DragHandle.MiddleLeft or DragHandle.MiddleRight => new Cursor(StandardCursorType.SizeWestEast),
-        DragHandle.Center => new Cursor(StandardCursorType.SizeAll),
+        DragHandle.TopLeft or DragHandle.BottomRight => TopLeftCornerCursor,
+        DragHandle.TopRight or DragHandle.BottomLeft => TopRightCornerCursor,
+        DragHandle.TopCenter or DragHandle.BottomCenter => NorthSouthCursor,
+        DragHandle.MiddleLeft or DragHandle.MiddleRight => WestEastCursor,
+        DragHandle.Center => MoveCursor,
         _ => Cursor.Default
     };
 
@@ -368,53 +341,37 @@ public partial class CropOverlayControl : UserControl
             return;
         }
 
-        switch (handle)
+        if (handle == DragHandle.Center)
         {
-            case DragHandle.TopLeft:
-                Crop.Left = Clamp(_dragStartCrop.Left + deltaX, 0, Crop.Right - MinCropSize);
-                Crop.Top = Clamp(_dragStartCrop.Top + deltaY, 0, Crop.Bottom - MinCropSize);
-                break;
-            case DragHandle.TopCenter:
-                Crop.Top = Clamp(_dragStartCrop.Top + deltaY, 0, Crop.Bottom - MinCropSize);
-                break;
-            case DragHandle.TopRight:
-                Crop.Right = Clamp(_dragStartCrop.Right + deltaX, Crop.Left + MinCropSize, 1);
-                Crop.Top = Clamp(_dragStartCrop.Top + deltaY, 0, Crop.Bottom - MinCropSize);
-                break;
-            case DragHandle.MiddleLeft:
-                Crop.Left = Clamp(_dragStartCrop.Left + deltaX, 0, Crop.Right - MinCropSize);
-                break;
-            case DragHandle.Center:
-                // Move entire crop region
-                var newLeft = _dragStartCrop.Left + deltaX;
-                var newTop = _dragStartCrop.Top + deltaY;
-                var cropWidth = _dragStartCrop.Right - _dragStartCrop.Left;
-                var cropHeight = _dragStartCrop.Bottom - _dragStartCrop.Top;
-
-                // Constrain to bounds
-                newLeft = Clamp(newLeft, 0, 1 - cropWidth);
-                newTop = Clamp(newTop, 0, 1 - cropHeight);
-
-                Crop.Left = newLeft;
-                Crop.Top = newTop;
-                Crop.Right = newLeft + cropWidth;
-                Crop.Bottom = newTop + cropHeight;
-                break;
-            case DragHandle.MiddleRight:
-                Crop.Right = Clamp(_dragStartCrop.Right + deltaX, Crop.Left + MinCropSize, 1);
-                break;
-            case DragHandle.BottomLeft:
-                Crop.Left = Clamp(_dragStartCrop.Left + deltaX, 0, Crop.Right - MinCropSize);
-                Crop.Bottom = Clamp(_dragStartCrop.Bottom + deltaY, Crop.Top + MinCropSize, 1);
-                break;
-            case DragHandle.BottomCenter:
-                Crop.Bottom = Clamp(_dragStartCrop.Bottom + deltaY, Crop.Top + MinCropSize, 1);
-                break;
-            case DragHandle.BottomRight:
-                Crop.Right = Clamp(_dragStartCrop.Right + deltaX, Crop.Left + MinCropSize, 1);
-                Crop.Bottom = Clamp(_dragStartCrop.Bottom + deltaY, Crop.Top + MinCropSize, 1);
-                break;
+            MoveCrop(deltaX, deltaY);
+            return;
         }
+
+        if (handle is DragHandle.TopLeft or DragHandle.MiddleLeft or DragHandle.BottomLeft)
+            Crop.Left = Clamp(_dragStartCrop.Left + deltaX, 0, Crop.Right - MinCropSize);
+
+        if (handle is DragHandle.TopRight or DragHandle.MiddleRight or DragHandle.BottomRight)
+            Crop.Right = Clamp(_dragStartCrop.Right + deltaX, Crop.Left + MinCropSize, 1);
+
+        if (handle is DragHandle.TopLeft or DragHandle.TopCenter or DragHandle.TopRight)
+            Crop.Top = Clamp(_dragStartCrop.Top + deltaY, 0, Crop.Bottom - MinCropSize);
+
+        if (handle is DragHandle.BottomLeft or DragHandle.BottomCenter or DragHandle.BottomRight)
+            Crop.Bottom = Clamp(_dragStartCrop.Bottom + deltaY, Crop.Top + MinCropSize, 1);
+    }
+
+    // Moves the whole region, keeping its size, within the image.
+    private void MoveCrop(double deltaX, double deltaY)
+    {
+        var cropWidth = _dragStartCrop!.Right - _dragStartCrop.Left;
+        var cropHeight = _dragStartCrop.Bottom - _dragStartCrop.Top;
+        var newLeft = Clamp(_dragStartCrop.Left + deltaX, 0, 1 - cropWidth);
+        var newTop = Clamp(_dragStartCrop.Top + deltaY, 0, 1 - cropHeight);
+
+        Crop!.Left = newLeft;
+        Crop.Top = newTop;
+        Crop.Right = newLeft + cropWidth;
+        Crop.Bottom = newTop + cropHeight;
     }
 
     private static double Clamp(double value, double min, double max)

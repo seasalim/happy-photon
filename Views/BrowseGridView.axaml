@@ -109,11 +109,11 @@
                                 <MenuItem x:Name="SelectAllMenuItem"
                                           Header="Select all" InputGesture="Ctrl+A"
                                           IsEnabled="{Binding Browse.HasVisibleImages}"
-                                          Click="OnSelectAllClick"/>
+                                          Command="{Binding SelectAllCommand}"/>
                                 <MenuItem x:Name="DeselectAllMenuItem"
                                           Header="Deselect all" InputGesture="Ctrl+D"
                                           IsEnabled="{Binding Browse.HasSelectedImages}"
-                                          Click="OnDeselectAllClick"/>
+                                          Command="{Binding DeselectAllCommand}"/>
                                 <Separator/>
                                 <MenuItem x:Name="SyncSettingsMenuItem"
                                           Header="Sync settings…"
@@ -398,8 +398,6 @@
 
         <views:BrowseGridFooter x:Name="BrowseGridFooter"
                                 Grid.Row="2"
-                                ShowBursts="{Binding ShowBursts, ElementName=Root, Mode=TwoWay}"
-                                ShowPairs="{Binding ShowPairs, ElementName=Root, Mode=TwoWay}"
                                 ThumbnailSize="{Binding ThumbnailSize, ElementName=Root, Mode=TwoWay}"/>
 
     </Grid>

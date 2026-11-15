@@ -14,14 +14,14 @@
                              StringFormat="{}{0:+0;-0;0}"
                              EnableDoubleClickReset="True"/>
         <views:CompactSlider x:Name="VibranceSlider"
-                             Classes="color-dependent"
+                             Classes="color-dependent dim-disabled"
                              Label="Vibrance"
                              Value="{Binding Vibrance}"
                              IsEnabled="{Binding IsColorEditingEnabled}"
                              StringFormat="{}{0:+0;-0;0}"
                              EnableDoubleClickReset="True"/>
         <views:CompactSlider x:Name="SaturationSlider"
-                             Classes="color-dependent"
+                             Classes="color-dependent dim-disabled"
                              Label="Saturation"
                              Value="{Binding Saturation}"
                              IsEnabled="{Binding IsColorEditingEnabled}"

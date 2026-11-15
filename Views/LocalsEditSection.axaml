@@ -101,15 +101,8 @@
                         </views:CompactSlider.TrackBrush>
                     </views:CompactSlider>
                     <views:CompactSlider Label="Tint" Value="{Binding LocalTint}" Minimum="-50" Maximum="50"
-                                         StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True">
-                        <views:CompactSlider.TrackBrush>
-                            <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
-                                <GradientStop Color="{StaticResource WhiteBalanceTintGreenColor}" Offset="0"/>
-                                <GradientStop Color="{StaticResource WhiteBalanceTintNeutralColor}" Offset="0.5"/>
-                                <GradientStop Color="{StaticResource WhiteBalanceTintMagentaColor}" Offset="1"/>
-                            </LinearGradientBrush>
-                        </views:CompactSlider.TrackBrush>
-                    </views:CompactSlider>
+                                         StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True"
+                                         TrackBrush="{StaticResource WhiteBalanceTintTrack}"/>
                     <views:CompactSlider Label="Saturation" Value="{Binding LocalSaturation}"
                                          StringFormat="{}{0:+0;-0;0}" EnableDoubleClickReset="True"/>
                 </StackPanel>

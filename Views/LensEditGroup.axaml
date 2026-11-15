@@ -8,23 +8,13 @@
              x:Class="HappyPhoton.Views.LensEditGroup"
              x:DataType="vm:MainWindowViewModel">
     <UserControl.Styles>
-        <Style Selector="StackPanel.optics-group:disabled">
-            <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
-        </Style>
         <Style Selector="Grid.optics-row">
             <Setter Property="Height" Value="28"/>
-        </Style>
-        <Style Selector="Grid.optics-row:disabled">
-            <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
-        </Style>
-        <Style Selector="StackPanel.global-edits.locked StackPanel.optics-group,
-                         StackPanel.global-edits.locked Grid.optics-row">
-            <Setter Property="Opacity" Value="1"/>
         </Style>
     </UserControl.Styles>
 
     <StackPanel x:Name="OpticsGroup"
-                Classes="optics-group"
+                Classes="optics-group dim-disabled"
                 Spacing="2"
                 IsEnabled="{Binding IsOpticsEnabled}">
         <Grid ColumnDefinitions="*" IsVisible="{Binding HasLensChoices}">
@@ -54,7 +44,7 @@
             </ComboBox>
         </Grid>
         <Grid x:Name="DistortionRow"
-              Classes="optics-row"
+              Classes="optics-row dim-disabled"
               IsEnabled="{Binding HasLensDistortion}">
             <CheckBox x:Name="DistortionToggle"
                       Classes="edit-toggle"
@@ -62,7 +52,7 @@
                       IsChecked="{Binding LensDistortion, Mode=TwoWay}"/>
         </Grid>
         <Grid x:Name="ChromaticAberrationRow"
-              Classes="optics-row"
+              Classes="optics-row dim-disabled"
               IsEnabled="{Binding HasLensChromaticAberration}">
             <CheckBox x:Name="ChromaticAberrationToggle"
                       Classes="edit-toggle"
@@ -70,7 +60,7 @@
                       IsChecked="{Binding LensChromaticAberration, Mode=TwoWay}"/>
         </Grid>
         <Grid x:Name="VignettingRow"
-              Classes="optics-row"
+              Classes="optics-row dim-disabled"
               IsEnabled="{Binding HasLensVignetting}">
             <CheckBox x:Name="VignettingToggle"
                       Classes="edit-toggle"

@@ -299,15 +299,7 @@ public partial class PresetsPanel : UserControl
     {
         foreach (var (id, button) in _presetButtons)
         {
-            var isActive = id == ActivePresetId;
-            if (isActive && !button.Classes.Contains("active"))
-            {
-                button.Classes.Add("active");
-            }
-            else if (!isActive && button.Classes.Contains("active"))
-            {
-                button.Classes.Remove("active");
-            }
+            button.Classes.Set("active", id == ActivePresetId);
         }
     }
 }

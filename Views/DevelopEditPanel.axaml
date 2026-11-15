@@ -41,24 +41,6 @@
         <Style Selector="StackPanel.global-edits.locked Expander.develop-group /template/ ToggleButton#ExpanderHeader:disabled">
             <Setter Property="Opacity" Value="1"/>
         </Style>
-        <Style Selector="views|CompactSlider.crossing-dependent:disabled">
-            <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
-        </Style>
-        <Style Selector="StackPanel.color-dependent:disabled,
-                         views|CompactSlider.color-dependent:disabled,
-                         views|MixerEditGroup.color-dependent:disabled">
-            <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
-        </Style>
-        <Style Selector="Grid.highlight-handling-row:disabled">
-            <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
-        </Style>
-        <Style Selector="StackPanel.global-edits.locked StackPanel.color-dependent,
-                         StackPanel.global-edits.locked views|CompactSlider.color-dependent,
-                         StackPanel.global-edits.locked views|CompactSlider.crossing-dependent,
-                         StackPanel.global-edits.locked views|MixerEditGroup.color-dependent,
-                         StackPanel.global-edits.locked Grid.highlight-handling-row">
-            <Setter Property="Opacity" Value="1"/>
-        </Style>
         <Style Selector="Grid.shooting-info TextBlock">
             <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
             <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
@@ -188,7 +170,7 @@
                         <views:DevelopGroup Header="White Balance" IsExpanded="{Binding WhiteBalanceGroup.IsExpanded, Mode=TwoWay}"
                                             SoloCommand="{Binding SoloDevelopGroupCommand}" Tag="{Binding WhiteBalanceGroup}">
                             <StackPanel x:Name="WhiteBalanceControls"
-                                        Classes="color-dependent"
+                                        Classes="color-dependent dim-disabled"
                                         Spacing="4"
                                         IsEnabled="{Binding IsColorEditingEnabled}">
                                 <Grid ColumnDefinitions="*,Auto,Auto"
@@ -248,19 +230,8 @@
 
                                 <views:CompactSlider Label="Tint"
                                                      Value="{Binding WhiteBalanceTint}"
-                                                     DisplayText="{Binding WhiteBalanceTintText}">
-                                    <views:CompactSlider.TrackBrush>
-                                        <LinearGradientBrush StartPoint="0%,50%"
-                                                             EndPoint="100%,50%">
-                                            <GradientStop Color="{StaticResource WhiteBalanceTintGreenColor}"
-                                                          Offset="0"/>
-                                            <GradientStop Color="{StaticResource WhiteBalanceTintNeutralColor}"
-                                                          Offset="0.5"/>
-                                            <GradientStop Color="{StaticResource WhiteBalanceTintMagentaColor}"
-                                                          Offset="1"/>
-                                        </LinearGradientBrush>
-                                    </views:CompactSlider.TrackBrush>
-                                </views:CompactSlider>
+                                                     DisplayText="{Binding WhiteBalanceTintText}"
+                                                     TrackBrush="{StaticResource WhiteBalanceTintTrack}"/>
                             </StackPanel>
 
                         </views:DevelopGroup>
@@ -276,7 +247,7 @@
                                                      StringFormat="{}{0:+0.00;-0.00;0.00}"
                                                      EnableDoubleClickReset="True"/>
                                 <views:CompactSlider x:Name="BrightnessSlider"
-                                                     Classes="crossing-dependent"
+                                                     Classes="crossing-dependent dim-disabled"
                                                      Label="Brightness"
                                                      Value="{Binding Brightness}"
                                                      IsEnabled="{Binding IsBrightnessEnabled}"
@@ -302,7 +273,7 @@
                                                      EnableDoubleClickReset="True"/>
 
                                 <Grid x:Name="HighlightHandlingRow"
-                                      Classes="highlight-handling-row"
+                                      Classes="highlight-handling-row dim-disabled"
                                       ColumnDefinitions="70,*,40"
                                       Height="24"
                                       Margin="0,0,0,4"
@@ -354,7 +325,7 @@
                         <views:DevelopGroup Header="Color Mixer" IsExpanded="{Binding ColorMixerGroup.IsExpanded, Mode=TwoWay}"
                                             SoloCommand="{Binding SoloDevelopGroupCommand}" Tag="{Binding ColorMixerGroup}">
                             <views:MixerEditGroup x:Name="MixerEditGroup"
-                                                  Classes="color-dependent"
+                                                  Classes="color-dependent dim-disabled"
                                                   IsEnabled="{Binding IsColorEditingEnabled}"/>
                         </views:DevelopGroup>
                         <views:DevelopGroup Header="Detail" IsExpanded="{Binding DetailGroup.IsExpanded, Mode=TwoWay}"

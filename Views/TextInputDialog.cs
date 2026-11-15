@@ -10,14 +10,6 @@ public class TextInputDialog : Window
 
     internal TextInputDialog(string title, string prompt, string initialText)
     {
-        Title = title;
-        Width = 420;
-        MinWidth = 320;
-        SizeToContent = SizeToContent.Height;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        CanResize = false;
-        Classes.Add("dialog");
-
         _textBox = new TextBox
         {
             Text = initialText,
@@ -25,45 +17,14 @@ public class TextInputDialog : Window
         };
         _textBox.TextChanged += (_, _) => UpdateOkState();
 
-        _okButton = CreateButton("OK");
+        _okButton = DialogChrome.Button("OK");
         _okButton.Classes.Add("accent");
         _okButton.Click += (_, _) => Confirm();
 
-        var cancelButton = CreateButton("Cancel");
+        var cancelButton = DialogChrome.Button("Cancel");
         cancelButton.Click += (_, _) => Close(null);
 
-        var footer = new Border
-        {
-            Classes = { "dialog-footer" },
-            Child = new StackPanel
-            {
-                Classes = { "dialog-buttons" },
-                Children = { cancelButton, _okButton }
-            }
-        };
-        Grid.SetRow(footer, 1);
-        Content = new Grid
-        {
-            RowDefinitions = new RowDefinitions("*,Auto"),
-            Children =
-            {
-                new Border
-                {
-                    Classes = { "dialog-content" },
-                    Child = new StackPanel
-                    {
-                        Spacing = 12,
-                        Children =
-                        {
-                            new TextBlock { Text = title, Classes = { "dialog-title" } },
-                            new TextBlock { Text = prompt, Classes = { "dialog-body" } },
-                            _textBox
-                        }
-                    }
-                },
-                footer
-            }
-        };
+        DialogChrome.Build(this, title, prompt, _textBox, cancelButton, _okButton);
 
         KeyDown += OnKeyDown;
         Opened += (_, _) =>
@@ -81,15 +42,6 @@ public class TextInputDialog : Window
         string initialText = "")
     {
         return new TextInputDialog(title, prompt, initialText).ShowDialog<string?>(owner);
-    }
-
-    private static Button CreateButton(string label)
-    {
-        return new Button
-        {
-            Content = label,
-            Classes = { "quiet-button" }
-        };
     }
 
     private void UpdateOkState()

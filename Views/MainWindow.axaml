@@ -193,8 +193,6 @@
                                        FlagFilter="{Binding Browse.FlagFilter, Mode=TwoWay}"
                                        MinimumRating="{Binding Browse.MinimumRating, Mode=TwoWay}"
                                        ColorLabelFilter="{Binding Browse.ColorLabelFilter, Mode=TwoWay}"
-                                       ShowBursts="{Binding ShowBurstGroups, Mode=TwoWay}"
-                                       ShowPairs="{Binding ShowCapturePairs, Mode=TwoWay}"
                                        ThumbnailSize="{Binding BrowseThumbnailSize, Mode=TwoWay}"
                                        SelectedImage="{Binding SelectedImage, Mode=TwoWay}"/>
 

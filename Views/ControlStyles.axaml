@@ -82,6 +82,14 @@
     <Style Selector="CheckBox:unchecked:pointerover /template/ Border#NormalRectangle">
         <Setter Property="BorderBrush" Value="{DynamicResource TextSecondary}"/>
     </Style>
+    <!-- Dim a disabled row or group once. Inside the locked global edits the
+         locked panel is already dimmed, so its rows stay at full opacity. -->
+    <Style Selector=":is(Control).dim-disabled:disabled">
+        <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
+    </Style>
+    <Style Selector="StackPanel.global-edits.locked :is(Control).dim-disabled">
+        <Setter Property="Opacity" Value="1"/>
+    </Style>
     <Style Selector="CheckBox:disabled">
         <Setter Property="Opacity" Value="{DynamicResource DisabledOpacity}"/>
     </Style>

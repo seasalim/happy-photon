@@ -275,11 +275,10 @@ public sealed class SliderAndFooterMetricTests
     }
 
     [AvaloniaFact]
-    public void PairStyledPropertiesAndFreshFooter_DefaultOff()
+    public void PairToggleAndFreshFooter_DefaultOff()
     {
-        Assert.False(new BrowseGridView().ShowPairs);
         var footer = new BrowseGridFooter();
-        Assert.False(footer.ShowPairs);
+        Assert.False(footer.FindControl<ToggleButton>("PairsButton")!.IsChecked);
         Assert.DoesNotContain(
             "active",
             footer.FindControl<Button>("PairsButton")!.Classes);

@@ -21,23 +21,8 @@ public partial class MainWindowViewModel
     [ObservableProperty]
     private int _mixerLuminance;
 
-    public bool IsRedMixerActive => ActiveMixerBand == ColorMixerBand.Red;
-    public bool IsOrangeMixerActive => ActiveMixerBand == ColorMixerBand.Orange;
-    public bool IsYellowMixerActive => ActiveMixerBand == ColorMixerBand.Yellow;
-    public bool IsGreenMixerActive => ActiveMixerBand == ColorMixerBand.Green;
-    public bool IsAquaMixerActive => ActiveMixerBand == ColorMixerBand.Aqua;
-    public bool IsBlueMixerActive => ActiveMixerBand == ColorMixerBand.Blue;
-    public bool IsPurpleMixerActive => ActiveMixerBand == ColorMixerBand.Purple;
-    public bool IsMagentaMixerActive => ActiveMixerBand == ColorMixerBand.Magenta;
-
-    public bool IsRedMixerTouched => IsMixerBandTouched(ColorMixerBand.Red);
-    public bool IsOrangeMixerTouched => IsMixerBandTouched(ColorMixerBand.Orange);
-    public bool IsYellowMixerTouched => IsMixerBandTouched(ColorMixerBand.Yellow);
-    public bool IsGreenMixerTouched => IsMixerBandTouched(ColorMixerBand.Green);
-    public bool IsAquaMixerTouched => IsMixerBandTouched(ColorMixerBand.Aqua);
-    public bool IsBlueMixerTouched => IsMixerBandTouched(ColorMixerBand.Blue);
-    public bool IsPurpleMixerTouched => IsMixerBandTouched(ColorMixerBand.Purple);
-    public bool IsMagentaMixerTouched => IsMixerBandTouched(ColorMixerBand.Magenta);
+    /// <summary>Raised when the active band or any band's touched state may have changed.</summary>
+    public event EventHandler? MixerBandsChanged;
 
     partial void OnActiveMixerBandChanged(ColorMixerBand value)
     {
@@ -96,26 +81,8 @@ public partial class MainWindowViewModel
         _isSwitchingMixerBand = false;
     }
 
-    private bool IsMixerBandTouched(ColorMixerBand band) =>
+    public bool IsMixerBandTouched(ColorMixerBand band) =>
         _liveMixer.GetBand(band).HasActivePixels;
 
-    private void NotifyMixerStateChanged()
-    {
-        OnPropertyChanged(nameof(IsRedMixerActive));
-        OnPropertyChanged(nameof(IsOrangeMixerActive));
-        OnPropertyChanged(nameof(IsYellowMixerActive));
-        OnPropertyChanged(nameof(IsGreenMixerActive));
-        OnPropertyChanged(nameof(IsAquaMixerActive));
-        OnPropertyChanged(nameof(IsBlueMixerActive));
-        OnPropertyChanged(nameof(IsPurpleMixerActive));
-        OnPropertyChanged(nameof(IsMagentaMixerActive));
-        OnPropertyChanged(nameof(IsRedMixerTouched));
-        OnPropertyChanged(nameof(IsOrangeMixerTouched));
-        OnPropertyChanged(nameof(IsYellowMixerTouched));
-        OnPropertyChanged(nameof(IsGreenMixerTouched));
-        OnPropertyChanged(nameof(IsAquaMixerTouched));
-        OnPropertyChanged(nameof(IsBlueMixerTouched));
-        OnPropertyChanged(nameof(IsPurpleMixerTouched));
-        OnPropertyChanged(nameof(IsMagentaMixerTouched));
-    }
+    private void NotifyMixerStateChanged() => MixerBandsChanged?.Invoke(this, EventArgs.Empty);
 }

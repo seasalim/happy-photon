@@ -126,7 +126,7 @@ public sealed class LoupeGateBaselineMeasurementTests(ITestOutputHelper output)
             Drain();
             var browse = window.FindControl<BrowseGridView>("BrowseGridView")!;
             var pairs = browse.FindFooterControl<Button>("PairsButton")!;
-            Assert.False(browse.ShowPairs);
+            Assert.False(viewModel.ShowCapturePairs);
             Assert.True(pairs.Focus());
             bool? pairsSpaceHandled = null;
             pairs.AddHandler(
@@ -145,11 +145,11 @@ public sealed class LoupeGateBaselineMeasurementTests(ITestOutputHelper output)
                 PhysicalKey.Space,
                 " ");
             Drain();
-            output.WriteLine($"browse footer activated: {browse.ShowPairs}");
+            output.WriteLine($"browse footer activated: {viewModel.ShowCapturePairs}");
 
             Assert.Equal("base ", textResult);
             Assert.False(namingSpaceHandled);
-            Assert.True(browse.ShowPairs);
+            Assert.True(viewModel.ShowCapturePairs);
             Assert.False(pairsSpaceHandled);
             Assert.False(viewModel.IsLoupeMode);
         }

@@ -38,6 +38,39 @@ public partial class MainWindow
         return true;
     }
 
+    // Left/Right step everywhere. Up/Down also step between compare pane rows,
+    // where the grid is hidden. Paging and Home/End stay grid-only: compare has
+    // no scroll extent.
+    private bool TryHandleNavigationKey(KeyEventArgs e, MainWindowViewModel vm)
+    {
+        var grid = vm.IsBrowseGridVisible;
+        var rows = grid || vm.IsCompareMode;
+        Action? navigate = e.Key switch
+        {
+            Key.Left => () => vm.SelectPreviousImageCommand.Execute(null),
+            Key.Right => () => vm.SelectNextImageCommand.Execute(null),
+            Key.Up when rows => () => vm.SelectImageUp(ItemsPerRow()),
+            Key.Down when rows => () => vm.SelectImageDown(ItemsPerRow()),
+            Key.PageUp when grid => () => vm.SelectImageUp(ItemsPerRow() * RowsPerPage()),
+            Key.PageDown when grid => () => vm.SelectImageDown(ItemsPerRow() * RowsPerPage()),
+            Key.Home when grid => vm.SelectFirstImage,
+            Key.End when grid => vm.SelectLastImage,
+            _ => null
+        };
+
+        if (navigate == null) return false;
+
+        navigate();
+        if (vm.IsBrowseGridVisible) FollowKeyboardFocus(vm);
+        e.Handled = true;
+
+        return true;
+    }
+
+    private int ItemsPerRow() => _browseGridView?.GetItemsPerRow() ?? 1;
+
+    private int RowsPerPage() => _browseGridView?.GetRowsPerPage() ?? 1;
+
     internal void FollowBrowseNavigation()
     {
         if (DataContext is MainWindowViewModel { IsBrowseGridVisible: true } vm)

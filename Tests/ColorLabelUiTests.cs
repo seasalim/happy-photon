@@ -150,19 +150,19 @@ public sealed partial class ColorLabelUiTests
         Click(thirdStar);
         Assert.Equal(0, control.MinimumRating);
 
-        Click(bursts);
-        Assert.True(control.ShowBursts);
-        Click(bursts);
-        Assert.False(control.ShowBursts);
+        PointerClick(window, bursts);
+        Assert.True(vm.ShowBurstGroups);
+        PointerClick(window, bursts);
+        Assert.False(vm.ShowBurstGroups);
 
-        Click(pairs);
-        Assert.True(control.ShowPairs);
+        PointerClick(window, pairs);
+        Assert.True(vm.ShowCapturePairs);
         Assert.True(pairs.IsChecked);
         Assert.Equal(
             ThemeResourceTests.Brush("ControlActive", Avalonia.Styling.ThemeVariant.Dark).Color,
             Assert.IsAssignableFrom<ISolidColorBrush>(pairs.Background).Color);
-        Click(pairs);
-        Assert.False(control.ShowPairs);
+        PointerClick(window, pairs);
+        Assert.False(vm.ShowCapturePairs);
         Assert.False(pairs.IsChecked);
 
         var filterControls = control.FindControl<ScrollViewer>("FilterScrollViewer")!;
