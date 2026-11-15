@@ -252,6 +252,10 @@ bound X-Trans scratch space without changing decode precision or pixel math; exp
 nonblank values win. Native operations share that budget; the resting two-worker cap
 applies only to managed kernels (repeatability: §2.6).
 
+Before any Magick use, process startup caps embedded profiles at 32 through
+the ImageMagick security policy. Excess profiles are discarded with a warning;
+the image remains readable.
+
 1. JPEG preview uses a native-geometry ping and a large-preview `jpeg:size` hint only
    when the source exceeds that size, preserving DCT-scaled decode without upscaling.
 2. Auto-orient and record orientation. Preview JPEG/HEIC capture source saturation from
