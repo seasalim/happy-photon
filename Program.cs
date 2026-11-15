@@ -12,7 +12,6 @@ sealed class Program
     public static void Main(string[] args)
     {
         LibRaw.Interop.NativeLibraryResolver.ConfigureOpenMpThreadLimit();
-        MagickSecurityPolicy.Initialize();
 
         if (args.Length > 0 && args[0] == SelfCheck.Argument)
         {

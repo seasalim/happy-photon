@@ -3,7 +3,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using HappyPhoton.LibRaw.Interop;
-using HappyPhoton.Services;
 using ImageMagick;
 using Xunit;
 
@@ -123,11 +122,7 @@ public sealed class OpenMpRuntimeTests
             m => Path.GetFileName(m.FileName).StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static void LoadMagick()
-    {
-        MagickSecurityPolicy.Initialize(OpenMpStartup.ConfigurationRoot);
-        using var image = new MagickImage(MagickColors.Gray, 2, 2);
-    }
+    private static void LoadMagick() { using var image = new MagickImage(MagickColors.Gray, 2, 2); }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static void LoadLibRaw() => Assert.Equal(0x001602u, LibRawContext.Runtime.LibRawVersionNumber);
