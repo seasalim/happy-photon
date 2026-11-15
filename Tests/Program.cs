@@ -16,6 +16,9 @@ internal static class Program
         if (args.FirstOrDefault() == "--restore-hot-journal-child")
             return TestChildEntry.Run(RestoreHotJournalTests.RunChild);
 
+        if (args.FirstOrDefault() == "--magick-policy-child")
+            return TestChildEntry.Run(MagickSecurityPolicyTests.RunChild);
+
         if (args.FirstOrDefault() == "--openmp-child")
             return TestChildEntry.Run(OpenMpRuntimeTests.RunChild);
 

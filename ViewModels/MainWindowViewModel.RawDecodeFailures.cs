@@ -17,7 +17,7 @@ public partial class MainWindowViewModel
                 ? "The original is unavailable. Make it available locally, then retry."
                 : null;
 
-    internal string? SelectedRawDecodeFailureStatus =>
+    internal string? SelectedDecodeFailureStatus =>
         SelectedImage?.RawDecodeFailed == true
             ? "This RAW file could not be decoded. It may use an unsupported encoding such as Nikon HE."
             : _standardDecodeFailure
