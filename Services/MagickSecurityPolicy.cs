@@ -7,7 +7,8 @@ namespace HappyPhoton.Services;
 
 internal static class MagickSecurityPolicy
 {
-    internal static void Initialize()
+    // The explicit root is for isolated test hosts; the app uses the OS per-user location.
+    internal static void Initialize(string? localApplicationDataRoot = null)
     {
         var configuration = ConfigurationFiles.Default;
         const string closingTag = "</policymap>";
@@ -17,11 +18,12 @@ internal static class MagickSecurityPolicy
         configuration.Policy.Data = configuration.Policy.Data.Replace(
             closingTag,
             """<policy domain="system" name="max-profile-count" value="32" /></policymap>""");
-        var directory = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "HappyPhoton",
-            Environment.UserName, $"magick-{MagickNET.Version}-profiles-32"));
+        var directory = GetConfigurationDirectory(localApplicationDataRoot);
         var lockKey = OperatingSystem.IsWindows() ? directory.ToUpperInvariant() : directory;
         var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(lockKey)));
-        using var mutex = new Mutex(false, $"HappyPhoton.MagickConfiguration.{hash}");
+        // The same user's processes share these files even across login/shell sessions.
+        using var mutex = new Mutex(false, $"HappyPhoton.MagickConfiguration.{hash}",
+            new NamedWaitHandleOptions { CurrentUserOnly = true, CurrentSessionOnly = false });
 
         try
         {
@@ -35,7 +37,18 @@ internal static class MagickSecurityPolicy
 
         try
         {
-            Directory.CreateDirectory(directory);
+            if (OperatingSystem.IsWindows())
+            {
+                // Inherit the per-user LocalApplicationData ACL.
+                Directory.CreateDirectory(directory);
+            }
+            else
+            {
+                const UnixFileMode ownerOnly = UnixFileMode.UserRead |
+                    UnixFileMode.UserWrite | UnixFileMode.UserExecute;
+                Directory.CreateDirectory(directory, ownerOnly);
+                File.SetUnixFileMode(directory, ownerOnly);
+            }
 
             foreach (var file in configuration.All)
             {
@@ -63,5 +76,16 @@ internal static class MagickSecurityPolicy
         {
             mutex.ReleaseMutex();
         }
+    }
+
+    internal static string GetConfigurationDirectory(string? localApplicationDataRoot = null)
+    {
+        var root = localApplicationDataRoot ?? Environment.GetFolderPath(
+            Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify);
+        if (string.IsNullOrWhiteSpace(root) || !Path.IsPathFullyQualified(root))
+            throw new InvalidOperationException("A per-user local application data directory is required.");
+
+        return Path.GetFullPath(Path.Combine(root, "Happy Photon",
+            $"magick-{MagickNET.Version}-profiles-32"));
     }
 }

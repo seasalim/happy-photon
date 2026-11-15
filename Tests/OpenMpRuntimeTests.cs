@@ -125,7 +125,7 @@ public sealed class OpenMpRuntimeTests
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static void LoadMagick()
     {
-        MagickSecurityPolicy.Initialize();
+        MagickSecurityPolicy.Initialize(OpenMpStartup.ConfigurationRoot);
         using var image = new MagickImage(MagickColors.Gray, 2, 2);
     }
 

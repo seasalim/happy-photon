@@ -8,6 +8,60 @@ namespace HappyPhoton.Tests;
 public sealed class MagickSecurityPolicyTests
 {
     [Fact]
+    public void DefaultDirectory_IsUnderPerUserLocalApplicationData()
+    {
+        var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData,
+            Environment.SpecialFolderOption.DoNotVerify);
+        Assert.True(Path.IsPathFullyQualified(local));
+        var directory = MagickSecurityPolicy.GetConfigurationDirectory();
+
+        Assert.Equal(Path.Combine("Happy Photon", $"magick-{MagickNET.Version}-profiles-32"),
+            Path.GetRelativePath(local, directory));
+        Assert.NotEqual(directory, MagickSecurityPolicy.GetConfigurationDirectory(OpenMpStartup.ConfigurationRoot));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("relative-data")]
+    public void InvalidRoot_DoesNotFallBackToWorkingDirectory(string root) =>
+        Assert.Throws<InvalidOperationException>(() => MagickSecurityPolicy.GetConfigurationDirectory(root));
+
+    [Fact]
+    public async Task SeparateUserDataRoots_KeepIndependentConfigurations()
+    {
+        using var first = new TemporaryDirectory();
+        using var second = new TemporaryDirectory();
+        await Task.WhenAll(RunProcessAsync(first.Path), RunProcessAsync(second.Path));
+        var firstPolicy = Assert.Single(Directory.GetFiles(first.Path, "policy.xml", SearchOption.AllDirectories));
+        var secondPolicy = Assert.Single(Directory.GetFiles(second.Path, "policy.xml", SearchOption.AllDirectories));
+
+        Assert.NotEqual(firstPolicy, secondPolicy);
+        Assert.Equal(File.ReadAllText(firstPolicy), File.ReadAllText(secondPolicy));
+    }
+
+    [Fact]
+    public async Task UnixDirectory_IsOwnerOnlyOnCreationAndReuse()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix directory permissions are exercised on Linux/macOS.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+        await RunProcessAsync(root.Path);
+        var directory = Path.GetDirectoryName(Assert.Single(
+            Directory.GetFiles(root.Path, "policy.xml", SearchOption.AllDirectories)))!;
+        const UnixFileMode ownerOnly = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute;
+        Assert.Equal(ownerOnly, File.GetUnixFileMode(directory));
+        File.SetUnixFileMode(directory, ownerOnly | UnixFileMode.GroupWrite | UnixFileMode.OtherWrite);
+        await RunProcessAsync(root.Path);
+
+        Assert.Equal(ownerOnly, File.GetUnixFileMode(directory));
+    }
+
+    [Fact]
     public async Task RepeatedInitialization_ReusesDirectoryWithoutRewritingFiles()
     {
         using var root = new TemporaryDirectory();
@@ -60,7 +114,7 @@ public sealed class MagickSecurityPolicyTests
 
     internal static void RunChild()
     {
-        MagickSecurityPolicy.Initialize();
+        MagickSecurityPolicy.Initialize(OpenMpStartup.ConfigurationRoot);
         using var image = new MagickImage(MagickColors.Gray, 1, 1);
         Console.WriteLine("MAGICK_CONFIGURATION_VERIFIED");
     }
@@ -76,9 +130,7 @@ public sealed class MagickSecurityPolicyTests
         };
         start.ArgumentList.Add(typeof(MagickSecurityPolicyTests).Assembly.Location);
         start.ArgumentList.Add("--magick-policy-child");
-        start.Environment["TEMP"] = temporaryRoot;
-        start.Environment["TMP"] = temporaryRoot;
-        start.Environment["TMPDIR"] = temporaryRoot;
+        start.Environment[OpenMpStartup.ConfigurationRootEnvironmentVariable] = temporaryRoot;
         using var process = Process.Start(start)!;
         var outputTask = process.StandardOutput.ReadToEndAsync();
         var errorTask = process.StandardError.ReadToEndAsync();
