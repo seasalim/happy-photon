@@ -70,6 +70,25 @@ jobs:
           echo "is-tag=$is_tag" >> "$GITHUB_OUTPUT"
           echo "is-prerelease=$is_prerelease" >> "$GITHUB_OUTPUT"
 
+      - name: Install .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      # Before packaging starts: a release never ships a package with a known
+      # high or critical advisory. The weekly Vulnerable packages workflow
+      # reports every severity without blocking ordinary CI.
+      - name: Refuse high and critical package advisories
+        run: |
+          for flavor in OpenMP-x64 AnyCPU; do
+            dotnet restore HappyPhoton.sln --locked-mode -p:ContinuousIntegrationBuild=true \
+              -p:MagickFlavor="$flavor" -warnaserror:NU1903,NU1904
+          done
+          for rid in win-x64 linux-x64 osx-arm64; do
+            dotnet restore HappyPhoton.csproj --locked-mode -p:ContinuousIntegrationBuild=true \
+              -p:RuntimeIdentifier="$rid" -p:PublishReadyToRun=true -warnaserror:NU1903,NU1904
+          done
+
       - name: Require exact-commit CI qualification
         shell: pwsh
         env:

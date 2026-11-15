@@ -44,6 +44,36 @@ public sealed class ReleaseStampingTests
     }
 
     [Fact]
+    public void ReleaseWorkflow_RefusesHighAndCriticalAdvisoriesBeforePackaging()
+    {
+        var workflow = ReadRepositoryFile(".github", "workflows", "release.yml");
+        var prepareJob = workflow[workflow.IndexOf("  prepare:", StringComparison.Ordinal)..
+            workflow.IndexOf("  windows:", StringComparison.Ordinal)];
+        var audit = prepareJob.IndexOf("Refuse high and critical package advisories", StringComparison.Ordinal);
+        var qualification = prepareJob.IndexOf("Require exact-commit CI qualification", StringComparison.Ordinal);
+
+        Assert.InRange(audit, 0, qualification - 1);
+        Assert.Equal(2, Regex.Matches(prepareJob, "--locked-mode").Count);
+        Assert.Equal(2, Regex.Matches(prepareJob, "-warnaserror:NU1903,NU1904").Count);
+        Assert.Contains("for flavor in OpenMP-x64 AnyCPU; do", prepareJob);
+        Assert.Contains("for rid in win-x64 linux-x64 osx-arm64; do", prepareJob);
+    }
+
+    [Fact]
+    public void VulnerablePackagesWorkflow_RunsWeeklyAndByHandOnly()
+    {
+        var workflow = ReadRepositoryFile(".github", "workflows", "vulnerable-packages.yml");
+        var triggers = workflow[workflow.IndexOf("on:", StringComparison.Ordinal)..
+            workflow.IndexOf("concurrency:", StringComparison.Ordinal)];
+
+        Assert.Contains("schedule:", triggers);
+        Assert.Contains("workflow_dispatch:", triggers);
+        Assert.DoesNotContain("push:", triggers);
+        Assert.DoesNotContain("pull_request", triggers);
+        Assert.Contains("./scripts/check-vulnerable-packages.ps1", workflow);
+    }
+
+    [Fact]
     public void LinuxAppImagePackaging_UsesPublishOutputAndPublicAssetName()
     {
         var script = ReadRepositoryFile("scripts", "package-linux-appimage.sh");

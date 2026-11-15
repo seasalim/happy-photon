@@ -132,6 +132,21 @@ Linux requires system `libgomp.so.1` for **all image decoding**, including JPEG,
 not only RAW: without it ImageMagick cannot load. The AppImage does not bundle it.
 macOS keeps the AnyCPU arm64 native and has no OpenMP runtime dependency.
 
+## Vulnerable packages
+
+The `Vulnerable packages` workflow runs every Monday and on demand. It restores
+each committed lock graph in locked mode (the solution in both Magick flavours,
+the app for each RID, the LibRaw smoke project) and runs
+`scripts/check-vulnerable-packages.ps1`, which fails and lists any package with
+a NuGet advisory of any severity. Before starting a release, read its latest run
+on `main` (Actions, then its summary); a red run needs a package fix or a
+recorded decision first. Ordinary CI never fails on an advisory.
+
+The release workflow's `prepare` job restores the solution and app graphs with
+NU1903 and NU1904 (high and critical advisories) as errors, so such a release
+stops before packaging. NuGet audit covers NuGet advisories only, not the
+bundled ImageMagick, .NET runtime or LibRaw.
+
 ## Repository variables
 
 Set these non-secret repository variables:
