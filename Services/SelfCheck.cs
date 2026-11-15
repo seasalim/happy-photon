@@ -24,6 +24,7 @@ internal static partial class SelfCheck
             return 2;
         }
 
+        Console.WriteLine($"self-check: runtime {Environment.Version}");
         Environment.SetEnvironmentVariable("HAPPY_PHOTON_DISPLAY_TRACE", null);
         var root = Path.Combine(Path.GetTempPath(), "happy-photon-self-check-" + Guid.NewGuid().ToString("N"));
         var run = Task.Run(() => RunStepsAsync(args[1], root));

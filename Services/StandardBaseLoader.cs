@@ -294,8 +294,8 @@ public sealed class StandardBaseLoader : IBaseImageLoader
             ? (height, width)
             : (width, height);
 
-    private static int NormalizeOrientation(OrientationType orientation) =>
-        orientation == OrientationType.Undefined ? 1 : (int)orientation;
+    private static int NormalizeOrientation(Orientation orientation) =>
+        orientation == Orientation.Undefined ? 1 : (int)orientation;
 
     private static bool IsJpeg(ImageFile file) =>
         file.Extension.Equals(".jpg", StringComparison.OrdinalIgnoreCase) ||

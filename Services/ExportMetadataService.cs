@@ -54,7 +54,7 @@ public sealed class ExportMetadataService
         var profile = ReadSourceProfile(sourceFile.FilePath, intent) ??
             new ExifProfile();
         ApplyFallbackMetadata(profile, sourceFile);
-        destination.Orientation = OrientationType.TopLeft;
+        destination.Orientation = Orientation.TopLeft;
         profile.SetValue(ExifTag.Orientation, (ushort)1);
         profile.RemoveThumbnail();
         profile.RemoveValue(ExifTag.JPEGInterchangeFormat);

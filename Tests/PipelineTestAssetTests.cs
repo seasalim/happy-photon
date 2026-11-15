@@ -24,8 +24,8 @@ public sealed class PipelineTestAssetTests
         var exif = image.GetExifProfile();
 
         Assert.NotNull(exif);
-        Assert.Equal(OrientationType.RightTop, image.Orientation);
-        Assert.Equal((ushort)OrientationType.RightTop,
+        Assert.Equal(Orientation.RightTop, image.Orientation);
+        Assert.Equal((ushort)Orientation.RightTop,
             exif!.GetValue(ExifTag.Orientation)?.Value);
         Assert.NotNull(exif.GetValue(ExifTag.GPSLatitude));
         Assert.NotNull(exif.GetValue(ExifTag.GPSLongitude));

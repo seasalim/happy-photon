@@ -301,7 +301,7 @@ public sealed class RenderNoiseReductionTests
         var image = CreateLuminanceNoisePattern(73, 61);
         if (withAlpha)
         {
-            image.Alpha(AlphaOption.Set);
+            image.Alpha(AlphaAction.Set);
         }
         using var pixels = image.GetPixels();
         for (var y = 0; y < image.Height; y++)

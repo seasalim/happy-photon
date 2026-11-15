@@ -25,7 +25,7 @@ public sealed class RenderRepairsTests
     {
         using var basis = Fixture(800, 600);
         using var source = new MagickImage(basis.Pixels);
-        if (alpha) source.Alpha(AlphaOption.On);
+        if (alpha) source.Alpha(AlphaAction.On);
         using var originalPixels = source.GetPixels();
         var original = originalPixels.ToShortArray(alpha ? PixelMapping.RGBA : PixelMapping.RGB)!;
         ushort[]? first = null;

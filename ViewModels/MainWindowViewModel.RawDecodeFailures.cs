@@ -8,6 +8,8 @@ public partial class MainWindowViewModel
 {
     private bool _previewSourceFailure;
 
+    private bool _standardDecodeFailure;
+
     internal string? PreviewSourceFailureStatus =>
         SelectedImage?.SourceRequiresHydration == true
             ? "The original is online-only. Download and open it to develop this photo."
@@ -15,10 +17,12 @@ public partial class MainWindowViewModel
                 ? "The original is unavailable. Make it available locally, then retry."
                 : null;
 
-    internal string? SelectedRawDecodeFailureStatus =>
+    internal string? SelectedDecodeFailureStatus =>
         SelectedImage?.RawDecodeFailed == true
             ? "This RAW file could not be decoded. It may use an unsupported encoding such as Nikon HE."
-            : null;
+            : _standardDecodeFailure
+                ? "This file could not be decoded."
+                : null;
 
     internal string? GlobalRawRuntimeFailureStatus =>
         IsRawRuntimeDegraded
@@ -50,10 +54,12 @@ public partial class MainWindowViewModel
         {
             return;
         }
+
         if (outcome.Succeeded)
         {
             outcome.Image!.RawDecodeFailed = false;
             _previewSourceFailure = false;
+            _standardDecodeFailure = false;
         }
         else
         {
@@ -62,24 +68,31 @@ public partial class MainWindowViewModel
             // cached preview) — preserve it, exactly like the histogram.
             _previewSourceFailure =
                 outcome.Failure == BaseImageLoadFailure.SourceUnavailable;
-            if (outcome.Image!.IsRaw &&
+            _standardDecodeFailure = !outcome.Image!.IsRaw &&
+                outcome.Failure == BaseImageLoadFailure.DecodeFailed;
+
+            if (outcome.Image.IsRaw &&
                 outcome.Failure is BaseImageLoadFailure.UnsupportedRaw or
                     BaseImageLoadFailure.DecodeFailed)
             {
                 outcome.Image.RawDecodeFailed = true;
             }
         }
+
         OnPropertyChanged(nameof(StatusMessage));
     }
 
     private void OnPreviewFailureSelectionChanged()
     {
         _previewSourceFailure = false;
+        _standardDecodeFailure = false;
+
         if (TransientStatus == RawFallbackStatus)
         {
             _transientStatusCts?.Cancel();
             TransientStatus = null;
         }
+
         OnPropertyChanged(nameof(StatusMessage));
     }
 }

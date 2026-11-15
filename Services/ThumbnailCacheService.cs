@@ -215,7 +215,7 @@ public sealed class ThumbnailCacheService : IAsyncDisposable
             using (var image = BitmapConversionService.ConvertToMagickImage(write.Bitmap))
             {
                 image.BackgroundColor = MagickColors.Black;
-                image.Alpha(AlphaOption.Remove);
+                image.Alpha(AlphaAction.Remove);
                 image.Quality = 85;
                 image.Write(temporaryPath, MagickFormat.Jpeg);
             }

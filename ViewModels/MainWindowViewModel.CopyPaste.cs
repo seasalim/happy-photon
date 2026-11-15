@@ -25,7 +25,7 @@ public partial class MainWindowViewModel
     public string? StatusMessage =>
         PinnedStatus ??
         PreviewSourceFailureStatus ??
-        SelectedRawDecodeFailureStatus ??
+        SelectedDecodeFailureStatus ??
         GlobalRawRuntimeFailureStatus ??
         TransientStatus ?? _oneTimeNotice.Text;
 

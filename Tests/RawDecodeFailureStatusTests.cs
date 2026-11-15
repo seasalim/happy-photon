@@ -122,6 +122,34 @@ public sealed class RawDecodeFailureStatusTests : IDisposable
         Assert.Contains("Nikon HE", image.LoadFailureText);
     }
 
+    [Theory]
+    [InlineData("broken.jpg")]
+    [InlineData("broken.tiff")]
+    public async Task StandardDecodeFailure_ShowsStatusAndClearsOnRetryOrSelection(string name)
+    {
+        var file = new ImageFile(Path.Combine(_root.Path, name));
+        File.WriteAllBytes(file.FilePath, [0, 1, 2, 3]);
+        var loader = new StandardBaseLoader();
+        var outcome = loader.LoadPreviewBaseWithOutcome(
+            file, BaseDecodeSettings.Default, CancellationToken.None);
+        Assert.Equal(BaseImageLoadFailure.DecodeFailed, outcome.Failure);
+        using var catalog = new CatalogService(Path.Combine(_root.Path, "catalog"));
+        await using var vm = CreateViewModel(catalog);
+        vm.SelectedImage = file;
+        vm.ApplyPreviewLoadOutcome(new PreviewLoadOutcome(
+            file, vm.LatestPreviewOutcomeGeneration, outcome.Failure));
+
+        Assert.Equal("This file could not be decoded.", vm.StatusMessage);
+        Assert.False(file.RawDecodeFailed);
+        vm.ApplyPreviewLoadOutcome(new PreviewLoadOutcome(
+            file, vm.LatestPreviewOutcomeGeneration, BaseImageLoadFailure.None));
+        Assert.Null(vm.StatusMessage);
+        vm.ApplyPreviewLoadOutcome(new PreviewLoadOutcome(
+            file, vm.LatestPreviewOutcomeGeneration, outcome.Failure));
+        vm.SelectedImage = new ImageFile(Path.Combine(_root.Path, "other.jpg"));
+        Assert.Null(vm.StatusMessage);
+    }
+
     private static MainWindowViewModel CreateViewModel(
         CatalogService catalog,
         LibRawRuntimeHealth? health = null) =>

@@ -59,7 +59,7 @@ internal sealed class EmbeddedPreviewExtractor
             cancellationToken.ThrowIfCancellationRequested();
 
             using var image = new MagickImage(encodedBytes);
-            if (image.Orientation == OrientationType.Undefined)
+            if (image.Orientation == Orientation.Undefined)
             {
                 ApplyExifOrientation(image, GetExifOrientation(filePath));
             }

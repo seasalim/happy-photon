@@ -222,7 +222,7 @@ public sealed class PresenceTests
     {
         using var basis = RenderPipelineTestSupport.CreateBase(OpsKernelTests.Sentinel(), height: 31);
         using var image = new MagickImage(basis.Pixels);
-        image.Alpha(AlphaOption.Set);
+        image.Alpha(AlphaAction.Set);
         using var pixels = image.GetPixels();
         var layout = RenderKernelSupport.GetLayout(pixels);
         var alpha = (int)pixels.GetChannelIndex(PixelChannel.Alpha)!.Value;

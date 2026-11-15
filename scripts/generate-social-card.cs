@@ -80,7 +80,7 @@ using (var beam = SpectrumBeam(tokensPath))
     card.Composite(beam, 64, 426, CompositeOperator.Over);
 }
 
-card.Alpha(AlphaOption.Remove);
+card.Alpha(AlphaAction.Remove);
 card.Format = MagickFormat.Png24;
 card.Strip();
 Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
