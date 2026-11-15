@@ -28,7 +28,7 @@ internal static class ExifThumbnailDecoder
                 return null;
             }
 
-            if (thumbnail.Orientation == OrientationType.Undefined)
+            if (thumbnail.Orientation == Orientation.Undefined)
             {
                 ImageServiceHelpers.ApplyExifOrientation(
                     thumbnail, NormalizeOrientation((int)imageInfo.Orientation));

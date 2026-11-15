@@ -300,7 +300,7 @@ public sealed class RenderEffectsTests
         var image = CreateSolid(width, height, 12000, 24000, 36000);
         if (includeAlpha)
         {
-            image.Alpha(AlphaOption.Set);
+            image.Alpha(AlphaAction.Set);
         }
         using var pixels = image.GetPixels();
         for (var y = 0; y < height; y++)

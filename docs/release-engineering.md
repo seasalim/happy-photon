@@ -117,7 +117,7 @@ Expected trim warnings are the reflection-JSON IL2026 set and IL2104 for
 
 ## ImageMagick packages and native prerequisites
 
-`MagickFlavor` selects `Magick.NET-Q16-OpenMP-x64` 14.17.2 for win-x64 and
+`MagickFlavor` selects `Magick.NET-Q16-OpenMP-x64` 15.1.0 for win-x64 and
 linux-x64, and `Magick.NET-Q16-AnyCPU` for osx-arm64. Without a RID it follows
 the host: OpenMP on x64 Windows/Linux, AnyCPU otherwise. Use
 `-p:MagickFlavor=AnyCPU` or `-p:MagickFlavor=OpenMP-x64` for build-time A/B checks.

@@ -56,7 +56,7 @@ public sealed class PreviewQ16ConversionBaselineTests(ITestOutputHelper output)
 
         // Add varying alpha only to an owned synthetic variant of the decoded base.
         using var alphaBase = new BaseImage(new MagickImage(pair.Interactive.Pixels), pair.Interactive.Info);
-        alphaBase.Pixels.Alpha(AlphaOption.Set);
+        alphaBase.Pixels.Alpha(AlphaAction.Set);
         using (var pixels = alphaBase.Pixels.GetPixels())
         {
             var values = pixels.GetArea(0, 0, alphaBase.Pixels.Width, alphaBase.Pixels.Height)!;

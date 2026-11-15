@@ -237,7 +237,7 @@ public sealed class FusedPreviewAnalysisTests
 
     private static void AddAlpha(MagickImage image)
     {
-        image.Alpha(AlphaOption.Set);
+        image.Alpha(AlphaAction.Set);
         using var pixels = image.GetPixels();
         var samples = pixels.GetArea(0, 0, image.Width, image.Height)!;
         var channels = checked((int)pixels.Channels);

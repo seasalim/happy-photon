@@ -86,10 +86,10 @@ void WriteOrientedGpsJpeg(MagickImage image, string fileName)
 {
     using var output = (MagickImage)image.Clone();
     output.Rotate(-90);
-    output.Orientation = OrientationType.RightTop;
+    output.Orientation = Orientation.RightTop;
 
     var exif = new ExifProfile();
-    exif.SetValue(ExifTag.Orientation, (ushort)OrientationType.RightTop);
+    exif.SetValue(ExifTag.Orientation, (ushort)Orientation.RightTop);
     exif.SetValue(ExifTag.Make, "Happy Photon");
     exif.SetValue(ExifTag.Model, "WP0.1 fixture generator");
     exif.SetValue(ExifTag.DateTimeOriginal, "2026:01:02 03:04:05");

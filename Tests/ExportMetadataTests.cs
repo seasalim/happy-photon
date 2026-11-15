@@ -228,7 +228,7 @@ public sealed class ExportMetadataTests : IDisposable
         if (format == ExportFormat.Tiff)
         {
             Assert.Equal("Raw Camera Co", result.GetAttribute("tiff:make"));
-            Assert.Equal(OrientationType.TopLeft, result.Orientation);
+            Assert.Equal(Orientation.TopLeft, result.Orientation);
             Assert.Equal(
                 "Happy Photon 9.8.7",
                 result.GetAttribute("tiff:software"));

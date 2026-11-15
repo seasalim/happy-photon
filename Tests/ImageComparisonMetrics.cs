@@ -79,7 +79,7 @@ internal static class ImageComparisonMetrics
         var image = (MagickImage)source.Clone();
         try
         {
-            var orientation = image.Orientation == OrientationType.Undefined
+            var orientation = image.Orientation == Orientation.Undefined
                 ? 1
                 : (int)image.Orientation;
             image.AutoOrient();

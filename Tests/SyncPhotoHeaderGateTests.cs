@@ -56,8 +56,8 @@ public sealed class SyncPhotoHeaderGateTests(ITestOutputHelper output)
                 image.Ping(paths[index]);
                 samples[index] = Stopwatch.GetElapsedTime(start).TotalMilliseconds;
                 Assert.True(image.Width > 0 && image.Height > 0);
-                var turned = image.Orientation is OrientationType.LeftTop or OrientationType.RightTop
-                    or OrientationType.RightBottom or OrientationType.LeftBottom;
+                var turned = image.Orientation is Orientation.LeftTop or Orientation.RightTop
+                    or Orientation.RightBottom or Orientation.LeftBottom;
                 var isPortrait = turned ? image.Width > image.Height : image.Height > image.Width;
                 if (isPortrait) portrait++;
 

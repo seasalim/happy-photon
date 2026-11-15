@@ -21,8 +21,8 @@ public sealed class JpegThumbnailDecoderTests : IDisposable, IClassFixture<Avalo
 
         var landscapePath = Path.Combine(_tempDirectory.Path, "landscape.jpg");
         var orientedPath = Path.Combine(_tempDirectory.Path, "oriented.jpg");
-        WriteJpeg(landscapePath, OrientationType.Undefined);
-        WriteJpeg(orientedPath, OrientationType.RightTop);
+        WriteJpeg(landscapePath, Orientation.Undefined);
+        WriteJpeg(orientedPath, Orientation.RightTop);
 
         using var landscape = JpegThumbnailDecoder.Decode(
             landscapePath, 150, CancellationToken.None);
@@ -109,10 +109,10 @@ public sealed class JpegThumbnailDecoderTests : IDisposable, IClassFixture<Avalo
         Assert.Equal((lastX, lastY), JpegThumbnailDecoder.MapPixel(2, 1, 3, 2, orientation));
     }
 
-    private static void WriteJpeg(string path, OrientationType orientation)
+    private static void WriteJpeg(string path, Orientation orientation)
     {
         using var image = new MagickImage(MagickColors.Red, 400, 200);
-        if (orientation != OrientationType.Undefined)
+        if (orientation != Orientation.Undefined)
         {
             var profile = new ExifProfile();
             profile.SetValue(ExifTag.Orientation, (ushort)orientation);

@@ -1,4 +1,4 @@
-#:package Magick.NET-Q16-AnyCPU@14.17.2
+#:package Magick.NET-Q16-AnyCPU@15.1.0
 #:property PublishAot=false
 #:property SelfContained=false
 

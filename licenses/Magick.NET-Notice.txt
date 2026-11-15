@@ -5,7 +5,7 @@
 ﻿Copyright Dirk Lemstra https://github.com/dlemstra/Magick.NET.
 Licensed under the Apache License, Version 2.0.
 
-[ ImageMagick 7.1.2-32 (2026-09-27) ]
+[ ImageMagick 7.1.2-35 (2026-10-31) (https://github.com/ImageMagick/ImageMagick/tree/5d1bcc55f2c83bc2ff802118b7369756610f3ad4) ]
 
 ImageMagick License
              https://imagemagick.org/license/
@@ -114,7 +114,7 @@ To apply the ImageMagick License to your work, attach the following boilerplate 
    License for the specific language governing permissions and limitations
    under the License.
 
-[ aom 3.15.1 (2026-09-22) ]
+[aom 3.15.2 (2026-10-09) (https://github.com/ImageMagick/aom/tree/949b2083094619a8cf6491938d47e6c4804ed108)]
 
 Copyright (c) 2016, Alliance for Open Media. All rights reserved.
 
@@ -143,7 +143,7 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
-[ brotli 1.2.0 (2025-10-27) ]
+[brotli 1.2.1 (2026-10-21) (https://github.com/ImageMagick/brotli/tree/62877063ab55b3494bdee9d1239156754aed6413)]
 
 Copyright (c) 2009, 2010, 2013-2016 by the Brotli Authors.
 
@@ -165,7 +165,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
-[ libbzip2 1.0.8 (2019-07-13) ]
+[libbzip2 1.0.8 (2019-07-13) (https://github.com/ImageMagick/bzip2/tree/abffe764f875f71d051efb19d4c83139375f82d7)]
 
 --------------------------------------------------------------------------
 
@@ -209,7 +209,7 @@ bzip2/libbzip2 version 1.0.8 of 13 July 2019
 
 --------------------------------------------------------------------------
 
-[ cairo 1.18.6 (2026-09-20) ]
+[cairo 1.18.6 (2026-09-20) (https://github.com/ImageMagick/cairo/tree/4334da83d8f44abe5aab1a11956e3f8e6e58eac7)]
 
 MOZILLA PUBLIC LICENSE
                                 Version 1.1
@@ -681,7 +681,7 @@ EXHIBIT A -Mozilla Public License.
      use the text of this Exhibit A rather than the text found in the
      Original Code Source Code for Your Modifications.]
 
-[ libcroco 0.6.13 (2019-04-06) ]
+[libcroco 0.6.13 (2019-04-06) (https://github.com/ImageMagick/croco/tree/178785cdc6faecad555a4e6fe4fda2b625046e8e)]
 
 GNU LIBRARY GENERAL PUBLIC LICENSE
 		       Version 2, June 1991
@@ -1165,7 +1165,7 @@ necessary.  Here is a sample; alter the names:
 
 That's all there is to it!
 
-[ libde265 1.1.3 (2026-09-14) ]
+[libde265 1.1.3 (2026-09-14) (https://github.com/ImageMagick/de265/tree/5a0bf9f624d810de6af20e41ac3cfd92bf7de508)]
 
 * The library `libde265` is distributed under the terms of the GNU Lesser General Public License.
 * The sample applications are distributed under the terms of the MIT license.
@@ -2039,7 +2039,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-[ openexr 3.5.1 (2026-09-26) ]
+[openexr 3.5.2 (2026-10-03) (https://github.com/ImageMagick/exr/tree/85a96b21d3cdcae99fbea6f32f62eba9ca4a9fdd)]
 
 Copyright (c) Contributors to the OpenEXR Project. All rights reserved.
 
@@ -2053,7 +2053,7 @@ Redistribution and use in source and binary forms, with or without modification,
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-[ libffi 3.8.0 (2026-08-09) ]
+[libffi 3.8.0 (2026-08-09) (https://github.com/ImageMagick/ffi/tree/91982d4ac97b179dd1fb878caef2ed2847bc38b6)]
 
 libffi - Copyright (c) 1996-2026  Anthony Green, Red Hat, Inc and others.
 See source files for details.
@@ -2077,7 +2077,7 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-[ fontconfig 2.18.3 (2026-08-06) ]
+[fontconfig 2.18.3 (2026-08-06) (https://github.com/ImageMagick/fontconfig/tree/943048d94dfa3d7d4a213f36f9ef7af988397cd4)]
 
 fontconfig/COPYING
 
@@ -2280,7 +2280,7 @@ fontconfig/src/ftglue.[ch]
  * PS: This "glue" code is explicitely put in the public domain
  */
 
-[ freetype 2.14.3 (2026-03-22) ]
+[freetype 2.15.0 (2026-10-11) (https://github.com/ImageMagick/freetype/tree/c872866d7b45c6926d82a636c3f9055472e6c334)]
 
 The FreeType Project LICENSE
                     ----------------------------
@@ -2452,7 +2452,7 @@ Legal Terms
 
 --- end of FTL.TXT ---
 
-[ fribidi 1.0.17 (2026-09-20) ]
+[fribidi 1.0.18 (2026-10-29) (https://github.com/ImageMagick/fribidi/tree/a51f6765d9bfafab1f7bd3f5f507ccf1eac6be6b)]
 
 GNU LESSER GENERAL PUBLIC LICENSE
                        Version 2.1, February 1999
@@ -2956,7 +2956,7 @@ necessary.  Here is a sample; alter the names:
 
 That's all there is to it!
 
-[ gdk-pixbuf 2.44.8 (2026-08-12) ]
+[gdk-pixbuf 2.44.8 (2026-08-12) (https://github.com/ImageMagick/gdk-pixbuf/tree/92a234886a0337480770ef93dc74ea920bf39ab3)]
 
 GNU LESSER GENERAL PUBLIC LICENSE
                        Version 2.1, February 1999
@@ -3461,7 +3461,7 @@ necessary.  Here is a sample; alter the names:
 
 That's all there is to it!
 
-[ glib 2.64.3 (2020-05-20) ]
+[glib 2.64.3 (2020-05-20) (https://github.com/ImageMagick/glib/tree/ea0118ca0d408473d320b21262a1cdc6ce3e5f40)]
 
 GNU LESSER GENERAL PUBLIC LICENSE
                        Version 2.1, February 1999
@@ -3966,7 +3966,7 @@ necessary.  Here is a sample; alter the names:
 
 That's all there is to it!
 
-[ harfbuzz 14.5.0 (2026-09-20) ]
+[harfbuzz 15.0.0 (2026-10-22) (https://github.com/ImageMagick/harfbuzz/tree/c77409b255cbce3e39210681dfad9ba93eadbcbe)]
 
 HarfBuzz is licensed under the so-called "Old MIT" license.  Details follow.
 For parts of HarfBuzz that are licensed under different licenses see individual
@@ -4011,7 +4011,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
 ON AN "AS IS" BASIS, AND THE COPYRIGHT HOLDER HAS NO OBLIGATION TO
 PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
-[ libheif 1.23.5 (2026-09-21) ]
+[libheif 1.23.7 (2026-10-26) (https://github.com/ImageMagick/heif/tree/498042a72e805c50e5e84b57e15327f3cfdf6a63)]
 
 * The library `libheif` is distributed under the terms of the GNU Lesser General Public License.
 * The sample applications and the Go and C++ wrappers are distributed under the terms of the MIT License.
@@ -4885,7 +4885,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-[ libhwy 1.4.0 (2026-04-23) ]
+[libhwy 1.4.0 (2026-04-23) (https://github.com/ImageMagick/highway/tree/e1a586af5be6358bb983ff608f9678a622209ca3)]
 
 This project is primarily dual-licensed under your choice of either the Apache
 License 2.0 or the BSD 3-Clause License.
@@ -5259,7 +5259,7 @@ express Statement of Purpose.
     party to this document and has no duty or obligation with respect to
     this CC0 or use of the Work.
 
-[ imath 3.2.3 (2026-08-20) ]
+[imath 3.2.3 (2026-08-20) (https://github.com/ImageMagick/imath/tree/1ec391453dd33f3432018d3a266e3d177a705235)]
 
 Copyright Contributors to the OpenEXR Project. All rights reserved.
 
@@ -5273,7 +5273,7 @@ Redistribution and use in source and binary forms, with or without modification,
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-[ libjpeg-turbo 3.2.0 (2025-06-30) ]
+[libjpeg-turbo 3.2.1 (2026-10-27) (https://github.com/ImageMagick/jpeg-turbo/tree/ea2dd9d26a47da90c87a3ab57f6ac7f85977be83)]
 
 libjpeg-turbo Licenses
 ======================
@@ -5423,7 +5423,7 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
-[ libjxl 0.12.0 (2026-07-01) ]
+[libjxl 0.12.0 (2026-07-01) (https://github.com/ImageMagick/jpeg-xl/tree/8503118ff13ab8b11680296900da3361d6703dc1)]
 
 Copyright (c) the JPEG XL Project Authors.
 All rights reserved.
@@ -5453,7 +5453,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-[ lcms 2.19.1 (2026-05-06) ]
+[lcms 2.19.1 (2026-05-06) (https://github.com/ImageMagick/lcms/tree/d261ab6fda30fd7578a2ce7ace5c0b2c7d3fc0b8)]
 
 MIT License
 
@@ -5478,7 +5478,7 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-[ liblqr 0.4.2 (2012-12-04) ]
+[liblqr 0.4.2 (2012-12-04) (https://github.com/ImageMagick/lqr/tree/a2e9e8b5b41bf0569f51482707a12d354a086f3a)]
 
 GNU LESSER GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
@@ -5646,7 +5646,7 @@ apply, that proxy's public statement of acceptance of any version is
 permanent authorization for you to choose that version for the
 Library.
 
-[ liblzma 5.8.4 (2026-09-09) ]
+[liblzma 5.8.4 (2026-09-09) (https://github.com/ImageMagick/lzma/tree/131e9a49425f51b8dd8710c57fbaa527baed3989)]
 
 GNU LESSER GENERAL PUBLIC LICENSE
                        Version 2.1, February 1999
@@ -6150,7 +6150,7 @@ necessary.  Here is a sample; alter the names:
 
 That's all there is to it!
 
-[ openh264 2.6.0 (2025-02-12) ]
+[openh264 2.7.0 (2026-10-22) (https://github.com/ImageMagick/openh264/tree/8f7d29ca929a6b66682c0a5889a62a68c0cfa486)]
 
 Copyright (c) 2013, Cisco Systems
 All rights reserved.
@@ -6176,7 +6176,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-[ openjpeg 2.5.4 (2025-09-20) ]
+[openjpeg 2.5.4 (2025-09-20) (https://github.com/ImageMagick/openjpeg/tree/97ce1d10749b1a02d657eae491e80c572ca183b2)]
 
 /*
  * The copyright in this software is being made available under the 2-clauses 
@@ -6218,7 +6218,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-[ openjph 0.32.0 (2026-09-17) ]
+[openjph 0.32.0 (2026-09-17) (https://github.com/ImageMagick/openjph/tree/c1a1ffc1e3f90eb9397407f1f545a47e01390aef)]
 
 BSD 2-Clause License
 
@@ -6248,7 +6248,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-[ pango 1.45.3 (2020-06-22) ]
+[pango 1.45.3 (2020-06-22) (https://github.com/ImageMagick/pango/tree/0b1e4536e0005f3c36b523c17ea12322490efd45)]
 
 GNU LIBRARY GENERAL PUBLIC LICENSE
 		       Version 2, June 1991
@@ -6733,7 +6733,7 @@ necessary.  Here is a sample; alter the names:
 
 That's all there is to it!
 
-[ pixman 0.46.4 (2025-07-20) ]
+[pixman 0.46.4 (2025-07-20) (https://github.com/ImageMagick/pixman/tree/f7b55a8d3c39380724da9fbdef72ad70be800efc)]
 
 The following is the MIT license, agreed upon by most contributors.
 Copyright holders of new code should use this license statement where
@@ -6778,7 +6778,7 @@ possible. They may also add themselves to the list below.
  * DEALINGS IN THE SOFTWARE.
  */
 
-[ libpng 1.6.58 (2026-04-15) ]
+[libpng 1.6.59 (2026-09-28) (https://github.com/ImageMagick/png/tree/1ccb8b78643c7ad5360f00719a1e952ce0be7a53)]
 
 COPYRIGHT NOTICE, DISCLAIMER, and LICENSE
 =========================================
@@ -6915,7 +6915,7 @@ to supporting the PNG file format in commercial products.  If you use
 this source code in a product, acknowledgment is not required but would
 be appreciated.
 
-[ libraqm 0.11.0 (2026-07-23) ]
+[libraqm 0.11.0 (2026-07-23) (https://github.com/ImageMagick/raqm/tree/a699b8b7838acb4ac8d5891f42ecf3d84a00a9ad)]
 
 The MIT License (MIT)
 
@@ -6940,7 +6940,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-[ libraw 0.22.2 (2026-07-16) ]
+[libraw 0.22.3 (2026-10-26) (https://github.com/ImageMagick/raw/tree/71399d76efc3fa915bf3fb01ddede994b549a80a)]
 
 GNU LESSER GENERAL PUBLIC LICENSE
 		       Version 2.1, February 1999
@@ -7401,7 +7401,7 @@ DAMAGES.
 
 		     END OF TERMS AND CONDITIONS
 
-[ librsvg 2.40.20 (2017-12-15) ]
+[librsvg 2.40.20 (2017-12-15) (https://github.com/ImageMagick/rsvg/tree/7415a6765db7554ba6f0f1b3dcb0877f36ff581b)]
 
 GNU LIBRARY GENERAL PUBLIC LICENSE
 		       Version 2, June 1991
@@ -7886,7 +7886,7 @@ necessary.  Here is a sample; alter the names:
 
 That's all there is to it!
 
-[ libtiff 4.7.2 (2026-06-26) ]
+[libtiff 4.7.2 (2026-06-26) (https://github.com/ImageMagick/tiff/tree/3021cd03440ba6954f8bdf2b7ad4557a36092cd8)]
 
 # LibTIFF license
 
@@ -7938,7 +7938,7 @@ THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
 WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 
-[ libwebp 1.6.0 (2025-07-09) ]
+[libwebp 1.6.0 (2025-07-09) (https://github.com/ImageMagick/webp/tree/b981ef267195cb12f2cb97e4dd23e12a1323a4ce)]
 
 Copyright (c) 2010, Google Inc. All rights reserved.
 
@@ -7970,7 +7970,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-[ libxml2 2.15.4 (2026-09-01) ]
+[libxml2 2.15.4 (2026-09-01) (https://github.com/ImageMagick/xml/tree/3ba73c8312b7ac88adc1a2e62df13d0827e93a0f)]
 
 Except where otherwise noted in the source code (e.g. the files dict.c and
 list.c, which are covered by a similar licence but with different Copyright
@@ -7997,9 +7997,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
-[ libzip 1.11.4 (2025-05-23) ]
+[libzip 1.12.1 (2026-10-14) (https://github.com/ImageMagick/zip/tree/4fb2753af4c718080b62fbadda0e99fd9178ab6a)]
 
-Copyright (C) 1999-2020 Dieter Baron and Thomas Klausner
+Copyright (C) 1999-2026 Dieter Baron and Thomas Klausner
 
 The authors can be contacted at <info@libzip.org>
 
@@ -8031,7 +8031,7 @@ IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-[ zlib 1.3.2 (2026-02-17) ]
+[zlib 1.3.2 (2026-02-17) (https://github.com/ImageMagick/zlib/tree/e42706934e4e7564d960031ae62ff29d918ee06d)]
 
 Copyright notice:
 
@@ -8056,7 +8056,7 @@ Copyright notice:
   Jean-loup Gailly        Mark Adler
   jloup@gzip.org          madler@alumni.caltech.edu
 
-[ zstd 1.5.7 (2025-02-19) ]
+[zstd 1.5.7 (2025-02-19) (https://github.com/ImageMagick/zstd/tree/4d5752ffeca8defb48ad744274f4f76b2866d71d)]
 
 BSD License
 

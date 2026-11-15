@@ -139,7 +139,7 @@ public sealed class ImageComparisonMetricsTests
     {
         using var source = new MagickImage(MagickColors.CornflowerBlue, 2, 3)
         {
-            Orientation = OrientationType.RightTop
+            Orientation = Orientation.RightTop
         };
 
         using var canonical = ImageComparisonMetrics.CanonicalizeReference(source);

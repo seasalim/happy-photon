@@ -59,7 +59,7 @@ internal static partial class CompatibilityFixtureRunner
                 profile.ToByteArray().Length > 0,
                 $"{format} {outputColorSpace} mono export did not carry an ICC profile.");
             var orientationNormalized = format == ExportFormat.Tiff
-                ? exported.Orientation == OrientationType.TopLeft
+                ? exported.Orientation == Orientation.TopLeft
                 : exported.GetExifProfile()?.GetValue(ExifTag.Orientation)?.Value == 1;
             Require(
                 orientationNormalized,

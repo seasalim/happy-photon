@@ -124,7 +124,7 @@ public sealed class TiffExportTests : IDisposable
         using var exported = new MagickImage(Path.Combine(
             outputFolder,
             "srgb-exif-gps-orientation-6.tif"));
-        Assert.Equal(OrientationType.TopLeft, exported.Orientation);
+        Assert.Equal(Orientation.TopLeft, exported.Orientation);
         Assert.Equal(
             expectGps,
             exported.GetAttribute("exif:GPSLatitude") != null);
